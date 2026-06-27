@@ -4,3 +4,4 @@ faster-whisper
 pydub
 pyngrok
 numpy
+librosa

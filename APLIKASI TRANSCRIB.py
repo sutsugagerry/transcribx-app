@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1OQHDRDE0rYaOIhCpjXcV-zRlNvt6pBIr
 """
 
-!pip install streamlit streamlit-webrtc faster-whisper pydub pyngrok numpy
-
 !pip install librosa
 
 # Commented out IPython magic to ensure Python compatibility.

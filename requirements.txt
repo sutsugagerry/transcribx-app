@@ -1,1 +1,6 @@
 streamlit
+streamlit-webrtc
+faster-whisper
+pydub
+pyngrok
+numpy

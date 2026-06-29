@@ -130,61 +130,33 @@ if not st.session_state["logged_in"]:
         st.markdown("<h2 style='text-align: center;'>🔒 Portal TranscribX Enterprise</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #64748b;'>Gunakan kredensial Anda untuk mengakses sistem Notulensi AI.</p>", unsafe_allow_html=True)
         
-        tab_login, tab_register = st.tabs(["Masuk (Login)", "Daftar Akun Baru"])
-        
-        # --- TAB LOGIN ---
-        with tab_login:
-            with st.form("login_form"):
-                email_login = st.text_input("Email", placeholder="Ketik email Anda di sini...")
-                pass_login = st.text_input("Password", type="password", placeholder="Ketik password Anda...")
-                btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True)
-                
-                if btn_login:
-                    if email_login and pass_login:
-                        with st.spinner("Memverifikasi kredensial..."):
-                            user_data = login_firebase(email_login, pass_login)
-                            if "idToken" in user_data:
-                                uid = user_data["localId"]
-                                sub_status = check_subscription(uid)
-                                
-                                if sub_status == "aktif":
-                                    st.session_state["logged_in"] = True
-                                    st.session_state["user_email"] = email_login
-                                    st.session_state["user_uid"] = uid
-                                    st.success("Login berhasil! Memuat sistem...")
-                                    st.rerun()
-                                else:
-                                    st.error("⚠️ Akun Anda belum berlangganan atau masa aktif habis.")
+        # Form Login Tunggal
+        with st.form("login_form"):
+            email_login = st.text_input("Email", placeholder="Ketik email Anda di sini...")
+            pass_login = st.text_input("Password", type="password", placeholder="Ketik password Anda...")
+            btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True)
+            
+            if btn_login:
+                if email_login and pass_login:
+                    with st.spinner("Memverifikasi kredensial..."):
+                        user_data = login_firebase(email_login, pass_login)
+                        if "idToken" in user_data:
+                            uid = user_data["localId"]
+                            sub_status = check_subscription(uid)
+                            
+                            if sub_status == "aktif":
+                                st.session_state["logged_in"] = True
+                                st.session_state["user_email"] = email_login
+                                st.session_state["user_uid"] = uid
+                                st.success("Login berhasil! Memuat sistem...")
+                                st.rerun()
                             else:
-                                err_msg = user_data.get("error", {}).get("message", "Login gagal")
-                                st.error(f"⚠️ {err_msg}")
-                    else:
-                        st.warning("Silakan masukkan email dan password.")
-
-        # --- TAB REGISTER ---
-        with tab_register:
-            with st.form("register_form"):
-                email_reg = st.text_input("Email Baru", placeholder="Gunakan email aktif...")
-                pass_reg = st.text_input("Password Baru", type="password", help="Minimal 6 karakter")
-                btn_reg = st.form_submit_button("📝 Daftar Akun", use_container_width=True)
-                
-                if btn_reg:
-                    if email_reg and len(pass_reg) >= 6:
-                        with st.spinner("Mendaftarkan akun Anda..."):
-                            new_user = register_firebase(email_reg, pass_reg)
-                            if "idToken" in new_user:
-                                uid = new_user["localId"]
-                                # Set akun baru langsung aktif (Anda bisa mengubah ini jadi "non-aktif")
-                                db.collection("users").document(uid).set({
-                                    "email": email_reg,
-                                    "status_subscription": "aktif" 
-                                })
-                                st.success("✅ Pendaftaran berhasil! Silakan pindah ke tab Login untuk masuk.")
-                            else:
-                                err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
-                                st.error(f"⚠️ Gagal mendaftar: {err}")
-                    else:
-                        st.warning("Pastikan email terisi dan password minimal 6 karakter.")
+                                st.error("⚠️ Akun Anda belum berlangganan atau masa aktif habis. Hubungi Admin.")
+                        else:
+                            err_msg = user_data.get("error", {}).get("message", "Login gagal")
+                            st.error(f"⚠️ {err_msg}")
+                else:
+                    st.warning("Silakan masukkan email dan password.")
 
 # =====================================================================
 # APLIKASI UTAMA (Setelah Login)
@@ -198,8 +170,56 @@ else:
             st.rerun()
 
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")
-    tab1, tab2 = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
+    
+    # ---------------------------------------------------------
+    # KONFIGURASI EMAIL ADMIN (Ubah dengan email Anda sendiri!)
+    # ---------------------------------------------------------
+    ADMIN_EMAIL = "email.anda@gmail.com" 
 
+    # Logika Penampilan Tab (Jika Admin, muncul tab Admin Panel)
+    if st.session_state.get("user_email") == ADMIN_EMAIL:
+        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
+        tab_admin = tabs[0]
+        tab1 = tabs[1]
+        tab2 = tabs[2]
+        
+        # --- TAB ADMIN PANEL ---
+        with tab_admin:
+            st.markdown("### 👑 Dashboard Admin: Registrasi Akun Klien")
+            st.info("Form ini hanya bisa dilihat oleh Anda. Gunakan form ini untuk mendaftarkan akun baru bagi klien.")
+            
+            with st.form("admin_register_form"):
+                col_reg1, col_reg2 = st.columns(2)
+                with col_reg1:
+                    email_reg = st.text_input("Email Klien Baru", placeholder="email@klien.com")
+                with col_reg2:
+                    pass_reg = st.text_input("Password Klien", type="password", help="Minimal 6 karakter")
+                
+                status_reg = st.selectbox("Status Langganan Awal", ["aktif", "non-aktif"])
+                btn_reg = st.form_submit_button("📝 Daftarkan Klien", type="primary")
+                
+                if btn_reg:
+                    if email_reg and len(pass_reg) >= 6:
+                        with st.spinner("Mendaftarkan akun..."):
+                            new_user = register_firebase(email_reg, pass_reg)
+                            if "idToken" in new_user:
+                                uid = new_user["localId"]
+                                # Simpan data user ke database beserta status langganannya
+                                db.collection("users").document(uid).set({
+                                    "email": email_reg,
+                                    "status_subscription": status_reg
+                                })
+                                st.success(f"✅ Akun {email_reg} berhasil dibuat dengan status: {status_reg}!")
+                            else:
+                                err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
+                                st.error(f"⚠️ Gagal mendaftar: {err}")
+                    else:
+                        st.warning("Pastikan email terisi dan password minimal 6 karakter.")
+    else:
+        # Jika bukan Admin (Klien Biasa), hanya melihat 2 tab utama
+        tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
+        tab1 = tabs[0]
+        tab2 = tabs[1]
     # =====================================================================
     # TAB 1: LIVE CAPTURE (HTML/JS)
     # =====================================================================

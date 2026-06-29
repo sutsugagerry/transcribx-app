@@ -160,11 +160,11 @@ else:
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
-                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT
                 window.downloadMarkmapImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const svgEl = container.querySelector('svg');
                     if (!svgEl) return;
+
                     const btn = event.currentTarget;
                     const originalText = btn.innerHTML;
                     btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
@@ -173,54 +173,35 @@ else:
                         const g = svgEl.querySelector('g');
                         if (!g) throw new Error("G element not found");
 
-                        const originalContainerWidth = container.style.width; const originalContainerHeight = container.style.height;
-                        const originalContainerOverflow = container.style.overflow;
-                        const originalSvgWidth = svgEl.style.width; const originalSvgHeight = svgEl.style.height;
-                        const originalSvgAttrWidth = svgEl.getAttribute('width'); const originalSvgAttrHeight = svgEl.getAttribute('height');
-                        const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
+                        const originalWidth = container.style.width; const originalHeight = container.style.height;
+                        const originalOverflow = container.style.overflow; const originalTransform = g.getAttribute('transform');
+                        const originalViewBox = svgEl.getAttribute('viewBox');
 
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
                         const bbox = g.getBBox();
-                        const padding = 50;
-                        const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                        const padding = 50; const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
 
-                        g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
-                        svgEl.removeAttribute('viewBox');
-                        svgEl.setAttribute('width', trueWidth); svgEl.setAttribute('height', trueHeight);
-                        svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
-                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px';
-                        container.style.overflow = 'visible';
+                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                        svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
+                        svgEl.style.width = '100%'; svgEl.style.height = '100%';
 
                         setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueHeight })
-                            .then(canvas => {
-                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
-                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
-                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
+                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }).then(canvas => {
+                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-
-                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
-
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                 btn.innerHTML = originalText; btn.disabled = false;
                             }).catch(err => {
-                                console.error(err);
-                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
-                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
-                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
+                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                             });
-                        }, 800); 
+                        }, 600); 
                     } catch (err) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
                 };
 
-                // FUNGSI DOWNLOAD MERMAID ASLI
                 window.downloadMermaidImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const btn = event.currentTarget;
@@ -246,17 +227,13 @@ else:
                     const a = document.createElement('a'); a.href = b64; a.download = 'Cytoscape_Map_HighRes.png'; a.click();
                 }
 
-                // FUNGSI EXPORT NOTULENSI KE TXT
                 window.lastAiData = null;
                 function exportNotulensiTxt() {
                     if(!window.lastAiData) return alert("Data Notulensi belum ada!");
-                    const root = window.lastAiData;
-                    const data = root.notulensi_rapat;
-                    let txt = `NOTULENSI RAPAT\\n========================\\n\\n`;
-                    txt += `RINGKASAN EKSEKUTIF:\\n`;
+                    const root = window.lastAiData; const data = root.notulensi_rapat;
+                    let txt = `NOTULENSI RAPAT\\n========================\\n\\nRINGKASAN EKSEKUTIF:\\n`;
                     if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += `- ${r}\\n`);
-                    txt += `\\nAgenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\n`;
-                    txt += `Jalannya Diskusi:\\n`;
+                    txt += `\\nAgenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\nJalannya Diskusi:\\n`;
                     if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += `- ${d}\\n`);
                     txt += `\\nKeputusan Utama:\\n`;
                     if(data.keputusan) data.keputusan.forEach(k => txt += `- ${k}\\n`);
@@ -264,7 +241,7 @@ else:
                     if(data.rencana_tindak_lanjut && data.rencana_tindak_lanjut.length > 0) {
                         data.rencana_tindak_lanjut.forEach(t => txt += `- [${t.prioritas}] ${t.tugas} (PIC: ${t.pic}, Deadline: ${t.deadline})\\n`);
                     } else {
-                        txt += `- [Default] Belum ada action item spesifik dideteksi.\\n`;
+                        txt += `- [Default] Belum ada action item.\\n`;
                     }
                     const blob = new Blob([txt], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Notulensi_Resmi.txt'; a.click();
                 }
@@ -432,15 +409,37 @@ else:
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
                         aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
 
-                        // PENGUNCIAN PROMPT AGAR TIDAK ADA CABANG KOSONG & TABEL PASTI MUNCUL
+                        // PENGUNCIAN PROMPT DUA WAJAH (Naratif untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN RINGKASAN EKSEKUTIF: WAJIB buat poin-poin penting dalam bentuk array of strings.
-                        ATURAN JALANNYA DISKUSI: WAJIB buat alur/kronologis diskusi dalam bentuk array of strings.
-                        ATURAN KEPUTUSAN PENTING: WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
-                        ATURAN RENCANA TINDAK LANJUT: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik di transkrip, WAJIB BUAT 1 TUGAS DEFAULT: Tugas: "Review kembali hasil diskusi rapat", PIC: "Peserta Rapat", Deadline: "Secepatnya", Prioritas: "Sedang". (Array ini tidak boleh kosong).
-                        ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya.
-                        ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda (contoh: A["Nama Node"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Root paling atas WAJIB '# [Judul/Topik Utama Rapat]'. Sub-header (##) untuk "Ringkasan Eksekutif", "Jalannya Diskusi", "Keputusan", dan "Rencana Tindak Lanjut" WAJIB DIISI DENGAN BULLET POINTS (- ) dari array JSON di atas. DILARANG KERAS membiarkan sub-header kosong tanpa poin cabang!
+                        ATURAN JSON NOTULENSI:
+                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
+                        - keputusan: Array of strings. Kesimpulan utama.
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+
+                        ATURAN MARKMAP (PENTING!):
+                        Gunakan kode murni markdown. Isi Markmap HARUS DIBUAT RINGKAS (jangan copy-paste narasi panjang dari jalannya_diskusi!). Wajib ikuti POLA STRUKTUR BERJENJANG INI agar visualnya rapi:
+                        # [Judul Topik Utama Rapat]
+                        ## Topik Utama / Agenda
+                        - [Topik 1]
+                        ## Peserta
+                        - [Nama Peserta]
+                        ## Kendala Utama / Permasalahan
+                        - [Kendala 1]
+                          - [Detail kendala singkat]
+                        ## Solusi & Sistem Diperkenalkan
+                        - [Solusi 1]
+                          - [Detail solusi singkat]
+                        ## Keputusan Utama
+                        - [Keputusan 1]
+                        ## Rencana Tindak Lanjut
+                        - [Nama Tugas]
+                          - PIC: [Nama]
+                          - Deadline: [Waktu]
+                          - Prioritas: [Level]
+
+                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]).
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -479,42 +478,44 @@ else:
                                 const reportDiv = document.createElement('div'); reportDiv.className = "fade-in space-y-6 mt-6 mb-10";
                                 
                                 // TABEL ACTION PLAN YANG SELALU MUNCUL
-                                let taskListHtml = `<div class="mt-4 pt-4 border-t border-slate-100">
-                                    <p class="font-black text-blue-600 uppercase text-[10px] mb-2">📋 Rencana Tindak Lanjut (Tugas, PIC, Deadline, Prioritas):</p>
-                                    <div class="overflow-x-auto rounded-lg border border-slate-200">
-                                        <table class="w-full text-left border-collapse">
-                                            <tr class="bg-blue-50 text-blue-800 text-[11px]"><th class="p-2 border-b border-r">Tugas</th><th class="p-2 border-b border-r">PIC</th><th class="p-2 border-b border-r">Deadline</th><th class="p-2 border-b">Prioritas</th></tr>
-                                            ${data.notulensi_rapat.rencana_tindak_lanjut.map(t => `<tr class="text-[12px] border-b bg-white"><td class="p-2 border-r font-medium">${t.tugas}</td><td class="p-2 border-r text-slate-600">${t.pic}</td><td class="p-2 border-r text-slate-600">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`).join('')}
+                                let taskListHtml = `<div class="mt-6 pt-4 border-t border-slate-100">
+                                    <p class="font-black text-blue-600 uppercase text-[11px] mb-3">📋 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
+                                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                                        <table class="w-full text-left border-collapse bg-white">
+                                            <tr class="bg-blue-50 text-blue-800 text-[11px] uppercase"><th class="p-3 border-b border-r">Tugas</th><th class="p-3 border-b border-r">PIC</th><th class="p-3 border-b border-r">Deadline</th><th class="p-3 border-b">Prioritas</th></tr>
+                                            ${data.notulensi_rapat.rencana_tindak_lanjut.map(t => `<tr class="text-[12px] border-b hover:bg-slate-50 transition"><td class="p-3 border-r font-medium text-slate-800">${t.tugas}</td><td class="p-3 border-r text-slate-600">${t.pic}</td><td class="p-3 border-r text-slate-600">${t.deadline}</td><td class="p-3 font-bold ${t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600'}">${t.prioritas}</td></tr>`).join('')}
                                         </table>
                                     </div>
                                 </div>`;
 
                                 let notulensiHtml = `
                                     <div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden mb-6">
-                                        <div class="flex justify-between items-center mb-4">
-                                            <h5 class="text-[14px] font-black text-slate-500 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5>
-                                            <button onclick="exportNotulensiTxt()" class="btn-export">📝 Download TXT</button>
+                                        <div class="flex justify-between items-center mb-6">
+                                            <h5 class="text-[15px] font-black text-slate-700 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5>
+                                            <button onclick="exportNotulensiTxt()" class="btn-export shadow-md">📝 Download TXT</button>
                                         </div>
-                                        <div class="space-y-4 text-sm text-slate-700 leading-relaxed">
+                                        <div class="space-y-5 text-[13px] text-slate-700 leading-relaxed">
                                             <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-1">RINGKASAN EKSEKUTIF:</p>
-                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                                    <ul class="list-disc ml-5 space-y-1 font-semibold text-slate-800">${data.ringkasan_eksekutif.map(r => `<li>${r}</li>`).join('')}</ul>
+                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">RINGKASAN EKSEKUTIF:</p>
+                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-inner">
+                                                    <ul class="list-disc ml-5 space-y-2 font-semibold text-slate-800">${data.ringkasan_eksekutif.map(r => `<li>${r}</li>`).join('')}</ul>
                                                 </div>
                                             </div>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div><p class="font-black text-blue-600 uppercase text-[11px] mb-1">AGENDA / TOPIK:</p><p class="font-medium">${data.notulensi_rapat.agenda || '-'}</p></div>
-                                                <div><p class="font-black text-blue-600 uppercase text-[11px] mb-1">PESERTA:</p><p class="font-medium">${data.notulensi_rapat.peserta.join(', ') || '-'}</p></div>
+                                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">AGENDA / TOPIK:</p><p class="font-bold text-slate-800">${data.notulensi_rapat.agenda || '-'}</p></div>
+                                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p><p class="font-bold text-slate-800">${data.notulensi_rapat.peserta.join(', ') || '-'}</p></div>
                                             </div>
                                             <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-1">JALANNYA DISKUSI:</p>
-                                                <div class="bg-white/50 p-3 rounded-xl border border-slate-100">
-                                                    <ul class="list-disc ml-5 space-y-1">${data.notulensi_rapat.jalannya_diskusi.map(d => `<li>${d}</li>`).join('')}</ul>
+                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">JALANNYA DISKUSI:</p>
+                                                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                                    <ul class="list-disc ml-5 space-y-3">${data.notulensi_rapat.jalannya_diskusi.map(d => `<li>${d}</li>`).join('')}</ul>
                                                 </div>
                                             </div>
                                             <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-1">KEPUTUSAN / KESIMPULAN UTAMA:</p>
-                                                <ul class="list-disc ml-5 space-y-1 font-bold text-slate-800">${data.notulensi_rapat.keputusan.map(k => `<li>${k}</li>`).join('')}</ul>
+                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">KEPUTUSAN / KESIMPULAN UTAMA:</p>
+                                                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                                    <ul class="list-disc ml-5 space-y-2 font-bold text-emerald-900">${data.notulensi_rapat.keputusan.map(k => `<li>${k}</li>`).join('')}</ul>
+                                                </div>
                                             </div>
                                             ${taskListHtml}
                                         </div>
@@ -531,19 +532,19 @@ else:
                                 let visualizationHtml = `
                                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                         <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Markdown)</h5><button onclick="downloadMarkmapImage('markmap-capture-area', 'Markmap', event)" class="btn-export">📸 PNG</button></div>
+                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Peta Konsep Rapat)</h5><button onclick="downloadMarkmapImage('markmap-capture-area', 'Markmap', event)" class="btn-export">📸 PNG</button></div>
                                             <div id="markmap-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden markmap-svg-container relative p-2" style="min-height: 400px;"></div>
                                         </div>
                                         
                                         <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Mindmap)</h5><button onclick="downloadMermaidImage('mermaid-capture-area', 'Mermaid', event)" class="btn-export">📸 PNG</button></div>
+                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Alur)</h5><button onclick="downloadMermaidImage('mermaid-capture-area', 'Mermaid', event)" class="btn-export">📸 PNG</button></div>
                                             <div id="mermaid-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto p-4 mermaid-container">
                                                 <div class="mermaid">${rawMermaid}</div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col mb-6">
-                                        <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Topik)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG (Full Scale)</button></div>
+                                        <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Entitas)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG Full</button></div>
                                         <div id="cy" class="cy-container"></div>
                                     </div>
                                 `;
@@ -636,12 +637,30 @@ else:
                         
                         prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN RINGKASAN EKSEKUTIF: WAJIB buat poin-poin penting dalam bentuk array of strings.
-                        ATURAN JALANNYA DISKUSI: WAJIB buat alur/kronologis diskusi dalam bentuk array of strings.
+                        ATURAN JALANNYA DISKUSI: WAJIB buat alur/kronologis diskusi dalam bentuk array of strings. Narasikan dengan DETAIL dan PANJANG untuk setiap poinnya.
                         ATURAN KEPUTUSAN PENTING (CRITICAL): WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
-                        ATURAN RENCANA TINDAK LANJUT: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik di transkrip, WAJIB BUAT 1 TUGAS DEFAULT: Tugas: "Review kembali hasil diskusi rapat", PIC: "Peserta Rapat", Deadline: "Secepatnya", Prioritas: "Sedang". (Array ini tidak boleh kosong).
+                        ATURAN RENCANA TINDAK LANJUT: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik di transkrip, WAJIB BUAT 1 TUGAS DEFAULT: Tugas: "Review kembali hasil diskusi rapat", PIC: "Peserta Rapat", Deadline: "Secepatnya", Prioritas: "Sedang". (Array tidak boleh kosong).
                         ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya.
                         ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda. Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Root paling atas WAJIB '# [Judul/Topik Utama Rapat]'. Sub-header (##) untuk "Ringkasan Eksekutif", "Jalannya Diskusi", "Keputusan", dan "Rencana Tindak Lanjut" WAJIB DIISI DENGAN BULLET POINTS (- ) dari array JSON di atas. DILARANG KERAS membiarkan sub-header kosong tanpa poin cabang!
+                        ATURAN MARKMAP: Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS, jangan gunakan narasi panjang dari diskusi. Wajib ikuti POLA STRUKTUR INI:
+                        # [Judul Topik Utama Rapat]
+                        ## Agenda
+                        - [Poin ringkas]
+                        ## Peserta
+                        - [Nama]
+                        ## Kendala Utama / Permasalahan
+                        - [Kendala 1]
+                          - [Sub-kendala]
+                        ## Solusi & Sistem Diperkenalkan
+                        - [Solusi 1]
+                          - [Detail Solusi]
+                        ## Keputusan Utama
+                        - [Poin ringkas]
+                        ## Rencana Tindak Lanjut
+                        - [Nama Tugas]
+                          - PIC: [Nama]
+                          - Deadline: [Waktu]
+                          - Prioritas: [Level]
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload = {
@@ -699,26 +718,26 @@ else:
             with col_t2: st.download_button(label="📝 Download Notulensi (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
-                st.markdown("**🌟 Ringkasan Eksekutif:**")
-                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px;'>"
-                for r in data.get('ringkasan_eksekutif', []): rx_html += f"<li>{r}</li>"
+                st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
+                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>"
+                for r in data.get('ringkasan_eksekutif', []): rx_html += f"<li style='margin-bottom:5px;'>{r}</li>"
                 rx_html += "</ul></div>"
                 st.markdown(rx_html, unsafe_allow_html=True)
                 
                 colA, colB = st.columns(2)
-                colA.markdown(f"**📌 Agenda / Topik:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
-                colB.markdown(f"**👥 Peserta:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
+                colA.markdown(f"**📌 AGENDA / TOPIK:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
+                colB.markdown(f"**👥 PESERTA:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
                 
-                st.markdown("**🗣️ Jalannya Diskusi:**")
-                diskusi_html = "<div style='background-color:#f8fafc; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px;'><ul style='margin:0; padding-left:20px;'>"
-                for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:5px;'>{d}</li>"
+                st.markdown("**🗣️ JALANNYA DISKUSI:**")
+                diskusi_html = "<div style='background-color:#ffffff; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'><ul style='margin:0; padding-left:20px; line-height: 1.6;'>"
+                for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:8px;'>{d}</li>"
                 diskusi_html += "</ul></div>"
                 st.markdown(diskusi_html, unsafe_allow_html=True)
                 
-                st.markdown("**✅ Keputusan / Takeaways Utama:**")
+                st.markdown("**✅ KEPUTUSAN / KESIMPULAN UTAMA:**")
                 for kep in data['notulensi_rapat']['keputusan']: st.markdown(f"- {kep}")
                 
-                st.markdown("**📅 Rencana Tindak Lanjut (Tugas, PIC, Deadline, Prioritas):**")
+                st.markdown("**📅 RENCANA TINDAK LANJUT (ACTION ITEMS):**")
                 df_tasks = pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut'])
                 df_tasks.columns = ["Tugas", "PIC", "Deadline", "Prioritas"]
                 st.table(df_tasks)
@@ -791,7 +810,7 @@ else:
                 """
                 components.html(mer_html, height=450)
 
-            st.markdown("### 🌿 Visualisasi Markmap (Mindmap)")
+            st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat)")
             raw_markmap = data['markmap_code'].replace("```markdown", "").replace("```", "").strip()
 
             markmap_html = f"""

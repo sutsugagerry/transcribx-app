@@ -5,5 +5,5 @@ pydub
 pyngrok
 numpy
 librosa
-requests
 firebase-admin
+requests

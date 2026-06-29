@@ -160,11 +160,11 @@ else:
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
+                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT
                 window.downloadMarkmapImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const svgEl = container.querySelector('svg');
                     if (!svgEl) return;
-
                     const btn = event.currentTarget;
                     const originalText = btn.innerHTML;
                     btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
@@ -173,32 +173,50 @@ else:
                         const g = svgEl.querySelector('g');
                         if (!g) throw new Error("G element not found");
 
-                        const originalWidth = container.style.width; const originalHeight = container.style.height;
-                        const originalOverflow = container.style.overflow; const originalTransform = g.getAttribute('transform');
-                        const originalViewBox = svgEl.getAttribute('viewBox');
+                        const originalContainerWidth = container.style.width; const originalContainerHeight = container.style.height;
+                        const originalContainerOverflow = container.style.overflow;
+                        const originalSvgWidth = svgEl.style.width; const originalSvgHeight = svgEl.style.height;
+                        const originalSvgAttrWidth = svgEl.getAttribute('width'); const originalSvgAttrHeight = svgEl.getAttribute('height');
+                        const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
 
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
                         const bbox = g.getBBox();
-                        const padding = 50; const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                        const padding = 50;
+                        const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
+                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
 
-                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                        svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                        svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                        g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
+                        svgEl.removeAttribute('viewBox');
+                        svgEl.setAttribute('width', trueWidth); svgEl.setAttribute('height', trueHeight);
+                        svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
+                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px';
+                        container.style.overflow = 'visible';
 
                         setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }).then(canvas => {
-                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueHeight })
+                            .then(canvas => {
+                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
+                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
+                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
+                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
                                 g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+
+                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
+                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
+
                                 btn.innerHTML = originalText; btn.disabled = false;
                             }).catch(err => {
-                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                console.error(err);
+                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
+                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
+                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
+                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
                                 g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
                                 btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                             });
-                        }, 600); 
+                        }, 800); 
                     } catch (err) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
                 };
 
@@ -409,37 +427,40 @@ else:
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
                         aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
 
-                        // PENGUNCIAN PROMPT DUA WAJAH (Naratif untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
+                        // PENGUNCIAN PROMPT DUA WAJAH (Naratif Detail untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN JSON NOTULENSI:
                         - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
                         - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
                         - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
                         - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
 
                         ATURAN MARKMAP (PENTING!):
-                        Gunakan kode murni markdown. Isi Markmap HARUS DIBUAT RINGKAS (jangan copy-paste narasi panjang dari jalannya_diskusi!). Wajib ikuti POLA STRUKTUR BERJENJANG INI agar visualnya rapi:
+                        Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
                         # [Judul Topik Utama Rapat]
-                        ## Topik Utama / Agenda
-                        - [Topik 1]
+                        ## Ringkasan Eksekutif
+                        - [Poin ringkas]
+                        ## Agenda / Topik
+                        - [Poin]
                         ## Peserta
-                        - [Nama Peserta]
-                        ## Kendala Utama / Permasalahan
-                        - [Kendala 1]
-                          - [Detail kendala singkat]
-                        ## Solusi & Sistem Diperkenalkan
-                        - [Solusi 1]
-                          - [Detail solusi singkat]
+                        - [Nama]
+                        ## Jalannya Diskusi
+                        - [Poin diskusi ringkas 1]
+                          - [Detail singkat]
+                        - [Poin diskusi ringkas 2]
+                        ## Kendala & Solusi (Jika ada)
+                        - [Kendala]
+                          - [Solusi]
                         ## Keputusan Utama
-                        - [Keputusan 1]
+                        - [Poin keputusan]
                         ## Rencana Tindak Lanjut
                         - [Nama Tugas]
                           - PIC: [Nama]
                           - Deadline: [Waktu]
                           - Prioritas: [Level]
 
-                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]).
+                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -477,7 +498,6 @@ else:
                                 window.lastAiData = data;
                                 const reportDiv = document.createElement('div'); reportDiv.className = "fade-in space-y-6 mt-6 mb-10";
                                 
-                                // TABEL ACTION PLAN YANG SELALU MUNCUL
                                 let taskListHtml = `<div class="mt-6 pt-4 border-t border-slate-100">
                                     <p class="font-black text-blue-600 uppercase text-[11px] mb-3">📋 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
                                     <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
@@ -635,32 +655,40 @@ else:
                 else:
                     with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
                         
+                        # PENGUNCIAN PROMPT DUA WAJAH (Naratif Detail untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
                         prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN RINGKASAN EKSEKUTIF: WAJIB buat poin-poin penting dalam bentuk array of strings.
-                        ATURAN JALANNYA DISKUSI: WAJIB buat alur/kronologis diskusi dalam bentuk array of strings. Narasikan dengan DETAIL dan PANJANG untuk setiap poinnya.
-                        ATURAN KEPUTUSAN PENTING (CRITICAL): WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
-                        ATURAN RENCANA TINDAK LANJUT: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik di transkrip, WAJIB BUAT 1 TUGAS DEFAULT: Tugas: "Review kembali hasil diskusi rapat", PIC: "Peserta Rapat", Deadline: "Secepatnya", Prioritas: "Sedang". (Array tidak boleh kosong).
-                        ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya.
-                        ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda. Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS, jangan gunakan narasi panjang dari diskusi. Wajib ikuti POLA STRUKTUR INI:
+                        ATURAN JSON NOTULENSI:
+                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
+                        - keputusan: Array of strings. Kesimpulan utama.
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+
+                        ATURAN MARKMAP (PENTING!):
+                        Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
                         # [Judul Topik Utama Rapat]
-                        ## Agenda
+                        ## Ringkasan Eksekutif
                         - [Poin ringkas]
+                        ## Agenda / Topik
+                        - [Poin]
                         ## Peserta
                         - [Nama]
-                        ## Kendala Utama / Permasalahan
-                        - [Kendala 1]
-                          - [Sub-kendala]
-                        ## Solusi & Sistem Diperkenalkan
-                        - [Solusi 1]
-                          - [Detail Solusi]
+                        ## Jalannya Diskusi
+                        - [Poin diskusi ringkas 1]
+                          - [Detail singkat]
+                        - [Poin diskusi ringkas 2]
+                        ## Kendala & Solusi (Jika ada)
+                        - [Kendala]
+                          - [Solusi]
                         ## Keputusan Utama
-                        - [Poin ringkas]
+                        - [Poin keputusan]
                         ## Rencana Tindak Lanjut
                         - [Nama Tugas]
                           - PIC: [Nama]
                           - Deadline: [Waktu]
                           - Prioritas: [Level]
+
+                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload = {

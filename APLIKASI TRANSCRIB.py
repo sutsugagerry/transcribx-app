@@ -382,7 +382,7 @@ transition: background 0.2s; }
        
         // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP 
        
-        window.downloadMarkmapImage = function(wrapperId, title, event) {
+window.downloadMarkmapImage = function(wrapperId, title, event) {
     const container = document.getElementById(wrapperId);
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
@@ -2487,7 +2487,7 @@ console.error("Error saving markmap:", err); btn.innerHTML = "❌ GAGAL"; setTim
  
 KETIKA SAYA DOWNLOAD PNG
 KENAPA KEPOTONG GITU SIH HARUSNYA GA KEPOTONG WOYYY KAMU IKUTIN CODINGAN INI
-WOY 
+WOY
 /**
  * FUNGSI DOWNLOAD PNG
 KHUSUS MARKMAP (ANTI ERROR / BLANK)
@@ -2508,7 +2508,7 @@ event.currentTarget;
     const
 originalText = btn.innerHTML;
     btn.innerHTML
-= "⏳ MENYIMPAN..."; 
+= "⏳ MENYIMPAN...";
     btn.disabled =
 true;
  
@@ -2556,7 +2556,7 @@ container.style.width = trueWidth + 'px';
 container.style.height = trueHeight + 'px';
        
 container.style.overflow = 'visible';
-        
+       
        
 svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding}
 ${trueWidth} ${trueHeight}`);
@@ -2614,7 +2614,7 @@ originalViewBox);
         link.click();
  
        
-        btn.innerHTML = originalText; 
+        btn.innerHTML = originalText;
        
         btn.disabled = false;
        
@@ -2627,7 +2627,7 @@ Peta Konsep HD Berhasil Disimpan!", "success");
        
         console.error("html2canvas error:", err);
        
-        
+       
        
         // Pastikan tampilan kembali seperti semula
 meskipun proses error
@@ -2646,16 +2646,16 @@ originalViewBox);
        
         else svgEl.removeAttribute('viewBox');
        
-        
        
-        btn.innerHTML = "❌ GAGAL"; 
+       
+        btn.innerHTML = "❌ GAGAL";
        
         setTimeout(() => { btn.innerHTML = originalText;
 btn.disabled = false; }, 2000);
        
     });
        
-}, 600); 
+}, 600);
  
     } catch (err)
 {
@@ -2663,7 +2663,7 @@ btn.disabled = false; }, 2000);
 console.error("Error saving markmap:", err);
        
 btn.innerHTML = "❌
-GAGAL"; 
+GAGAL";
        
 setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; },
 2000);

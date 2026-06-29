@@ -159,7 +159,7 @@ else:
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
-                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT (FIX BLANK SPACE & KEPOTONG)
+                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI EKSTREM KE ATAS (FIX BLANK SPACE)
                 window.downloadMarkmapImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const svgEl = container.querySelector('svg');
@@ -174,7 +174,6 @@ else:
                         const g = svgEl.querySelector('g');
                         if (!g) throw new Error("G element not found");
 
-                        // 1. Simpan semua state ukuran asli web
                         const originalContainerWidth = container.style.width;
                         const originalContainerHeight = container.style.height;
                         const originalContainerOverflow = container.style.overflow;
@@ -187,20 +186,17 @@ else:
                         const originalTransform = g.getAttribute('transform');
                         const originalViewBox = svgEl.getAttribute('viewBox');
 
-                        // 2. Reset transform untuk hitung Bounding Box mentah
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
                         const bbox = g.getBBox();
 
-                        // 3. Hitung dimensi persis sesuai elemen (dengan padding)
                         const padding = 50;
                         const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                        // Kurangi trueHeight sedikit agar tidak banyak ruang putih sisa di bawah
+                        const trueHeight = Math.max(bbox.height, 500) + padding; 
 
-                        // 4. THE ULTIMATE FIX: Geser elemen secara FISIK ke koordinat X & Y Positif
-                        // (html2canvas nge-bug kalau baca viewBox minus, jadi gambarnya diturunin ke bawah. Kita akalin dengan translate ini)
-                        g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
+                        // THE ULTIMATE FIX: GESER EKSTREM KE ATAS (-150px)
+                        g.setAttribute('transform', `translate(${-bbox.x + 30}, ${-bbox.y - 150}) scale(1)`);
                         
-                        // Hapus viewBox dan paksa width/height absolut di SVG-nya langsung
                         svgEl.removeAttribute('viewBox');
                         svgEl.setAttribute('width', trueWidth);
                         svgEl.setAttribute('height', trueHeight);
@@ -211,10 +207,9 @@ else:
                         container.style.height = trueHeight + 'px';
                         container.style.overflow = 'visible';
 
-                        // 5. Beri jeda 800ms agar browser re-render sempurna, lalu tangkap
                         setTimeout(() => {
                             html2canvas(container, {
-                                scale: 2, // Resolusi Tinggi
+                                scale: 2, 
                                 useCORS: true,
                                 backgroundColor: '#ffffff',
                                 width: trueWidth,
@@ -222,7 +217,6 @@ else:
                                 windowWidth: trueWidth,
                                 windowHeight: trueHeight
                             }).then(canvas => {
-                                // --- Kembalikan tampilan Web ke aslinya ---
                                 container.style.width = originalContainerWidth;
                                 container.style.height = originalContainerHeight;
                                 container.style.overflow = originalContainerOverflow;
@@ -235,7 +229,6 @@ else:
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
 
-                                // --- Unduh PNG ---
                                 const link = document.createElement('a');
                                 link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
                                 link.href = canvas.toDataURL('image/png', 1.0);
@@ -247,27 +240,18 @@ else:
 
                             }).catch(err => {
                                 console.error("html2canvas error:", err);
-                                
-                                // Kembalikan ke aslinya meski error
-                                container.style.width = originalContainerWidth;
-                                container.style.height = originalContainerHeight;
-                                container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth;
-                                svgEl.style.height = originalSvgHeight;
+                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
+                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
                                 if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
                                 if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
-                                g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                
-                                btn.innerHTML = "❌ GAGAL"; 
-                                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+                                g.setAttribute('transform', originalTransform || ''); if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                             });
                         }, 800); 
 
                     } catch (err) {
                         console.error("Error saving markmap:", err);
-                        btn.innerHTML = "❌ GAGAL"; 
-                        setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+                        btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                     }
                 };
 
@@ -308,9 +292,12 @@ else:
                     const root = window.lastAiData;
                     const data = root.notulensi_rapat;
                     let txt = `NOTULENSI RAPAT\\n========================\\n\\n`;
-                    txt += `RINGKASAN EKSEKUTIF:\\n${root.ringkasan_eksekutif || '-'}\\n\\n`;
-                    txt += `Agenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\n`;
-                    txt += `Jalannya Diskusi:\\n${data.jalannya_diskusi || '-'}\\n\\nKeputusan Utama:\\n`;
+                    txt += `RINGKASAN EKSEKUTIF:\\n`;
+                    if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += `- ${r}\\n`);
+                    txt += `\\nAgenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\n`;
+                    txt += `Jalannya Diskusi:\\n`;
+                    if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += `- ${d}\\n`);
+                    txt += `\\nKeputusan Utama:\\n`;
                     if(data.keputusan) data.keputusan.forEach(k => txt += `- ${k}\\n`);
                     if(data.rencana_tindak_lanjut && data.rencana_tindak_lanjut.length > 0) {
                         txt += `\\nRencana Tindak Lanjut:\\n`; data.rencana_tindak_lanjut.forEach(t => txt += `- [${t.prioritas}] ${t.tugas} (PIC: ${t.pic}, Deadline: ${t.deadline})\\n`);
@@ -481,13 +468,15 @@ else:
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
                         aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
 
+                        // PERBAIKAN: KEMBALI KE FORMAT ARRAY AGAR BULLET POINTS MUNCUL KEMBALI
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat (1-2 paragraf) dari keseluruhan rapat.
+                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat dalam bentuk array of strings (poin-poin) dari keseluruhan rapat.
+                        ATURAN JALANNYA DISKUSI: Buat jalannya diskusi dalam bentuk array of strings (poin-poin kronologis).
                         ATURAN KEPUTUSAN PENTING: WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
                         ATURAN RENCANA TINDAK LANJUT: Ekstrak juga rencana tindak lanjut (Tugas, PIC, Deadline, Prioritas).
                         ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya (sumber -> relasi -> target).
                         ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda. Root/Pangkal utama diagram WAJIB berisi Judul Topik Rapat/Agenda, contoh: A["Topik Rapat X"] --> B["Ringkasan Eksekutif"].
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll.
+                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll. Pastikan isi dari ringkasan eksekutif dan diskusi di-breakdown menjadi list/bullet points (- poin 1\\n- poin 2).
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -499,12 +488,12 @@ else:
                                     "schema": {
                                         "type": "object",
                                         "properties": {
-                                            "ringkasan_eksekutif": { "type": "string" },
+                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
                                             "notulensi_rapat": {
                                                 "type": "object",
                                                 "properties": {
                                                     "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "string" }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
                                                     "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
                                                     "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
                                                 }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
@@ -526,7 +515,7 @@ else:
                                 const reportDiv = document.createElement('div'); reportDiv.className = "fade-in space-y-6 mt-6 mb-10";
                                 
                                 let taskListHtml = '';
-                                if (data.notulensi_rapat.rencana_tindak_lanjut.length > 0) {
+                                if (data.notulensi_rapat.rencana_tindak_lanjut && data.notulensi_rapat.rencana_tindak_lanjut.length > 0) {
                                     taskListHtml = `<div class="mt-4 pt-4 border-t border-slate-100"><p class="font-black text-blue-600 uppercase text-[10px] mb-2">📋 Rencana Tindak Lanjut:</p><div class="overflow-x-auto rounded-lg border border-slate-200"><table class="w-full text-left border-collapse"><tr class="bg-blue-50 text-blue-800 text-[11px]"><th class="p-2 border-b border-r">Tugas</th><th class="p-2 border-b border-r">PIC</th><th class="p-2 border-b border-r">Deadline</th><th class="p-2 border-b">Prioritas</th></tr>
                                     ${data.notulensi_rapat.rencana_tindak_lanjut.map(t => `<tr class="text-[12px] border-b bg-white"><td class="p-2 border-r font-medium">${t.tugas}</td><td class="p-2 border-r text-slate-600">${t.pic}</td><td class="p-2 border-r text-slate-600">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`).join('')}</table></div></div>`;
                                 }
@@ -540,19 +529,23 @@ else:
                                         <div class="space-y-4 text-sm text-slate-700 leading-relaxed">
                                             <div>
                                                 <p class="font-black text-blue-600 uppercase text-[11px] mb-1">RINGKASAN EKSEKUTIF:</p>
-                                                <p class="bg-blue-50 p-4 rounded-xl border border-blue-100 font-semibold text-slate-800">${data.ringkasan_eksekutif || '-'}</p>
+                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                                    <ul class="list-disc ml-5 space-y-1 font-semibold text-slate-800">${data.ringkasan_eksekutif ? data.ringkasan_eksekutif.map(r => `<li>${r}</li>`).join('') : '-'}</ul>
+                                                </div>
                                             </div>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div><p class="font-black text-blue-600 uppercase text-[11px] mb-1">AGENDA / TOPIK:</p><p class="font-medium">${data.notulensi_rapat.agenda || '-'}</p></div>
-                                                <div><p class="font-black text-blue-600 uppercase text-[11px] mb-1">PESERTA:</p><p class="font-medium">${data.notulensi_rapat.peserta.join(', ') || '-'}</p></div>
+                                                <div><p class="font-black text-blue-600 uppercase text-[11px] mb-1">PESERTA:</p><p class="font-medium">${data.notulensi_rapat.peserta ? data.notulensi_rapat.peserta.join(', ') : '-'}</p></div>
                                             </div>
                                             <div>
                                                 <p class="font-black text-blue-600 uppercase text-[11px] mb-1">JALANNYA DISKUSI:</p>
-                                                <p class="bg-white/50 p-3 rounded-xl border border-slate-100">${data.notulensi_rapat.jalannya_diskusi}</p>
+                                                <div class="bg-white/50 p-3 rounded-xl border border-slate-100">
+                                                    <ul class="list-disc ml-5 space-y-1">${data.notulensi_rapat.jalannya_diskusi ? data.notulensi_rapat.jalannya_diskusi.map(d => `<li>${d}</li>`).join('') : '-'}</ul>
+                                                </div>
                                             </div>
                                             <div>
                                                 <p class="font-black text-blue-600 uppercase text-[11px] mb-1">KEPUTUSAN / KESIMPULAN UTAMA:</p>
-                                                <ul class="list-disc ml-5 space-y-1 font-bold text-slate-800">${data.notulensi_rapat.keputusan.map(k => `<li>${k}</li>`).join('')}</ul>
+                                                <ul class="list-disc ml-5 space-y-1 font-bold text-slate-800">${data.notulensi_rapat.keputusan ? data.notulensi_rapat.keputusan.map(k => `<li>${k}</li>`).join('') : '-'}</ul>
                                             </div>
                                             ${taskListHtml}
                                         </div>
@@ -672,13 +665,15 @@ else:
                 else:
                     with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
                         
+                        # PERBAIKAN: KEMBALI KE FORMAT ARRAY
                         prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat (1-2 paragraf) dari keseluruhan rapat.
+                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat dalam bentuk array of strings (poin-poin) dari keseluruhan rapat.
+                        ATURAN JALANNYA DISKUSI: Buat jalannya diskusi dalam bentuk array of strings (poin-poin kronologis).
                         ATURAN KEPUTUSAN PENTING (CRITICAL): WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
                         ATURAN RENCANA TINDAK LANJUT: Ekstrak juga rencana tindak lanjut (Tugas, PIC, Deadline, Prioritas).
                         ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya (sumber -> relasi -> target).
                         ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda. Root/Pangkal utama diagram WAJIB berisi Judul Topik Rapat/Agenda, contoh: A["Topik Rapat X"] --> B["Ringkasan Eksekutif"].
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll.
+                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll. Pastikan isi dari ringkasan eksekutif dan diskusi di-breakdown menjadi list/bullet points (- poin 1\\n- poin 2).
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload = {
@@ -690,12 +685,12 @@ else:
                                     "schema": {
                                         "type": "object",
                                         "properties": {
-                                            "ringkasan_eksekutif": { "type": "string" },
+                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
                                             "notulensi_rapat": {
                                                 "type": "object",
                                                 "properties": {
                                                     "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "string" }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
                                                     "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
                                                     "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
                                                 }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
@@ -721,11 +716,13 @@ else:
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
             txt_report = "NOTULENSI RAPAT\n====================\n\n"
-            txt_report += f"Ringkasan Eksekutif:\n{data.get('ringkasan_eksekutif', '-')}\n\n"
-            txt_report += f"Agenda/Topik: {data['notulensi_rapat'].get('agenda', '-')}\n"
+            txt_report += "Ringkasan Eksekutif:\n"
+            for r in data.get('ringkasan_eksekutif', []): txt_report += f"- {r}\n"
+            txt_report += f"\nAgenda/Topik: {data['notulensi_rapat'].get('agenda', '-')}\n"
             txt_report += f"Peserta: {', '.join(data['notulensi_rapat'].get('peserta', []))}\n\n"
-            txt_report += f"Jalannya Diskusi:\n{data['notulensi_rapat'].get('jalannya_diskusi', '-')}\n\n"
-            txt_report += "Keputusan Utama:\n"
+            txt_report += "Jalannya Diskusi:\n"
+            for d in data['notulensi_rapat'].get('jalannya_diskusi', []): txt_report += f"- {d}\n"
+            txt_report += "\nKeputusan Utama:\n"
             for k in data['notulensi_rapat'].get('keputusan', []): txt_report += f"- {k}\n"
             txt_report += "\nRencana Tindak Lanjut:\n"
             for t in data['notulensi_rapat'].get('rencana_tindak_lanjut', []):
@@ -734,14 +731,21 @@ else:
             with col_t2: st.download_button(label="📝 Download Notulensi (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
-                st.markdown(f"**🌟 Ringkasan Eksekutif:**<br><div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'>{data.get('ringkasan_eksekutif', '-')}</div>", unsafe_allow_html=True)
+                st.markdown("**🌟 Ringkasan Eksekutif:**")
+                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px;'>"
+                for r in data.get('ringkasan_eksekutif', []): rx_html += f"<li>{r}</li>"
+                rx_html += "</ul></div>"
+                st.markdown(rx_html, unsafe_allow_html=True)
                 
                 colA, colB = st.columns(2)
                 colA.markdown(f"**📌 Agenda / Topik:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
                 colB.markdown(f"**👥 Peserta:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
                 
                 st.markdown("**🗣️ Jalannya Diskusi:**")
-                st.info(data['notulensi_rapat']['jalannya_diskusi'])
+                diskusi_html = "<div style='background-color:#f8fafc; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px;'><ul style='margin:0; padding-left:20px;'>"
+                for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:5px;'>{d}</li>"
+                diskusi_html += "</ul></div>"
+                st.markdown(diskusi_html, unsafe_allow_html=True)
                 
                 st.markdown("**✅ Keputusan / Takeaways Utama:**")
                 for kep in data['notulensi_rapat']['keputusan']: st.markdown(f"- {kep}")
@@ -845,7 +849,7 @@ else:
                     const {{ root }} = transformer.transform(markdown);
                     Markmap.create('#markmap', null, root);
 
-                    // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT (FIX BLANK SPACE & KEPOTONG)
+                    // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI EKSTREM KE ATAS
                     window.downloadMarkmapImage = function(wrapperId, title, event) {{
                         const container = document.getElementById(wrapperId);
                         const svgEl = container.querySelector('svg');
@@ -860,7 +864,6 @@ else:
                             const g = svgEl.querySelector('g');
                             if (!g) throw new Error("G element not found");
 
-                            // 1. Simpan semua state ukuran asli web
                             const originalContainerWidth = container.style.width;
                             const originalContainerHeight = container.style.height;
                             const originalContainerOverflow = container.style.overflow;
@@ -873,20 +876,16 @@ else:
                             const originalTransform = g.getAttribute('transform');
                             const originalViewBox = svgEl.getAttribute('viewBox');
 
-                            // 2. Reset transform untuk hitung Bounding Box mentah
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
                             const bbox = g.getBBox();
 
-                            // 3. Hitung dimensi persis sesuai elemen (dengan padding)
                             const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                            const trueHeight = Math.max(bbox.height, 500) + padding;
 
-                            // 4. THE ULTIMATE FIX: Geser elemen secara FISIK ke koordinat X & Y Positif
-                            // (html2canvas nge-bug kalau baca viewBox minus, jadi gambarnya diturunin ke bawah. Kita akalin dengan translate ini)
-                            g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
+                            // THE ULTIMATE FIX: GESER EKSTREM KE ATAS (-150px)
+                            g.setAttribute('transform', `translate(${-bbox.x + 30}, ${-bbox.y - 150}) scale(1)`);
                             
-                            // Hapus viewBox dan paksa width/height absolut di SVG-nya langsung
                             svgEl.removeAttribute('viewBox');
                             svgEl.setAttribute('width', trueWidth);
                             svgEl.setAttribute('height', trueHeight);
@@ -897,10 +896,9 @@ else:
                             container.style.height = trueHeight + 'px';
                             container.style.overflow = 'visible';
 
-                            // 5. Beri jeda 800ms agar browser re-render sempurna, lalu tangkap
                             setTimeout(() => {{
                                 html2canvas(container, {{
-                                    scale: 2, // Resolusi Tinggi
+                                    scale: 2, 
                                     useCORS: true,
                                     backgroundColor: '#ffffff',
                                     width: trueWidth,
@@ -908,7 +906,6 @@ else:
                                     windowWidth: trueWidth,
                                     windowHeight: trueHeight
                                 }}).then(canvas => {{
-                                    // --- Kembalikan tampilan Web ke aslinya ---
                                     container.style.width = originalContainerWidth;
                                     container.style.height = originalContainerHeight;
                                     container.style.overflow = originalContainerOverflow;
@@ -921,7 +918,6 @@ else:
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
 
-                                    // --- Unduh PNG ---
                                     const link = document.createElement('a');
                                     link.download = `MindMap_${{title.replace(/[^a-zA-Z0-9]/g, "_")}}.png`;
                                     link.href = canvas.toDataURL('image/png', 1.0);
@@ -933,27 +929,18 @@ else:
 
                                 }}).catch(err => {{
                                     console.error("html2canvas error:", err);
-                                    
-                                    // Kembalikan ke aslinya meski error
-                                    container.style.width = originalContainerWidth;
-                                    container.style.height = originalContainerHeight;
-                                    container.style.overflow = originalContainerOverflow;
-                                    svgEl.style.width = originalSvgWidth;
-                                    svgEl.style.height = originalSvgHeight;
+                                    container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
+                                    svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
                                     if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
                                     if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
-                                    g.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                    
-                                    btn.innerHTML = "❌ GAGAL"; 
-                                    setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                                    g.setAttribute('transform', originalTransform || ''); if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                    btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                                 }});
                             }}, 800); 
 
                         }} catch (err) {{
                             console.error("Error saving markmap:", err);
-                            btn.innerHTML = "❌ GAGAL"; 
-                            setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                            btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                         }}
                     }};
                 </script>

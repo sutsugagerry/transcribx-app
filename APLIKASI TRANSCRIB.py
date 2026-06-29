@@ -159,7 +159,7 @@ else:
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
-                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP (ANTI ERROR / BLANK / KEPOTONG)
+                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT (FIX BLANK SPACE & KEPOTONG)
                 window.downloadMarkmapImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const svgEl = container.querySelector('svg');
@@ -174,51 +174,68 @@ else:
                         const g = svgEl.querySelector('g');
                         if (!g) throw new Error("G element not found");
 
-                        // 1. Simpan state ukuran asli web agar bisa dikembalikan nanti
-                        const originalWidth = container.style.width;
-                        const originalHeight = container.style.height;
-                        const originalOverflow = container.style.overflow;
+                        // 1. Simpan semua state ukuran asli web
+                        const originalContainerWidth = container.style.width;
+                        const originalContainerHeight = container.style.height;
+                        const originalContainerOverflow = container.style.overflow;
+                        
+                        const originalSvgWidth = svgEl.style.width;
+                        const originalSvgHeight = svgEl.style.height;
+                        const originalSvgAttrWidth = svgEl.getAttribute('width');
+                        const originalSvgAttrHeight = svgEl.getAttribute('height');
+                        
                         const originalTransform = g.getAttribute('transform');
                         const originalViewBox = svgEl.getAttribute('viewBox');
 
-                        // 2. Reset zoom & pan pengguna agar kita bisa menangkap seluruh peta konsep
+                        // 2. Reset transform untuk hitung Bounding Box mentah
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
                         const bbox = g.getBBox();
 
-                        // 3. Tambahkan padding 50px agar teks paling pinggir tidak ikut terpotong
+                        // 3. Hitung dimensi persis sesuai elemen (dengan padding)
                         const padding = 50;
                         const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                         const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
 
-                        // 4. Perbesar elemen HTML & SVG secara sementara sesuai ukuran aslinya
+                        // 4. THE ULTIMATE FIX: Geser elemen secara FISIK ke koordinat X & Y Positif
+                        // (html2canvas nge-bug kalau baca viewBox minus, jadi gambarnya diturunin ke bawah. Kita akalin dengan translate ini)
+                        g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
+                        
+                        // Hapus viewBox dan paksa width/height absolut di SVG-nya langsung
+                        svgEl.removeAttribute('viewBox');
+                        svgEl.setAttribute('width', trueWidth);
+                        svgEl.setAttribute('height', trueHeight);
+                        svgEl.style.width = trueWidth + 'px';
+                        svgEl.style.height = trueHeight + 'px';
+
                         container.style.width = trueWidth + 'px';
                         container.style.height = trueHeight + 'px';
                         container.style.overflow = 'visible';
-                        
-                        svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                        svgEl.style.width = '100%';
-                        svgEl.style.height = '100%';
 
-                        // 5. Beri jeda 600ms agar DOM merender ulang, lalu tangkap menggunakan html2canvas
+                        // 5. Beri jeda 800ms agar browser re-render sempurna, lalu tangkap
                         setTimeout(() => {
                             html2canvas(container, {
-                                scale: 2, // Resolusi Tinggi (HD)
+                                scale: 2, // Resolusi Tinggi
                                 useCORS: true,
                                 backgroundColor: '#ffffff',
                                 width: trueWidth,
                                 height: trueHeight,
-                                windowWidth: trueWidth, // Tambahan untuk override iframe streamlit
-                                windowHeight: trueHeight // Tambahan untuk override iframe streamlit
+                                windowWidth: trueWidth,
+                                windowHeight: trueHeight
                             }).then(canvas => {
-                                // --- Kembalikan ke tampilan aslinya di layar ---
-                                container.style.width = originalWidth;
-                                container.style.height = originalHeight;
-                                container.style.overflow = originalOverflow;
+                                // --- Kembalikan tampilan Web ke aslinya ---
+                                container.style.width = originalContainerWidth;
+                                container.style.height = originalContainerHeight;
+                                container.style.overflow = originalContainerOverflow;
+                                
+                                svgEl.style.width = originalSvgWidth;
+                                svgEl.style.height = originalSvgHeight;
+                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
+                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
+                                
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                else svgEl.removeAttribute('viewBox');
 
-                                // --- Proses Unduh PNG ---
+                                // --- Unduh PNG ---
                                 const link = document.createElement('a');
                                 link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
                                 link.href = canvas.toDataURL('image/png', 1.0);
@@ -231,18 +248,21 @@ else:
                             }).catch(err => {
                                 console.error("html2canvas error:", err);
                                 
-                                // Pastikan tampilan kembali seperti semula meskipun proses error
-                                container.style.width = originalWidth;
-                                container.style.height = originalHeight;
-                                container.style.overflow = originalOverflow;
+                                // Kembalikan ke aslinya meski error
+                                container.style.width = originalContainerWidth;
+                                container.style.height = originalContainerHeight;
+                                container.style.overflow = originalContainerOverflow;
+                                svgEl.style.width = originalSvgWidth;
+                                svgEl.style.height = originalSvgHeight;
+                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
+                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                else svgEl.removeAttribute('viewBox');
                                 
                                 btn.innerHTML = "❌ GAGAL"; 
                                 setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                             });
-                        }, 600); 
+                        }, 800); 
 
                     } catch (err) {
                         console.error("Error saving markmap:", err);
@@ -461,7 +481,6 @@ else:
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
                         aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
 
-                        // KUNCI PROMPT: MEMAKSA ROOT NODE BERNAMA JUDUL/TOPIK RAPAT ASLI (TIDAK HARDCODED LAGI)
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat (1-2 paragraf) dari keseluruhan rapat.
                         ATURAN KEPUTUSAN PENTING: WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
@@ -653,7 +672,6 @@ else:
                 else:
                     with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
                         
-                        # KUNCI PROMPT: MEMAKSA ROOT NODE BERNAMA JUDUL/TOPIK RAPAT ASLI
                         prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat (1-2 paragraf) dari keseluruhan rapat.
                         ATURAN KEPUTUSAN PENTING (CRITICAL): WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
@@ -827,7 +845,7 @@ else:
                     const {{ root }} = transformer.transform(markdown);
                     Markmap.create('#markmap', null, root);
 
-                    // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN AUTO-RESIZE BOUNDING BOX
+                    // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT (FIX BLANK SPACE & KEPOTONG)
                     window.downloadMarkmapImage = function(wrapperId, title, event) {{
                         const container = document.getElementById(wrapperId);
                         const svgEl = container.querySelector('svg');
@@ -842,51 +860,68 @@ else:
                             const g = svgEl.querySelector('g');
                             if (!g) throw new Error("G element not found");
 
-                            // 1. Simpan state ukuran asli web agar bisa dikembalikan nanti
-                            const originalWidth = container.style.width;
-                            const originalHeight = container.style.height;
-                            const originalOverflow = container.style.overflow;
+                            // 1. Simpan semua state ukuran asli web
+                            const originalContainerWidth = container.style.width;
+                            const originalContainerHeight = container.style.height;
+                            const originalContainerOverflow = container.style.overflow;
+                            
+                            const originalSvgWidth = svgEl.style.width;
+                            const originalSvgHeight = svgEl.style.height;
+                            const originalSvgAttrWidth = svgEl.getAttribute('width');
+                            const originalSvgAttrHeight = svgEl.getAttribute('height');
+                            
                             const originalTransform = g.getAttribute('transform');
                             const originalViewBox = svgEl.getAttribute('viewBox');
 
-                            // 2. Reset zoom & pan pengguna agar kita bisa menangkap seluruh peta konsep
+                            // 2. Reset transform untuk hitung Bounding Box mentah
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
                             const bbox = g.getBBox();
 
-                            // 3. Tambahkan padding 50px agar teks paling pinggir tidak ikut terpotong
+                            // 3. Hitung dimensi persis sesuai elemen (dengan padding)
                             const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
 
-                            // 4. Perbesar elemen HTML & SVG secara sementara sesuai ukuran aslinya
+                            // 4. THE ULTIMATE FIX: Geser elemen secara FISIK ke koordinat X & Y Positif
+                            // (html2canvas nge-bug kalau baca viewBox minus, jadi gambarnya diturunin ke bawah. Kita akalin dengan translate ini)
+                            g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
+                            
+                            // Hapus viewBox dan paksa width/height absolut di SVG-nya langsung
+                            svgEl.removeAttribute('viewBox');
+                            svgEl.setAttribute('width', trueWidth);
+                            svgEl.setAttribute('height', trueHeight);
+                            svgEl.style.width = trueWidth + 'px';
+                            svgEl.style.height = trueHeight + 'px';
+
                             container.style.width = trueWidth + 'px';
                             container.style.height = trueHeight + 'px';
                             container.style.overflow = 'visible';
-                            
-                            svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                            svgEl.style.width = '100%';
-                            svgEl.style.height = '100%';
 
-                            // 5. Beri jeda 600ms agar DOM merender ulang, lalu tangkap menggunakan html2canvas
+                            // 5. Beri jeda 800ms agar browser re-render sempurna, lalu tangkap
                             setTimeout(() => {{
                                 html2canvas(container, {{
-                                    scale: 2, // Resolusi Tinggi (HD)
+                                    scale: 2, // Resolusi Tinggi
                                     useCORS: true,
                                     backgroundColor: '#ffffff',
                                     width: trueWidth,
                                     height: trueHeight,
-                                    windowWidth: trueWidth, // Override iframe streamer clipping
-                                    windowHeight: trueHeight // Override iframe streamer clipping
+                                    windowWidth: trueWidth,
+                                    windowHeight: trueHeight
                                 }}).then(canvas => {{
-                                    // --- Kembalikan ke tampilan aslinya di layar ---
-                                    container.style.width = originalWidth;
-                                    container.style.height = originalHeight;
-                                    container.style.overflow = originalOverflow;
+                                    // --- Kembalikan tampilan Web ke aslinya ---
+                                    container.style.width = originalContainerWidth;
+                                    container.style.height = originalContainerHeight;
+                                    container.style.overflow = originalContainerOverflow;
+                                    
+                                    svgEl.style.width = originalSvgWidth;
+                                    svgEl.style.height = originalSvgHeight;
+                                    if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
+                                    if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
+                                    
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                    else svgEl.removeAttribute('viewBox');
 
-                                    // --- Proses Unduh PNG ---
+                                    // --- Unduh PNG ---
                                     const link = document.createElement('a');
                                     link.download = `MindMap_${{title.replace(/[^a-zA-Z0-9]/g, "_")}}.png`;
                                     link.href = canvas.toDataURL('image/png', 1.0);
@@ -899,18 +934,21 @@ else:
                                 }}).catch(err => {{
                                     console.error("html2canvas error:", err);
                                     
-                                    // Pastikan tampilan kembali seperti semula meskipun proses error
-                                    container.style.width = originalWidth;
-                                    container.style.height = originalHeight;
-                                    container.style.overflow = originalOverflow;
+                                    // Kembalikan ke aslinya meski error
+                                    container.style.width = originalContainerWidth;
+                                    container.style.height = originalContainerHeight;
+                                    container.style.overflow = originalContainerOverflow;
+                                    svgEl.style.width = originalSvgWidth;
+                                    svgEl.style.height = originalSvgHeight;
+                                    if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
+                                    if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                    else svgEl.removeAttribute('viewBox');
                                     
                                     btn.innerHTML = "❌ GAGAL"; 
                                     setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                                 }});
-                            }}, 600); 
+                            }}, 800); 
 
                         }} catch (err) {{
                             console.error("Error saving markmap:", err);

@@ -174,7 +174,7 @@ else:
     # ---------------------------------------------------------
     # KONFIGURASI EMAIL ADMIN (Ubah dengan email Anda sendiri!)
     # ---------------------------------------------------------
-    ADMIN_EMAIL = "email.anda@gmail.com" 
+    ADMIN_EMAIL = st.secrets["ADMIN_EMAIL"]
 
     # Logika Penampilan Tab (Jika Admin, muncul tab Admin Panel)
     if st.session_state.get("user_email") == ADMIN_EMAIL:

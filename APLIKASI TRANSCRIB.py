@@ -1,12 +1,45 @@
-
 import streamlit as st
 import streamlit.components.v1 as components
 import requests
 import json
 import pandas as pd
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # Konfigurasi Halaman (Hanya boleh dipanggil sekali di paling atas)
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
+
+# =====================================================================
+# INISIALISASI FIREBASE ADMIN (Dijalankan sekali)
+# =====================================================================
+if not firebase_admin._apps:
+    # Mengambil kredensial dari st.secrets (secrets.toml)
+    cred = credentials.Certificate(dict(st.secrets["firebase_admin"]))
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+# =====================================================================
+# FUNGSI FIREBASE (REST API & FIRESTORE)
+# =====================================================================
+def login_firebase(email, password):
+    api_key = st.secrets["FIREBASE_WEB_API_KEY"]
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
+    data = {"email": email, "password": password, "returnSecureToken": True}
+    return requests.post(url, json=data).json()
+
+def register_firebase(email, password):
+    api_key = st.secrets["FIREBASE_WEB_API_KEY"]
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={api_key}"
+    data = {"email": email, "password": password, "returnSecureToken": True}
+    return requests.post(url, json=data).json()
+
+def check_subscription(uid):
+    doc_ref = db.collection("users").document(uid)
+    doc = doc_ref.get()
+    if doc.exists:
+        return doc.to_dict().get("status_subscription", "non-aktif")
+    return "non-aktif"
 
 # =====================================================================
 # AREA SIDEBAR: HIASAN ROBOT GERMIC (DENGAN EFEK MELAYANG)
@@ -76,7 +109,9 @@ with st.sidebar:
     st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold;'>GERMIC System Online</p>", unsafe_allow_html=True)
     st.markdown("---")
 
-# 1. INISIALISASI SESSION STATE
+# =====================================================================
+# INISIALISASI SESSION STATE
+# =====================================================================
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "offline_transcript" not in st.session_state:
@@ -84,25 +119,76 @@ if "offline_transcript" not in st.session_state:
 if "offline_summary" not in st.session_state:
     st.session_state["offline_summary"] = None
 
-# 2. LOGIN
+# =====================================================================
+# HALAMAN LOGIN & REGISTER FIREBASE
+# =====================================================================
 if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write("")
         st.write("")
-        st.markdown("<h2 style='text-align: center;'>🔒 Login TranscribX Enterprise</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b;'>Silakan masukkan kredensial untuk mengakses sistem Notulensi AI.</p>", unsafe_allow_html=True)
-        with st.form("login_form"):
-            username = st.text_input("Username", placeholder="Ketik username Anda di sini...")
-            password = st.text_input("Password", type="password", placeholder="Ketik password Anda di sini...")
-            submit_button = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True)
-            if submit_button:
-                if username == "admin" and password == "12345":
-                    st.session_state["logged_in"] = True
-                    st.success("Login berhasil! Memuat sistem...")
-                    st.rerun()
-                else:
-                    st.error("⚠️ Username atau password salah!")
+        st.markdown("<h2 style='text-align: center;'>🔒 Portal TranscribX Enterprise</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b;'>Gunakan kredensial Anda untuk mengakses sistem Notulensi AI.</p>", unsafe_allow_html=True)
+        
+        tab_login, tab_register = st.tabs(["Masuk (Login)", "Daftar Akun Baru"])
+        
+        # --- TAB LOGIN ---
+        with tab_login:
+            with st.form("login_form"):
+                email_login = st.text_input("Email", placeholder="Ketik email Anda di sini...")
+                pass_login = st.text_input("Password", type="password", placeholder="Ketik password Anda...")
+                btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True)
+                
+                if btn_login:
+                    if email_login and pass_login:
+                        with st.spinner("Memverifikasi kredensial..."):
+                            user_data = login_firebase(email_login, pass_login)
+                            if "idToken" in user_data:
+                                uid = user_data["localId"]
+                                sub_status = check_subscription(uid)
+                                
+                                if sub_status == "aktif":
+                                    st.session_state["logged_in"] = True
+                                    st.session_state["user_email"] = email_login
+                                    st.session_state["user_uid"] = uid
+                                    st.success("Login berhasil! Memuat sistem...")
+                                    st.rerun()
+                                else:
+                                    st.error("⚠️ Akun Anda belum berlangganan atau masa aktif habis.")
+                            else:
+                                err_msg = user_data.get("error", {}).get("message", "Login gagal")
+                                st.error(f"⚠️ {err_msg}")
+                    else:
+                        st.warning("Silakan masukkan email dan password.")
+
+        # --- TAB REGISTER ---
+        with tab_register:
+            with st.form("register_form"):
+                email_reg = st.text_input("Email Baru", placeholder="Gunakan email aktif...")
+                pass_reg = st.text_input("Password Baru", type="password", help="Minimal 6 karakter")
+                btn_reg = st.form_submit_button("📝 Daftar Akun", use_container_width=True)
+                
+                if btn_reg:
+                    if email_reg and len(pass_reg) >= 6:
+                        with st.spinner("Mendaftarkan akun Anda..."):
+                            new_user = register_firebase(email_reg, pass_reg)
+                            if "idToken" in new_user:
+                                uid = new_user["localId"]
+                                # Set akun baru langsung aktif (Anda bisa mengubah ini jadi "non-aktif")
+                                db.collection("users").document(uid).set({
+                                    "email": email_reg,
+                                    "status_subscription": "aktif" 
+                                })
+                                st.success("✅ Pendaftaran berhasil! Silakan pindah ke tab Login untuk masuk.")
+                            else:
+                                err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
+                                st.error(f"⚠️ Gagal mendaftar: {err}")
+                    else:
+                        st.warning("Pastikan email terisi dan password minimal 6 karakter.")
+
+# =====================================================================
+# APLIKASI UTAMA (Setelah Login)
+# =====================================================================
 else:
     colA, colB = st.columns([8, 1])
     with colB:
@@ -625,11 +711,13 @@ else:
         uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
 
         if uploaded_file is not None:
-            if uploaded_file.size > 26214400: st.error("⚠️ Ukuran file melebihi 25MB. Silakan kompres audio Anda terlebih dahulu.")
+            if uploaded_file.size > 26214400: 
+                st.error("⚠️ Ukuran file melebihi 25MB. Silakan kompres audio Anda terlebih dahulu.")
             else:
                 st.audio(uploaded_file)
                 if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
-                    if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                    if not llm_key: 
+                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
                         with st.spinner("⏳ Sedang mentranskripsi audio... Proses ini memakan waktu tergantung durasi file."):
                             try:
@@ -642,8 +730,10 @@ else:
                                 if response.status_code == 200:
                                     st.session_state["offline_transcript"] = response.json().get("text", "")
                                     st.success("✅ Transkripsi berhasil!")
-                                else: st.error(f"❌ Error dari API LiteLLM: {response.text}")
-                            except Exception as e: st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
+                                else: 
+                                    st.error(f"❌ Error dari API LiteLLM: {response.text}")
+                            except Exception as e: 
+                                st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
 
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
@@ -651,11 +741,11 @@ else:
             st.session_state["offline_transcript"] = transcript_area 
 
             if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                if not llm_key: 
+                    st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                 else:
                     with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
                         
-                        # PENGUNCIAN PROMPT DUA WAJAH (Naratif Detail untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
                         prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN JSON NOTULENSI:
                         - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
@@ -719,16 +809,20 @@ else:
 
                         try:
                             res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
-                            if res.status_code == 200: st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                            else: st.error(f"Error AI: {res.text}")
-                        except Exception as e: st.error(f"Koneksi LLM Gagal: {str(e)}")
+                            if res.status_code == 200: 
+                                st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                            else: 
+                                st.error(f"Error AI: {res.text}")
+                        except Exception as e: 
+                            st.error(f"Koneksi LLM Gagal: {str(e)}")
 
         if st.session_state["offline_summary"]:
             data = st.session_state["offline_summary"]
             st.markdown("---")
             
             col_t1, col_t2 = st.columns([3, 1])
-            with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
+            with col_t1: 
+                st.markdown("### 📋 Laporan Notulensi AI")
             
             txt_report = "NOTULENSI RAPAT\n====================\n\n"
             txt_report += "Ringkasan Eksekutif:\n"
@@ -743,7 +837,8 @@ else:
             for t in data['notulensi_rapat'].get('rencana_tindak_lanjut', []):
                 txt_report += f"- [{t.get('prioritas')}] {t.get('tugas')} (PIC: {t.get('pic')}, Deadline: {t.get('deadline')})\n"
             
-            with col_t2: st.download_button(label="📝 Download Notulensi (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
+            with col_t2: 
+                st.download_button(label="📝 Download Notulensi (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
                 st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
@@ -763,7 +858,8 @@ else:
                 st.markdown(diskusi_html, unsafe_allow_html=True)
                 
                 st.markdown("**✅ KEPUTUSAN / KESIMPULAN UTAMA:**")
-                for kep in data['notulensi_rapat']['keputusan']: st.markdown(f"- {kep}")
+                for kep in data['notulensi_rapat']['keputusan']: 
+                    st.markdown(f"- {kep}")
                 
                 st.markdown("**📅 RENCANA TINDAK LANJUT (ACTION ITEMS):**")
                 df_tasks = pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut'])

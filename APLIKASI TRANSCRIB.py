@@ -1,4 +1,3 @@
-
 import streamlit as st
 import streamlit.components.v1 as components
 import requests
@@ -911,7 +910,6 @@ window.downloadMarkmapImage = function(wrapperId, title) {
         g.setAttribute('transform', 'translate(0,0) scale(1)');
         const bbox = g.getBBox();
 
-        // 3. Tambahkan padding 50px agar teks paling pinggir tidak ikut terpotong
         const padding = 50;
         const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
         const trueHeight = Math.max(bbox.height, 500) + (padding * 2);

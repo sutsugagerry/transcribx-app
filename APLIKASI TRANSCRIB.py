@@ -207,8 +207,8 @@ else:
                                 backgroundColor: '#ffffff',
                                 width: trueWidth,
                                 height: trueHeight,
-                                windowWidth: trueWidth, // Tambahan untuk override iframe streamit
-                                windowHeight: trueHeight // Tambahan untuk override iframe streamit
+                                windowWidth: trueWidth, // Tambahan untuk override iframe streamlit
+                                windowHeight: trueHeight // Tambahan untuk override iframe streamlit
                             }).then(canvas => {
                                 // --- Kembalikan ke tampilan aslinya di layar ---
                                 container.style.width = originalWidth;
@@ -288,12 +288,9 @@ else:
                     const root = window.lastAiData;
                     const data = root.notulensi_rapat;
                     let txt = `NOTULENSI RAPAT\\n========================\\n\\n`;
-                    txt += `RINGKASAN EKSEKUTIF:\\n`;
-                    if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += `- ${r}\\n`);
-                    txt += `\\nAgenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\n`;
-                    txt += `Jalannya Diskusi:\\n`;
-                    if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += `- ${d}\\n`);
-                    txt += `\\nKeputusan Utama:\\n`;
+                    txt += `RINGKASAN EKSEKUTIF:\\n${root.ringkasan_eksekutif || '-'}\\n\\n`;
+                    txt += `Agenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\n`;
+                    txt += `Jalannya Diskusi:\\n${data.jalannya_diskusi || '-'}\\n\\nKeputusan Utama:\\n`;
                     if(data.keputusan) data.keputusan.forEach(k => txt += `- ${k}\\n`);
                     if(data.rencana_tindak_lanjut && data.rencana_tindak_lanjut.length > 0) {
                         txt += `\\nRencana Tindak Lanjut:\\n`; data.rencana_tindak_lanjut.forEach(t => txt += `- [${t.prioritas}] ${t.tugas} (PIC: ${t.pic}, Deadline: ${t.deadline})\\n`);
@@ -464,14 +461,14 @@ else:
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
                         aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
 
+                        // KUNCI PROMPT: MEMAKSA ROOT NODE BERNAMA JUDUL/TOPIK RAPAT ASLI (TIDAK HARDCODED LAGI)
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat dalam bentuk array of strings (poin-poin) dari keseluruhan rapat.
-                        ATURAN JALANNYA DISKUSI: Buat jalannya diskusi dalam bentuk array of strings (poin-poin kronologis).
+                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat (1-2 paragraf) dari keseluruhan rapat.
                         ATURAN KEPUTUSAN PENTING: WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
                         ATURAN RENCANA TINDAK LANJUT: Ekstrak juga rencana tindak lanjut (Tugas, PIC, Deadline, Prioritas).
-                        ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya.
+                        ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya (sumber -> relasi -> target).
                         ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda. Root/Pangkal utama diagram WAJIB berisi Judul Topik Rapat/Agenda, contoh: A["Topik Rapat X"] --> B["Ringkasan Eksekutif"].
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll. Pastikan isi dari ringkasan eksekutif dan diskusi di-breakdown menjadi list/bullet points (- poin 1\\n- poin 2).
+                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll.
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -483,12 +480,12 @@ else:
                                     "schema": {
                                         "type": "object",
                                         "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                            "ringkasan_eksekutif": { "type": "string" },
                                             "notulensi_rapat": {
                                                 "type": "object",
                                                 "properties": {
                                                     "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "string" }, "keputusan": { "type": "array", "items": { "type": "string" } },
                                                     "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
                                                     "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
                                                 }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
@@ -524,9 +521,7 @@ else:
                                         <div class="space-y-4 text-sm text-slate-700 leading-relaxed">
                                             <div>
                                                 <p class="font-black text-blue-600 uppercase text-[11px] mb-1">RINGKASAN EKSEKUTIF:</p>
-                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                                    <ul class="list-disc ml-5 space-y-1 font-semibold text-slate-800">${data.ringkasan_eksekutif.map(r => `<li>${r}</li>`).join('')}</ul>
-                                                </div>
+                                                <p class="bg-blue-50 p-4 rounded-xl border border-blue-100 font-semibold text-slate-800">${data.ringkasan_eksekutif || '-'}</p>
                                             </div>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div><p class="font-black text-blue-600 uppercase text-[11px] mb-1">AGENDA / TOPIK:</p><p class="font-medium">${data.notulensi_rapat.agenda || '-'}</p></div>
@@ -534,9 +529,7 @@ else:
                                             </div>
                                             <div>
                                                 <p class="font-black text-blue-600 uppercase text-[11px] mb-1">JALANNYA DISKUSI:</p>
-                                                <div class="bg-white/50 p-3 rounded-xl border border-slate-100">
-                                                    <ul class="list-disc ml-5 space-y-1">${data.notulensi_rapat.jalannya_diskusi.map(d => `<li>${d}</li>`).join('')}</ul>
-                                                </div>
+                                                <p class="bg-white/50 p-3 rounded-xl border border-slate-100">${data.notulensi_rapat.jalannya_diskusi}</p>
                                             </div>
                                             <div>
                                                 <p class="font-black text-blue-600 uppercase text-[11px] mb-1">KEPUTUSAN / KESIMPULAN UTAMA:</p>
@@ -660,14 +653,14 @@ else:
                 else:
                     with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
                         
+                        # KUNCI PROMPT: MEMAKSA ROOT NODE BERNAMA JUDUL/TOPIK RAPAT ASLI
                         prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat dalam bentuk array of strings (poin-poin) dari keseluruhan rapat.
-                        ATURAN JALANNYA DISKUSI: Buat jalannya diskusi dalam bentuk array of strings (poin-poin kronologis).
+                        ATURAN RINGKASAN EKSEKUTIF: Buat ringkasan padat (1-2 paragraf) dari keseluruhan rapat.
                         ATURAN KEPUTUSAN PENTING (CRITICAL): WAJIB merumuskan poin-poin kesimpulan utama ke dalam array "keputusan".
                         ATURAN RENCANA TINDAK LANJUT: Ekstrak juga rencana tindak lanjut (Tugas, PIC, Deadline, Prioritas).
                         ATURAN HUBUNGAN TOPIK (CYTOSCAPE): Ekstrak 5-15 kata kunci/entitas penting dan hubungannya (sumber -> relasi -> target).
                         ATURAN MERMAID: WAJIB gunakan format 'graph LR'. Format node HARUS menggunakan tanda kutip ganda. Root/Pangkal utama diagram WAJIB berisi Judul Topik Rapat/Agenda, contoh: A["Topik Rapat X"] --> B["Ringkasan Eksekutif"].
-                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll. Pastikan isi dari ringkasan eksekutif dan diskusi di-breakdown menjadi list/bullet points (- poin 1\\n- poin 2).
+                        ATURAN MARKMAP: Gunakan kode murni markdown. Baris paling pertama/utama WAJIB berisi judul utama: "# [Judul/Topik Utama Rapat]". Di bawahnya, buat sub-header (##) untuk "Ringkasan Eksekutif", "Agenda", "Diskusi", dll.
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload = {
@@ -679,12 +672,12 @@ else:
                                     "schema": {
                                         "type": "object",
                                         "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                            "ringkasan_eksekutif": { "type": "string" },
                                             "notulensi_rapat": {
                                                 "type": "object",
                                                 "properties": {
                                                     "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "string" }, "keputusan": { "type": "array", "items": { "type": "string" } },
                                                     "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
                                                     "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
                                                 }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
@@ -710,13 +703,11 @@ else:
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
             txt_report = "NOTULENSI RAPAT\n====================\n\n"
-            txt_report += "Ringkasan Eksekutif:\n"
-            for r in data.get('ringkasan_eksekutif', []): txt_report += f"- {r}\n"
-            txt_report += f"\nAgenda/Topik: {data['notulensi_rapat'].get('agenda', '-')}\n"
+            txt_report += f"Ringkasan Eksekutif:\n{data.get('ringkasan_eksekutif', '-')}\n\n"
+            txt_report += f"Agenda/Topik: {data['notulensi_rapat'].get('agenda', '-')}\n"
             txt_report += f"Peserta: {', '.join(data['notulensi_rapat'].get('peserta', []))}\n\n"
-            txt_report += "Jalannya Diskusi:\n"
-            for d in data['notulensi_rapat'].get('jalannya_diskusi', []): txt_report += f"- {d}\n"
-            txt_report += "\nKeputusan Utama:\n"
+            txt_report += f"Jalannya Diskusi:\n{data['notulensi_rapat'].get('jalannya_diskusi', '-')}\n\n"
+            txt_report += "Keputusan Utama:\n"
             for k in data['notulensi_rapat'].get('keputusan', []): txt_report += f"- {k}\n"
             txt_report += "\nRencana Tindak Lanjut:\n"
             for t in data['notulensi_rapat'].get('rencana_tindak_lanjut', []):
@@ -725,22 +716,14 @@ else:
             with col_t2: st.download_button(label="📝 Download Notulensi (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
-                st.markdown("**🌟 Ringkasan Eksekutif:**")
-                # Format ke dalam div dengan bullet points (UI Streamlit)
-                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px;'>"
-                for r in data.get('ringkasan_eksekutif', []): rx_html += f"<li>{r}</li>"
-                rx_html += "</ul></div>"
-                st.markdown(rx_html, unsafe_allow_html=True)
+                st.markdown(f"**🌟 Ringkasan Eksekutif:**<br><div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'>{data.get('ringkasan_eksekutif', '-')}</div>", unsafe_allow_html=True)
                 
                 colA, colB = st.columns(2)
                 colA.markdown(f"**📌 Agenda / Topik:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
                 colB.markdown(f"**👥 Peserta:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
                 
                 st.markdown("**🗣️ Jalannya Diskusi:**")
-                diskusi_html = "<div style='background-color:#f8fafc; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px;'><ul style='margin:0; padding-left:20px;'>"
-                for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:5px;'>{d}</li>"
-                diskusi_html += "</ul></div>"
-                st.markdown(diskusi_html, unsafe_allow_html=True)
+                st.info(data['notulensi_rapat']['jalannya_diskusi'])
                 
                 st.markdown("**✅ Keputusan / Takeaways Utama:**")
                 for kep in data['notulensi_rapat']['keputusan']: st.markdown(f"- {kep}")

@@ -1,4 +1,3 @@
-
 import streamlit as st
 import streamlit.components.v1 as components
 import requests
@@ -160,7 +159,7 @@ else:
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
-                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP 
+                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP (ANTI ERROR / BLANK / KEPOTONG)
                 window.downloadMarkmapImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const svgEl = container.querySelector('svg');
@@ -168,55 +167,87 @@ else:
 
                     const btn = event.currentTarget;
                     const originalText = btn.innerHTML;
-                    btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
+                    btn.innerHTML = "⏳ MENYIMPAN..."; 
+                    btn.disabled = true;
 
                     try {
                         const g = svgEl.querySelector('g');
                         if (!g) throw new Error("G element not found");
 
+                        // 1. Simpan state ukuran asli web agar bisa dikembalikan nanti
                         const originalWidth = container.style.width;
                         const originalHeight = container.style.height;
                         const originalOverflow = container.style.overflow;
                         const originalTransform = g.getAttribute('transform');
                         const originalViewBox = svgEl.getAttribute('viewBox');
 
+                        // 2. Reset zoom & pan pengguna agar kita bisa menangkap seluruh peta konsep
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
                         const bbox = g.getBBox();
 
+                        // 3. Tambahkan padding 50px agar teks paling pinggir tidak ikut terpotong
                         const padding = 50;
                         const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                         const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
 
+                        // 4. Perbesar elemen HTML & SVG secara sementara sesuai ukuran aslinya
                         container.style.width = trueWidth + 'px';
                         container.style.height = trueHeight + 'px';
                         container.style.overflow = 'visible';
                         
                         svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                        svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                        svgEl.style.width = '100%';
+                        svgEl.style.height = '100%';
 
+                        // 5. Beri jeda 600ms agar DOM merender ulang, lalu tangkap menggunakan html2canvas
                         setTimeout(() => {
                             html2canvas(container, {
-                                scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight
+                                scale: 2, // Resolusi Tinggi (HD)
+                                useCORS: true,
+                                backgroundColor: '#ffffff',
+                                width: trueWidth,
+                                height: trueHeight,
+                                windowWidth: trueWidth, // Tambahan untuk override iframe streamit
+                                windowHeight: trueHeight // Tambahan untuk override iframe streamit
                             }).then(canvas => {
-                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                // --- Kembalikan ke tampilan aslinya di layar ---
+                                container.style.width = originalWidth;
+                                container.style.height = originalHeight;
+                                container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                else svgEl.removeAttribute('viewBox');
 
-                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                // --- Proses Unduh PNG ---
+                                const link = document.createElement('a');
+                                link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
+                                link.href = canvas.toDataURL('image/png', 1.0);
+                                link.click();
 
-                                btn.innerHTML = originalText; btn.disabled = false;
+                                btn.innerHTML = originalText; 
+                                btn.disabled = false;
                                 if (typeof showNotification === 'function') showNotification("✅ Peta Konsep HD Berhasil Disimpan!", "success");
+
                             }).catch(err => {
                                 console.error("html2canvas error:", err);
-                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                
+                                // Pastikan tampilan kembali seperti semula meskipun proses error
+                                container.style.width = originalWidth;
+                                container.style.height = originalHeight;
+                                container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                else svgEl.removeAttribute('viewBox');
+                                
+                                btn.innerHTML = "❌ GAGAL"; 
+                                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                             });
                         }, 600); 
+
                     } catch (err) {
-                        console.error("Error saving markmap:", err); btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+                        console.error("Error saving markmap:", err);
+                        btn.innerHTML = "❌ GAGAL"; 
+                        setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                     }
                 };
 
@@ -813,61 +844,95 @@ else:
                     const {{ root }} = transformer.transform(markdown);
                     Markmap.create('#markmap', null, root);
 
+                    // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN AUTO-RESIZE BOUNDING BOX
                     window.downloadMarkmapImage = function(wrapperId, title, event) {{
                         const container = document.getElementById(wrapperId);
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
 
-                        const btn = document.getElementById('dlBtnMM');
+                        const btn = event.currentTarget;
                         const originalText = btn.innerHTML;
-                        btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
+                        btn.innerHTML = "⏳ MENYIMPAN..."; 
+                        btn.disabled = true;
 
                         try {{
                             const g = svgEl.querySelector('g');
                             if (!g) throw new Error("G element not found");
 
+                            // 1. Simpan state ukuran asli web agar bisa dikembalikan nanti
                             const originalWidth = container.style.width;
                             const originalHeight = container.style.height;
                             const originalOverflow = container.style.overflow;
                             const originalTransform = g.getAttribute('transform');
                             const originalViewBox = svgEl.getAttribute('viewBox');
 
+                            // 2. Reset zoom & pan pengguna agar kita bisa menangkap seluruh peta konsep
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
                             const bbox = g.getBBox();
 
+                            // 3. Tambahkan padding 50px agar teks paling pinggir tidak ikut terpotong
                             const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
 
+                            // 4. Perbesar elemen HTML & SVG secara sementara sesuai ukuran aslinya
                             container.style.width = trueWidth + 'px';
                             container.style.height = trueHeight + 'px';
                             container.style.overflow = 'visible';
                             
                             svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                            svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                            svgEl.style.width = '100%';
+                            svgEl.style.height = '100%';
 
+                            // 5. Beri jeda 600ms agar DOM merender ulang, lalu tangkap menggunakan html2canvas
                             setTimeout(() => {{
                                 html2canvas(container, {{
-                                    scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight
+                                    scale: 2, // Resolusi Tinggi (HD)
+                                    useCORS: true,
+                                    backgroundColor: '#ffffff',
+                                    width: trueWidth,
+                                    height: trueHeight,
+                                    windowWidth: trueWidth, // Override iframe streamer clipping
+                                    windowHeight: trueHeight // Override iframe streamer clipping
                                 }}).then(canvas => {{
-                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    // --- Kembalikan ke tampilan aslinya di layar ---
+                                    container.style.width = originalWidth;
+                                    container.style.height = originalHeight;
+                                    container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                    else svgEl.removeAttribute('viewBox');
 
-                                    const link = document.createElement('a'); link.download = `MindMap_${{title}}.png`;
-                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    // --- Proses Unduh PNG ---
+                                    const link = document.createElement('a');
+                                    link.download = `MindMap_${{title.replace(/[^a-zA-Z0-9]/g, "_")}}.png`;
+                                    link.href = canvas.toDataURL('image/png', 1.0);
+                                    link.click();
 
-                                    btn.innerHTML = originalText; btn.disabled = false;
+                                    btn.innerHTML = originalText; 
+                                    btn.disabled = false;
+                                    if (typeof showNotification === 'function') showNotification("✅ Peta Konsep HD Berhasil Disimpan!", "success");
+
                                 }}).catch(err => {{
                                     console.error("html2canvas error:", err);
-                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    
+                                    // Pastikan tampilan kembali seperti semula meskipun proses error
+                                    container.style.width = originalWidth;
+                                    container.style.height = originalHeight;
+                                    container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                    else svgEl.removeAttribute('viewBox');
+                                    
+                                    btn.innerHTML = "❌ GAGAL"; 
+                                    setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                                 }});
                             }}, 600); 
+
                         }} catch (err) {{
-                            console.error("Error saving markmap:", err); btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                            console.error("Error saving markmap:", err);
+                            btn.innerHTML = "❌ GAGAL"; 
+                            setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                         }}
                     }};
                 </script>

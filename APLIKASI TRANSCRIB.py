@@ -49,15 +49,26 @@ PAKET_LANGGANAN = {
 }
 
 # =====================================================================
-# KONFIGURASI EMAIL ADMIN
+# KONFIGURASI EMAIL ADMIN (SUPPORT MULTIPLE ADMIN)
 # =====================================================================
-ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com")
+# Ambil dari secrets, support list/array
+ADMIN_EMAILS_CONFIG = st.secrets.get("ADMIN_EMAILS", [])
+
+# Fallback: jika ADMIN_EMAILS tidak ada, coba ADMIN_EMAIL (single)
+if not ADMIN_EMAILS_CONFIG:
+    single_admin = st.secrets.get("ADMIN_EMAIL", "")
+    if single_admin:
+        ADMIN_EMAILS_CONFIG = [single_admin]
+    else:
+        # Default fallback jika tidak ada konfigurasi sama sekali
+        ADMIN_EMAILS_CONFIG = ["sutsuga.gery@gmail.com"]
 
 # =====================================================================
 # FUNGSI UNTUK CEK APAKAH USER ADALAH ADMIN
 # =====================================================================
 def is_admin():
-    return st.session_state.get("user_email") == ADMIN_EMAIL
+    """Cek apakah user yang login adalah admin (support multiple admin)"""
+    return st.session_state.get("user_email") in ADMIN_EMAILS_CONFIG
 
 # =====================================================================
 # FUNGSI FIREBASE (REST API & FIRESTORE)
@@ -165,7 +176,7 @@ with st.sidebar:
     if st.session_state.get("logged_in"):
         st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
         
-        # [PERBAIKAN] Tampilan khusus untuk Admin
+        # [PERBAIKAN] Tampilan khusus untuk Admin (support multiple admin)
         if is_admin():
             st.markdown("**🏷️ Paket:** 👑 ADMIN (Unlimited Access)")
             st.markdown("**✨ Sisa AI Summary:** ♾️ Unlimited", unsafe_allow_html=True)
@@ -213,8 +224,8 @@ if not st.session_state["logged_in"]:
                         if "idToken" in user_data:
                             uid = user_data["localId"]
                             
-                            # [PERBAIKAN] Cek apakah ini admin
-                            if email_login == ADMIN_EMAIL:
+                            # [PERBAIKAN] Cek apakah ini admin (support multiple admin)
+                            if email_login in ADMIN_EMAILS_CONFIG:
                                 st.session_state["logged_in"] = True
                                 st.session_state["user_email"] = email_login
                                 st.session_state["user_uid"] = uid
@@ -268,6 +279,13 @@ else:
         with tab_admin:
             st.markdown("### 👑 Dashboard Admin: Kelola Akun Klien")
             
+            # Tampilkan daftar admin yang terdaftar
+            with st.expander("👥 Daftar Admin Sistem", expanded=False):
+                st.info(f"Admin yang terdaftar di sistem:")
+                for i, admin_email in enumerate(ADMIN_EMAILS_CONFIG, 1):
+                    st.markdown(f"{i}. 👑 **{admin_email}**")
+                st.caption("Untuk menambah admin, edit `ADMIN_EMAILS` di Streamlit Secrets.")
+            
             # [FITUR BARU] Update / Upgrade Paket Klien Lama
             with st.expander("🚀 UPDATE / UPGRADE PAKET KLIEN LAMA", expanded=False):
                 st.info("Gunakan form ini untuk mengubah paket klien lama (misal naik dari BASIC ke EXECUTIVE). Kuota mereka akan di-reset otomatis sesuai paket baru.")
@@ -277,31 +295,35 @@ else:
                     btn_update = st.form_submit_button("🔄 Update Paket Klien", type="primary")
 
                     if btn_update and email_to_update:
-                        users = db.collection("users").where("email", "==", email_to_update).stream()
-                        updated = False
-                        for u in users:
-                            uid = u.id
-                            if new_paket != "NON-AKTIF":
-                                db.collection("users").document(uid).update({
-                                    "status_subscription": "aktif",
-                                    "paket": new_paket,
-                                    "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
-                                    "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"]
-                                })
-                            else:
-                                db.collection("users").document(uid).update({
-                                    "status_subscription": "non-aktif",
-                                    "paket": "NON-AKTIF",
-                                    "kuota_ai": 0,
-                                    "kuota_upload": 0
-                                })
-                            updated = True
-                        
-                        if updated:
-                            st.success(f"✅ Berhasil! Paket untuk {email_to_update} telah diubah menjadi {new_paket}.")
-                            st.rerun()
+                        # Cegah admin mengubah paket admin lain
+                        if email_to_update in ADMIN_EMAILS_CONFIG:
+                            st.error("⚠️ Tidak dapat mengubah paket Admin! Admin memiliki akses Unlimited.")
                         else:
-                            st.error(f"⚠️ Email {email_to_update} tidak ditemukan di database.")
+                            users = db.collection("users").where("email", "==", email_to_update).stream()
+                            updated = False
+                            for u in users:
+                                uid = u.id
+                                if new_paket != "NON-AKTIF":
+                                    db.collection("users").document(uid).update({
+                                        "status_subscription": "aktif",
+                                        "paket": new_paket,
+                                        "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
+                                        "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"]
+                                    })
+                                else:
+                                    db.collection("users").document(uid).update({
+                                        "status_subscription": "non-aktif",
+                                        "paket": "NON-AKTIF",
+                                        "kuota_ai": 0,
+                                        "kuota_upload": 0
+                                    })
+                                updated = True
+                            
+                            if updated:
+                                st.success(f"✅ Berhasil! Paket untuk {email_to_update} telah diubah menjadi {new_paket}.")
+                                st.rerun()
+                            else:
+                                st.error(f"⚠️ Email {email_to_update} tidak ditemukan di database.")
 
             st.markdown("---")
             st.markdown("### 📝 Registrasi Akun Klien Baru")
@@ -317,32 +339,36 @@ else:
                 
                 if btn_reg:
                     if email_reg and len(pass_reg) >= 6:
-                        with st.spinner("Mendaftarkan akun..."):
-                            new_user = register_firebase(email_reg, pass_reg)
-                            if "idToken" in new_user:
-                                uid = new_user["localId"]
-                                
-                                if paket_reg != "NON-AKTIF":
-                                    status_reg = "aktif"
-                                    kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"]
-                                    kuota_upload = PAKET_LANGGANAN[paket_reg]["upload_limit"]
+                        # Cegah registrasi dengan email admin
+                        if email_reg in ADMIN_EMAILS_CONFIG:
+                            st.error("⚠️ Email ini terdaftar sebagai Admin. Tidak dapat mendaftarkan admin sebagai klien.")
+                        else:
+                            with st.spinner("Mendaftarkan akun..."):
+                                new_user = register_firebase(email_reg, pass_reg)
+                                if "idToken" in new_user:
+                                    uid = new_user["localId"]
+                                    
+                                    if paket_reg != "NON-AKTIF":
+                                        status_reg = "aktif"
+                                        kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"]
+                                        kuota_upload = PAKET_LANGGANAN[paket_reg]["upload_limit"]
+                                    else:
+                                        status_reg = "non-aktif"
+                                        kuota_ai = 0
+                                        kuota_upload = 0
+                                    
+                                    db.collection("users").document(uid).set({
+                                        "email": email_reg,
+                                        "status_subscription": status_reg,
+                                        "paket": paket_reg,
+                                        "kuota_ai": kuota_ai,
+                                        "kuota_upload": kuota_upload
+                                    })
+                                    st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}!")
+                                    st.rerun()
                                 else:
-                                    status_reg = "non-aktif"
-                                    kuota_ai = 0
-                                    kuota_upload = 0
-                                
-                                db.collection("users").document(uid).set({
-                                    "email": email_reg,
-                                    "status_subscription": status_reg,
-                                    "paket": paket_reg,
-                                    "kuota_ai": kuota_ai,
-                                    "kuota_upload": kuota_upload
-                                })
-                                st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}!")
-                                st.rerun()
-                            else:
-                                err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
-                                st.error(f"⚠️ Gagal mendaftar: {err}")
+                                    err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
+                                    st.error(f"⚠️ Gagal mendaftar: {err}")
                     else:
                         st.warning("Pastikan email terisi dan password minimal 6 karakter.")
 
@@ -356,15 +382,27 @@ else:
                 for doc in users_ref:
                     user_info = doc.to_dict()
                     
-                    # Logika tampilan agar tabel rapi meskipun datanya adalah data lama (belum update)
-                    status_user = user_info.get("status_subscription", "non-aktif")
-                    paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
-                    sisa_ai = user_info.get("kuota_ai", PAKET_LANGGANAN["BASIC"]["ai_limit"] if paket_user == "BASIC" else 0)
-                    sisa_up = user_info.get("kuota_upload", PAKET_LANGGANAN["BASIC"]["upload_limit"] if paket_user == "BASIC" else 0)
+                    email_user = user_info.get("email", "-")
+                    
+                    # Skip admin dari daftar klien (opsional, bisa dihapus jika ingin admin tetap muncul)
+                    # if email_user in ADMIN_EMAILS_CONFIG:
+                    #     continue
+                    
+                    # Logika tampilan agar tabel rapi
+                    if email_user in ADMIN_EMAILS_CONFIG:
+                        status_user = "admin"
+                        paket_user = "ADMIN"
+                        sisa_ai = "∞ Unlimited"
+                        sisa_up = "∞ Unlimited"
+                    else:
+                        status_user = user_info.get("status_subscription", "non-aktif")
+                        paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
+                        sisa_ai = user_info.get("kuota_ai", PAKET_LANGGANAN["BASIC"]["ai_limit"] if paket_user == "BASIC" else 0)
+                        sisa_up = user_info.get("kuota_upload", PAKET_LANGGANAN["BASIC"]["upload_limit"] if paket_user == "BASIC" else 0)
 
                     users_list.append({
                         "UID": doc.id,
-                        "Email": user_info.get("email", "-"),
+                        "Email": email_user,
                         "Status": status_user,
                         "Paket": paket_user,
                         "Sisa AI": sisa_ai,
@@ -953,8 +991,7 @@ else:
             else:
                 st.audio(uploaded_file)
                 
-                # [PERBAIKAN] Cek Kuota Upload sebelum mengizinkan tombol ditekan
-                # Admin tidak dibatasi
+                # [PERBAIKAN] Cek Kuota Upload - Admin tidak dibatasi
                 if not is_admin():
                     kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
                     if kuota_upload_sekarang <= 0:
@@ -1013,7 +1050,7 @@ else:
             transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
             st.session_state["offline_transcript"] = transcript_area 
 
-            # [PERBAIKAN] Cek Kuota AI Summary
+            # [PERBAIKAN] Cek Kuota AI Summary - Admin tidak dibatasi
             if not is_admin():
                 kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
                 if kuota_ai_sekarang <= 0:

@@ -5,6 +5,8 @@ import json
 import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, firestore
+from datetime import datetime, timedelta
+import time
 
 # Konfigurasi Halaman (Hanya boleh dipanggil sekali di paling atas)
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
@@ -42,10 +44,10 @@ db = firestore.client()
 # DATA PAKET LANGGANAN
 # =====================================================================
 PAKET_LANGGANAN = {
-    "BASIC": {"ai_limit": 5, "upload_limit": 1},
-    "EXECUTIVE": {"ai_limit": 10, "upload_limit": 3},
-    "MASTER": {"ai_limit": 30, "upload_limit": 10},
-    "NON-AKTIF": {"ai_limit": 0, "upload_limit": 0}
+    "BASIC": {"ai_limit": 5, "upload_limit": 1, "durasi_hari": 30},
+    "EXECUTIVE": {"ai_limit": 10, "upload_limit": 3, "durasi_hari": 30},
+    "MASTER": {"ai_limit": 30, "upload_limit": 10, "durasi_hari": 30},
+    "NON-AKTIF": {"ai_limit": 0, "upload_limit": 0, "durasi_hari": 0}
 }
 
 # =====================================================================
@@ -71,6 +73,67 @@ def is_admin():
     return st.session_state.get("user_email") in ADMIN_EMAILS_CONFIG
 
 # =====================================================================
+# FUNGSI HELPER UNTUK TANGGAL
+# =====================================================================
+def hitung_sisa_hari(tanggal_berakhir_str):
+    """Hitung sisa hari dari sekarang sampai tanggal berakhir"""
+    if not tanggal_berakhir_str:
+        return 0
+    
+    try:
+        # Parse tanggal dari format string ISO
+        if isinstance(tanggal_berakhir_str, str):
+            tanggal_berakhir = datetime.fromisoformat(tanggal_berakhir_str)
+        elif hasattr(tanggal_berakhir_str, 'timestamp'):
+            # Jika dari Firestore Timestamp
+            tanggal_berakhir = tanggal_berakhir_str.replace(tzinfo=None)
+        else:
+            return 0
+        
+        sekarang = datetime.now()
+        selisih = tanggal_berakhir - sekarang
+        sisa_hari = selisih.days
+        
+        return sisa_hari if sisa_hari > 0 else 0
+    except Exception as e:
+        return 0
+
+def cek_dan_update_status_kadaluarsa(uid, user_data):
+    """
+    Cek apakah subscription sudah kadaluarsa.
+    Jika iya, update status ke non-aktif dan reset kuota.
+    Return True jika status berubah.
+    """
+    if not user_data:
+        return False
+    
+    status = user_data.get("status_subscription", "non-aktif")
+    
+    # Skip untuk admin atau yang sudah non-aktif
+    if status == "non-aktif" or user_data.get("email") in ADMIN_EMAILS_CONFIG:
+        return False
+    
+    tanggal_berakhir = user_data.get("tanggal_berakhir")
+    if not tanggal_berakhir:
+        return False
+    
+    sisa_hari = hitung_sisa_hari(tanggal_berakhir)
+    
+    # Jika sudah kadaluarsa (sisa_hari <= 0)
+    if sisa_hari <= 0:
+        # Update database ke non-aktif
+        db.collection("users").document(uid).update({
+            "status_subscription": "non-aktif",
+            "paket": "NON-AKTIF",
+            "kuota_ai": 0,
+            "kuota_upload": 0,
+            "tanggal_kadaluarsa": datetime.now().isoformat()
+        })
+        return True
+    
+    return False
+
+# =====================================================================
 # FUNGSI FIREBASE (REST API & FIRESTORE)
 # =====================================================================
 def login_firebase(email, password):
@@ -90,19 +153,99 @@ def check_subscription(uid):
     doc = doc_ref.get()
     if doc.exists:
         data = doc.to_dict()
+        
+        # Cek dan update status kadaluarsa
+        cek_dan_update_status_kadaluarsa(uid, data)
+        
+        # Refresh data setelah kemungkinan update
+        doc = doc_ref.get()
+        data = doc.to_dict()
+        
         # [PERBAIKAN] Auto-Migrasi untuk user lama yang belum punya field paket
         if "paket" not in data and data.get("status_subscription") == "aktif":
             data["paket"] = "BASIC"
             data["kuota_ai"] = PAKET_LANGGANAN["BASIC"]["ai_limit"]
             data["kuota_upload"] = PAKET_LANGGANAN["BASIC"]["upload_limit"]
+            data["tanggal_berakhir"] = (datetime.now() + timedelta(days=30)).isoformat()
             # Simpan update ke database agar permanen
             doc_ref.update({
                 "paket": data["paket"],
                 "kuota_ai": data["kuota_ai"],
-                "kuota_upload": data["kuota_upload"]
+                "kuota_upload": data["kuota_upload"],
+                "tanggal_berakhir": data["tanggal_berakhir"]
             })
         return data
     return {"status_subscription": "non-aktif", "paket": "NON-AKTIF"}
+
+# =====================================================================
+# FUNGSI UNTUK RESET KUOTA BULANAN (Dipanggil saat login/refresh)
+# =====================================================================
+def cek_reset_kuota_bulanan(uid, user_data):
+    """
+    Cek apakah sudah waktunya reset kuota bulanan.
+    Reset terjadi setiap 30 hari dari tanggal_mulai atau tanggal_reset_terakhir.
+    """
+    if not user_data or user_data.get("status_subscription") != "aktif":
+        return False
+    
+    # Skip admin
+    if user_data.get("email") in ADMIN_EMAILS_CONFIG:
+        return False
+    
+    paket = user_data.get("paket", "BASIC")
+    if paket not in PAKET_LANGGANAN:
+        return False
+    
+    # Cek apakah perlu reset kuota
+    sekarang = datetime.now()
+    reset_terakhir_str = user_data.get("reset_kuota_terakhir")
+    
+    perlu_reset = False
+    
+    if reset_terakhir_str:
+        try:
+            if isinstance(reset_terakhir_str, str):
+                reset_terakhir = datetime.fromisoformat(reset_terakhir_str)
+            else:
+                reset_terakhir = reset_terakhir_str.replace(tzinfo=None)
+            
+            # Reset setiap 30 hari
+            if (sekarang - reset_terakhir).days >= 30:
+                perlu_reset = True
+        except:
+            perlu_reset = True
+    else:
+        # Jika belum ada catatan reset, cek dari tanggal_mulai
+        tanggal_mulai_str = user_data.get("tanggal_mulai")
+        if tanggal_mulai_str:
+            try:
+                if isinstance(tanggal_mulai_str, str):
+                    tanggal_mulai = datetime.fromisoformat(tanggal_mulai_str)
+                else:
+                    tanggal_mulai = tanggal_mulai_str.replace(tzinfo=None)
+                
+                if (sekarang - tanggal_mulai).days >= 30:
+                    perlu_reset = True
+            except:
+                perlu_reset = True
+        else:
+            perlu_reset = True
+    
+    if perlu_reset:
+        # Reset kuota ke nilai default paket
+        kuota_default = PAKET_LANGGANAN[paket]
+        db.collection("users").document(uid).update({
+            "kuota_ai": kuota_default["ai_limit"],
+            "kuota_upload": kuota_default["upload_limit"],
+            "reset_kuota_terakhir": sekarang.isoformat()
+        })
+        
+        # Update session state
+        st.session_state["user_kuota_ai"] = kuota_default["ai_limit"]
+        st.session_state["user_kuota_upload"] = kuota_default["upload_limit"]
+        return True
+    
+    return False
 
 # =====================================================================
 # AREA SIDEBAR: HIASAN ROBOT GERMIC & INFO AKUN
@@ -182,13 +325,25 @@ with st.sidebar:
             st.markdown("**✨ Sisa AI Summary:** ♾️ Unlimited", unsafe_allow_html=True)
             st.markdown("**📁 Sisa Upload Audio:** ♾️ Unlimited", unsafe_allow_html=True)
         else:
-            st.markdown(f"**🏷️ Paket:** {st.session_state.get('user_paket', 'NON-AKTIF')}")
-            if st.session_state.get('user_paket') != 'NON-AKTIF':
+            paket = st.session_state.get('user_paket', 'NON-AKTIF')
+            st.markdown(f"**🏷️ Paket:** {paket}")
+            
+            if paket != 'NON-AKTIF':
                 # Highlight merah jika kuota habis
                 ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
                 up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
                 st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
                 st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
+                
+                # Tampilkan sisa hari
+                sisa_hari = st.session_state.get('sisa_hari', 0)
+                hari_color = "red" if sisa_hari <= 3 else "green" if sisa_hari > 7 else "orange"
+                st.markdown(f"**⏳ Sisa Masa Aktif:** <span style='color:{hari_color}; font-weight:bold;'>{sisa_hari} hari</span>", unsafe_allow_html=True)
+                
+                if sisa_hari <= 3 and sisa_hari > 0:
+                    st.warning(f"⚠️ Masa aktif hampir habis! Segera perpanjang.")
+            else:
+                st.markdown("**⏳ Status:** Non-Aktif")
         st.markdown("---")
 
 # =====================================================================
@@ -232,23 +387,32 @@ if not st.session_state["logged_in"]:
                                 st.session_state["user_paket"] = "ADMIN"
                                 st.session_state["user_kuota_ai"] = 999999  # Unlimited
                                 st.session_state["user_kuota_upload"] = 999999  # Unlimited
+                                st.session_state["sisa_hari"] = 999999
                                 st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
                                 st.rerun()
                             
                             user_db_info = check_subscription(uid)
                             sub_status = user_db_info.get("status_subscription", "non-aktif")
                             
+                            # Hitung sisa hari
+                            sisa_hari = hitung_sisa_hari(user_db_info.get("tanggal_berakhir"))
+                            
                             if sub_status == "aktif":
+                                # Cek reset kuota bulanan
+                                cek_reset_kuota_bulanan(uid, user_db_info)
+                                
                                 st.session_state["logged_in"] = True
                                 st.session_state["user_email"] = email_login
                                 st.session_state["user_uid"] = uid
                                 st.session_state["user_paket"] = user_db_info.get("paket", "BASIC")
                                 st.session_state["user_kuota_ai"] = user_db_info.get("kuota_ai", 0)
                                 st.session_state["user_kuota_upload"] = user_db_info.get("kuota_upload", 0)
+                                st.session_state["sisa_hari"] = sisa_hari
+                                st.session_state["tanggal_berakhir"] = user_db_info.get("tanggal_berakhir", "")
                                 st.success("Login berhasil! Memuat sistem...")
                                 st.rerun()
                             else:
-                                st.error("⚠️ Akun Anda belum berlangganan atau masa aktif habis. Hubungi Admin.")
+                                st.error(f"⚠️ Akun Anda sudah tidak aktif. Sisa hari: {sisa_hari}. Hubungi Admin untuk perpanjangan.")
                         else:
                             err_msg = user_data.get("error", {}).get("message", "Login gagal")
                             st.error(f"⚠️ {err_msg}")
@@ -288,42 +452,102 @@ else:
             
             # [FITUR BARU] Update / Upgrade Paket Klien Lama
             with st.expander("🚀 UPDATE / UPGRADE PAKET KLIEN LAMA", expanded=False):
-                st.info("Gunakan form ini untuk mengubah paket klien lama (misal naik dari BASIC ke EXECUTIVE). Kuota mereka akan di-reset otomatis sesuai paket baru.")
-                with st.form("admin_update_form", clear_on_submit=True):
-                    email_to_update = st.text_input("Masukkan Email Klien Terdaftar")
-                    new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
-                    btn_update = st.form_submit_button("🔄 Update Paket Klien", type="primary")
+                st.info("Gunakan form ini untuk mengubah paket klien lama (misal naik dari BASIC ke EXECUTIVE). Kuota akan di-reset dan masa aktif 30 hari dari sekarang.")
+                
+                col_up1, col_up2 = st.columns(2)
+                with col_up1:
+                    with st.form("admin_update_form", clear_on_submit=True):
+                        email_to_update = st.text_input("Masukkan Email Klien Terdaftar")
+                        new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
+                        btn_update = st.form_submit_button("🔄 Update Paket Klien", type="primary")
 
-                    if btn_update and email_to_update:
-                        # Cegah admin mengubah paket admin lain
-                        if email_to_update in ADMIN_EMAILS_CONFIG:
-                            st.error("⚠️ Tidak dapat mengubah paket Admin! Admin memiliki akses Unlimited.")
-                        else:
-                            users = db.collection("users").where("email", "==", email_to_update).stream()
-                            updated = False
-                            for u in users:
-                                uid = u.id
-                                if new_paket != "NON-AKTIF":
+                        if btn_update and email_to_update:
+                            # Cegah admin mengubah paket admin lain
+                            if email_to_update in ADMIN_EMAILS_CONFIG:
+                                st.error("⚠️ Tidak dapat mengubah paket Admin! Admin memiliki akses Unlimited.")
+                            else:
+                                users = db.collection("users").where("email", "==", email_to_update).stream()
+                                updated = False
+                                for u in users:
+                                    uid = u.id
+                                    sekarang = datetime.now()
+                                    tanggal_berakhir_baru = sekarang + timedelta(days=30)
+                                    
+                                    if new_paket != "NON-AKTIF":
+                                        db.collection("users").document(uid).update({
+                                            "status_subscription": "aktif",
+                                            "paket": new_paket,
+                                            "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
+                                            "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"],
+                                            "tanggal_mulai": sekarang.isoformat(),
+                                            "tanggal_berakhir": tanggal_berakhir_baru.isoformat(),
+                                            "reset_kuota_terakhir": sekarang.isoformat()
+                                        })
+                                    else:
+                                        db.collection("users").document(uid).update({
+                                            "status_subscription": "non-aktif",
+                                            "paket": "NON-AKTIF",
+                                            "kuota_ai": 0,
+                                            "kuota_upload": 0,
+                                            "tanggal_berakhir": sekarang.isoformat()
+                                        })
+                                    updated = True
+                                
+                                if updated:
+                                    st.success(f"✅ Berhasil! Paket untuk {email_to_update} telah diubah menjadi {new_paket}. Masa aktif: 30 hari ke depan.")
+                                    st.rerun()
+                                else:
+                                    st.error(f"⚠️ Email {email_to_update} tidak ditemukan di database.")
+                
+                with col_up2:
+                    # Form perpanjang manual
+                    with st.form("admin_extend_form", clear_on_submit=True):
+                        email_extend = st.text_input("Email Klien untuk Diperpanjang")
+                        hari_tambahan = st.number_input("Tambah Hari", min_value=1, max_value=365, value=30)
+                        btn_extend = st.form_submit_button("📅 Perpanjang Masa Aktif", type="secondary")
+                        
+                        if btn_extend and email_extend:
+                            if email_extend in ADMIN_EMAILS_CONFIG:
+                                st.error("⚠️ Admin tidak perlu diperpanjang.")
+                            else:
+                                users = db.collection("users").where("email", "==", email_extend).stream()
+                                extended = False
+                                for u in users:
+                                    uid = u.id
+                                    user_doc = u.to_dict()
+                                    
+                                    # Hitung tanggal berakhir baru
+                                    sekarang = datetime.now()
+                                    tanggal_berakhir_lama = user_doc.get("tanggal_berakhir")
+                                    
+                                    if tanggal_berakhir_lama:
+                                        try:
+                                            if isinstance(tanggal_berakhir_lama, str):
+                                                tgl_akhir = datetime.fromisoformat(tanggal_berakhir_lama)
+                                            else:
+                                                tgl_akhir = tanggal_berakhir_lama.replace(tzinfo=None)
+                                            
+                                            # Jika sudah kadaluarsa, mulai dari sekarang
+                                            if tgl_akhir < sekarang:
+                                                tgl_akhir = sekarang
+                                            
+                                            tanggal_baru = tgl_akhir + timedelta(days=hari_tambahan)
+                                        except:
+                                            tanggal_baru = sekarang + timedelta(days=hari_tambahan)
+                                    else:
+                                        tanggal_baru = sekarang + timedelta(days=hari_tambahan)
+                                    
                                     db.collection("users").document(uid).update({
                                         "status_subscription": "aktif",
-                                        "paket": new_paket,
-                                        "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
-                                        "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"]
+                                        "tanggal_berakhir": tanggal_baru.isoformat()
                                     })
+                                    extended = True
+                                
+                                if extended:
+                                    st.success(f"✅ Masa aktif {email_extend} berhasil diperpanjang {hari_tambahan} hari!")
+                                    st.rerun()
                                 else:
-                                    db.collection("users").document(uid).update({
-                                        "status_subscription": "non-aktif",
-                                        "paket": "NON-AKTIF",
-                                        "kuota_ai": 0,
-                                        "kuota_upload": 0
-                                    })
-                                updated = True
-                            
-                            if updated:
-                                st.success(f"✅ Berhasil! Paket untuk {email_to_update} telah diubah menjadi {new_paket}.")
-                                st.rerun()
-                            else:
-                                st.error(f"⚠️ Email {email_to_update} tidak ditemukan di database.")
+                                    st.error(f"⚠️ Email {email_extend} tidak ditemukan.")
 
             st.markdown("---")
             st.markdown("### 📝 Registrasi Akun Klien Baru")
@@ -348,6 +572,9 @@ else:
                                 if "idToken" in new_user:
                                     uid = new_user["localId"]
                                     
+                                    sekarang = datetime.now()
+                                    tanggal_berakhir = sekarang + timedelta(days=30)
+                                    
                                     if paket_reg != "NON-AKTIF":
                                         status_reg = "aktif"
                                         kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"]
@@ -362,9 +589,12 @@ else:
                                         "status_subscription": status_reg,
                                         "paket": paket_reg,
                                         "kuota_ai": kuota_ai,
-                                        "kuota_upload": kuota_upload
+                                        "kuota_upload": kuota_upload,
+                                        "tanggal_mulai": sekarang.isoformat(),
+                                        "tanggal_berakhir": tanggal_berakhir.isoformat(),
+                                        "reset_kuota_terakhir": sekarang.isoformat()
                                     })
-                                    st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}!")
+                                    st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}! Masa aktif: 30 hari.")
                                     st.rerun()
                                 else:
                                     err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
@@ -373,7 +603,26 @@ else:
                         st.warning("Pastikan email terisi dan password minimal 6 karakter.")
 
             st.markdown("---")
-            st.markdown("### 📋 Daftar Klien Terdaftar")
+            
+            # Tombol Refresh Status
+            col_refresh1, col_refresh2 = st.columns([3, 1])
+            with col_refresh1:
+                st.markdown("### 📋 Daftar Klien Terdaftar")
+            with col_refresh2:
+                if st.button("🔄 Refresh Status", use_container_width=True):
+                    # Force check semua user untuk kadaluarsa
+                    users_ref = db.collection("users").stream()
+                    jumlah_expired = 0
+                    for doc in users_ref:
+                        user_data = doc.to_dict()
+                        if cek_dan_update_status_kadaluarsa(doc.id, user_data):
+                            jumlah_expired += 1
+                    
+                    if jumlah_expired > 0:
+                        st.success(f"✅ {jumlah_expired} akun telah dinonaktifkan karena kadaluarsa.")
+                    else:
+                        st.info("Tidak ada akun yang kadaluarsa.")
+                    st.rerun()
             
             with st.spinner("Memuat data klien..."):
                 users_ref = db.collection("users").stream()
@@ -384,34 +633,86 @@ else:
                     
                     email_user = user_info.get("email", "-")
                     
-                    # Skip admin dari daftar klien (opsional, bisa dihapus jika ingin admin tetap muncul)
-                    # if email_user in ADMIN_EMAILS_CONFIG:
-                    #     continue
-                    
-                    # Logika tampilan agar tabel rapi
+                    # Hitung sisa hari
                     if email_user in ADMIN_EMAILS_CONFIG:
                         status_user = "admin"
                         paket_user = "ADMIN"
-                        sisa_ai = "∞ Unlimited"
-                        sisa_up = "∞ Unlimited"
+                        sisa_ai = "∞"
+                        sisa_up = "∞"
+                        sisa_hari = "∞"
                     else:
                         status_user = user_info.get("status_subscription", "non-aktif")
                         paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
-                        sisa_ai = user_info.get("kuota_ai", PAKET_LANGGANAN["BASIC"]["ai_limit"] if paket_user == "BASIC" else 0)
-                        sisa_up = user_info.get("kuota_upload", PAKET_LANGGANAN["BASIC"]["upload_limit"] if paket_user == "BASIC" else 0)
+                        sisa_ai = user_info.get("kuota_ai", 0)
+                        sisa_up = user_info.get("kuota_upload", 0)
+                        
+                        # Hitung sisa hari
+                        tanggal_berakhir = user_info.get("tanggal_berakhir")
+                        if status_user == "aktif" and tanggal_berakhir:
+                            sisa_hari = hitung_sisa_hari(tanggal_berakhir)
+                            sisa_hari_display = f"{sisa_hari} hari"
+                            if sisa_hari <= 0:
+                                status_user = "non-aktif ⚠️"
+                                sisa_hari_display = "Kadaluarsa"
+                            elif sisa_hari <= 3:
+                                sisa_hari_display = f"⚠️ {sisa_hari} hari"
+                        else:
+                            sisa_hari_display = "-"
 
                     users_list.append({
-                        "UID": doc.id,
                         "Email": email_user,
                         "Status": status_user,
                         "Paket": paket_user,
                         "Sisa AI": sisa_ai,
-                        "Sisa Upload": sisa_up
+                        "Sisa Upload": sisa_up,
+                        "Sisa Hari": sisa_hari_display,
+                        "UID": doc.id[:8] + "..."  # Potong UID untuk tampilan
                     })
                 
                 if users_list:
                     df_users = pd.DataFrame(users_list)
-                    st.dataframe(df_users, use_container_width=True, hide_index=True)
+                    
+                    # Styling dataframe
+                    def color_status(val):
+                        if val == "admin":
+                            return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                        elif val == "aktif":
+                            return 'background-color: #d1fae5; color: #065f46; font-weight: bold'
+                        elif "non-aktif" in str(val):
+                            return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                        return ''
+                    
+                    def color_sisa_hari(val):
+                        if val == "∞":
+                            return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                        elif "Kadaluarsa" in str(val):
+                            return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                        elif "⚠️" in str(val):
+                            return 'background-color: #fef3c7; color: #92400e; font-weight: bold'
+                        elif "hari" in str(val):
+                            try:
+                                hari = int(str(val).split(" ")[0])
+                                if hari > 7:
+                                    return 'background-color: #d1fae5; color: #065f46'
+                            except:
+                                pass
+                        return ''
+                    
+                    styled_df = df_users.style.applymap(color_status, subset=['Status']).applymap(color_sisa_hari, subset=['Sisa Hari'])
+                    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                    
+                    # Ringkasan
+                    total_aktif = sum(1 for u in users_list if u['Status'] == 'aktif')
+                    total_nonaktif = sum(1 for u in users_list if 'non-aktif' in str(u['Status']))
+                    total_admin = sum(1 for u in users_list if u['Status'] == 'admin')
+                    
+                    col_s1, col_s2, col_s3 = st.columns(3)
+                    with col_s1:
+                        st.metric("Total Aktif", total_aktif)
+                    with col_s2:
+                        st.metric("Total Non-Aktif", total_nonaktif)
+                    with col_s3:
+                        st.metric("Admin", total_admin)
                 else:
                     st.info("Belum ada klien yang terdaftar di sistem.")
 
@@ -435,13 +736,14 @@ else:
             st.markdown("""
             <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
                 <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
-                <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ bulan</span></h4>
+                <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin yang rapatnya tidak terlalu sering.</p>
                 <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
                     <li>✅ <b>5x</b> Premium AI Summary & Mindmap</li>
                     <li>✅ <b>1x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -450,13 +752,14 @@ else:
             <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative;'>
                 <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
                 <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
-                <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ bulan</span></h4>
+                <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, apoteker, atau profesional yang rutin memimpin rapat.</p>
                 <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
                     <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
                     <li>✅ <b>3x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -464,7 +767,7 @@ else:
             st.markdown("""
             <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
                 <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
-                <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ bulan</span></h4>
+                <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass, pembuat SOP, atau institusi dengan arsip jumlah besar.</p>
                 <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
@@ -472,12 +775,13 @@ else:
                     <li>✅ <b>30x</b> Premium AI Summary & Mindmap</li>
                     <li>✅ <b>10x</b> Upload File Audio (Max 30 menit)</li>
                     <li>🌟 <b>Prioritas Support</b> via WhatsApp</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE (HTML/JS)
+    # TAB 1: LIVE CAPTURE (HTML/JS) - TIDAK BERUBAH
     # =====================================================================
     with tab1:
         st.markdown("Mesin **Web Speech API** + **AI LiteLLM Summary** untuk Notulensi Otomatis dengan UI Enterprise.")

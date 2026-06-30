@@ -633,13 +633,16 @@ else:
                     
                     email_user = user_info.get("email", "-")
                     
-                    # Hitung sisa hari
+                    # Inisialisasi default untuk sisa_hari_display
+                    sisa_hari_display = "-"
+                    
+                    # Hitung sisa hari dan status
                     if email_user in ADMIN_EMAILS_CONFIG:
                         status_user = "admin"
                         paket_user = "ADMIN"
                         sisa_ai = "∞"
                         sisa_up = "∞"
-                        sisa_hari = "∞"
+                        sisa_hari_display = "∞"
                     else:
                         status_user = user_info.get("status_subscription", "non-aktif")
                         paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
@@ -650,12 +653,15 @@ else:
                         tanggal_berakhir = user_info.get("tanggal_berakhir")
                         if status_user == "aktif" and tanggal_berakhir:
                             sisa_hari = hitung_sisa_hari(tanggal_berakhir)
-                            sisa_hari_display = f"{sisa_hari} hari"
                             if sisa_hari <= 0:
                                 status_user = "non-aktif ⚠️"
                                 sisa_hari_display = "Kadaluarsa"
                             elif sisa_hari <= 3:
                                 sisa_hari_display = f"⚠️ {sisa_hari} hari"
+                            else:
+                                sisa_hari_display = f"{sisa_hari} hari"
+                        elif status_user != "aktif":
+                            sisa_hari_display = "Kadaluarsa"
                         else:
                             sisa_hari_display = "-"
 
@@ -691,7 +697,8 @@ else:
                             return 'background-color: #fef3c7; color: #92400e; font-weight: bold'
                         elif "hari" in str(val):
                             try:
-                                hari = int(str(val).split(" ")[0])
+                                # Ambil angka hari dari string
+                                hari = int(''.join(filter(str.isdigit, str(val))))
                                 if hari > 7:
                                     return 'background-color: #d1fae5; color: #065f46'
                             except:
@@ -781,7 +788,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE (HTML/JS) - TIDAK BERUBAH
+    # TAB 1: LIVE CAPTURE (HTML/JS)
     # =====================================================================
     with tab1:
         st.markdown("Mesin **Web Speech API** + **AI LiteLLM Summary** untuk Notulensi Otomatis dengan UI Enterprise.")

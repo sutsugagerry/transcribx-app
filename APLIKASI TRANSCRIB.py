@@ -717,6 +717,10 @@ else:
                     };
 
                     aiBtn.onclick = async () => {
+                 // Cek kuota di sisi klien sebelum kirim ke AI
+                 if (!isAdmin && kuotaAiSekarang <= 0) {
+                   return alert("❌ Kuota AI Anda habis!");
+                    }
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
                         if (!apiKey) { alert("⚠️ Masukkan API Key LiteLLM/Gemini terlebih dahulu."); apiKeyInput.focus(); return; }
                         if (!transcript) { alert("⚠️ Transkrip masih kosong."); return; }
@@ -932,25 +936,31 @@ else:
                     st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
                 else:
                     if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
-                        if not llm_key: 
-                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                        else:
-                            with st.spinner("⏳ Sedang mentranskripsi audio..."):
+                      # Cek apakah Admin (Admin bebas kuota)
+                         is_admin = st.session_state.get("user_email") == ADMIN_EMAIL
+                            kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+    
+                           if not is_admin and kuota_upload_sekarang <= 0:
+                          st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin.")
+                       elif not llm_key: 
+                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                            else:
+                                 with st.spinner("⏳ Sedang mentranskripsi audio..."):
                                 try:
                                     url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                     headers = {"Authorization": f"Bearer {llm_key}"}
                                     files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                                     data = {"model": "whisper-1", "response_format": "json"}
                                     response = requests.post(url, headers=headers, files=files, data=data)
-
-                                    if response.status_code == 200:
-                                        st.session_state["offline_transcript"] = response.json().get("text", "")
-                                        
-                                        # [PERBAIKAN] Potong Kuota Upload setelah berhasil
-                                        st.session_state["user_kuota_upload"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({
-                                            "kuota_upload": st.session_state["user_kuota_upload"]
-                                        })
+                       if response.status_code == 200:
+                        st.session_state["offline_transcript"] = response.json().get("text", "")
+                
+                       # Cuma potong kuota jika bukan admin
+                         if not is_admin:
+                            st.session_state["user_kuota_upload"] -= 1
+                             db.collection("users").document(st.session_state["user_uid"]).update({
+                               "kuota_upload": st.session_state["user_kuota_upload"]
+                               })
                                         
                                         st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
                                     else: 
@@ -1124,6 +1134,9 @@ else:
                     </script>
                 </body></html>
                 """
+                is_admin = st.session_state.get("user_email") == ADMIN_EMAIL
+               # Masukkan variabel ini ke dalam string html_code
+                html_code = html_code.replace("const isAdmin = false;", f"const isAdmin = {str(is_admin).lower()};")
                 components.html(cytoscape_html, height=450)
 
             with col_v2:

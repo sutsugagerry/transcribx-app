@@ -26,20 +26,6 @@ hide_st_style = """
             .st-emotion-cache-1vt4ygl {
                 display: none;
             }
-            /* Style untuk tombol edit di dataframe */
-            .edit-btn {
-                background-color: #3b82f6;
-                color: white;
-                border: none;
-                padding: 4px 12px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-weight: bold;
-                font-size: 12px;
-            }
-            .edit-btn:hover {
-                background-color: #2563eb;
-            }
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -133,6 +119,73 @@ def cek_dan_update_status_kadaluarsa(uid, user_data):
     return False
 
 # =====================================================================
+# FUNGSI MANAJEMEN USER
+# =====================================================================
+def get_user_login_history(uid):
+    """Mendapatkan history login user"""
+    try:
+        login_ref = db.collection("users").document(uid).collection("login_history")
+        history = login_ref.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(10).stream()
+        return [h.to_dict() for h in history]
+    except:
+        return []
+
+def record_login(uid, email):
+    """Mencatat login user"""
+    try:
+        login_ref = db.collection("users").document(uid).collection("login_history")
+        login_ref.add({
+            "timestamp": datetime.now().isoformat(),
+            "email": email,
+            "platform": "Streamlit Cloud"
+        })
+        # Update last login di dokumen utama
+        db.collection("users").document(uid).update({
+            "last_login": datetime.now().isoformat(),
+            "login_count": firestore.Increment(1)
+        })
+    except Exception as e:
+        pass  # Silent fail untuk logging
+
+def delete_user(uid, email):
+    """Menghapus user dari Firestore dan subcollection"""
+    try:
+        # Hapus subcollection login_history
+        login_ref = db.collection("users").document(uid).collection("login_history")
+        docs = login_ref.stream()
+        for doc in docs:
+            doc.reference.delete()
+        
+        # Hapus dokumen utama
+        db.collection("users").document(uid).delete()
+        
+        return True, f"User {email} berhasil dihapus dari database."
+    except Exception as e:
+        return False, f"Gagal menghapus user: {str(e)}"
+
+def get_active_users_count():
+    """Menghitung user yang sedang online (login dalam 1 jam terakhir)"""
+    try:
+        satu_jam_lalu = datetime.now() - timedelta(hours=1)
+        users_ref = db.collection("users").where("last_login", ">=", satu_jam_lalu.isoformat()).stream()
+        return len(list(users_ref))
+    except:
+        return 0
+
+def reset_user_kuota(uid, paket):
+    """Reset kuota user berdasarkan paket"""
+    if paket in PAKET_LANGGANAN and paket != "NON-AKTIF":
+        kuota_data = PAKET_LANGGANAN[paket]
+        sekarang = datetime.now()
+        db.collection("users").document(uid).update({
+            "kuota_ai": kuota_data["ai_limit"],
+            "kuota_upload": kuota_data["upload_limit"],
+            "reset_kuota_terakhir": sekarang.isoformat()
+        })
+        return True
+    return False
+
+# =====================================================================
 # FUNGSI FIREBASE (REST API & FIRESTORE)
 # =====================================================================
 def login_firebase(email, password):
@@ -162,8 +215,7 @@ def check_subscription(uid):
             data["paket"] = "BASIC"
             data["kuota_ai"] = PAKET_LANGGANAN["BASIC"]["ai_limit"]
             data["kuota_upload"] = PAKET_LANGGANAN["BASIC"]["upload_limit"]
-            # TANGGAL AKHIR DI SET 30 HARI DARI SEKARANG (MULAI BESOK)
-            data["tanggal_berakhir"] = (datetime.now() + timedelta(days=30)).replace(hour=23, minute=59, second=59).isoformat()
+            data["tanggal_berakhir"] = (datetime.now() + timedelta(days=30)).isoformat()
             doc_ref.update({
                 "paket": data["paket"],
                 "kuota_ai": data["kuota_ai"],
@@ -217,15 +269,10 @@ def cek_reset_kuota_bulanan(uid, user_data):
             perlu_reset = True
     
     if perlu_reset:
-        kuota_default = PAKET_LANGGANAN[paket]
-        db.collection("users").document(uid).update({
-            "kuota_ai": kuota_default["ai_limit"],
-            "kuota_upload": kuota_default["upload_limit"],
-            "reset_kuota_terakhir": sekarang.isoformat()
-        })
+        reset_user_kuota(uid, paket)
         
-        st.session_state["user_kuota_ai"] = kuota_default["ai_limit"]
-        st.session_state["user_kuota_upload"] = kuota_default["upload_limit"]
+        st.session_state["user_kuota_ai"] = PAKET_LANGGANAN[paket]["ai_limit"]
+        st.session_state["user_kuota_upload"] = PAKET_LANGGANAN[paket]["upload_limit"]
         return True
     
     return False
@@ -334,10 +381,8 @@ if "offline_transcript" not in st.session_state:
     st.session_state["offline_transcript"] = ""
 if "offline_summary" not in st.session_state:
     st.session_state["offline_summary"] = None
-if "edit_mode" not in st.session_state:
-    st.session_state["edit_mode"] = False
-if "edit_email" not in st.session_state:
-    st.session_state["edit_email"] = None
+if "confirm_delete" not in st.session_state:
+    st.session_state["confirm_delete"] = None
 
 # =====================================================================
 # HALAMAN LOGIN & REGISTER FIREBASE
@@ -361,6 +406,9 @@ if not st.session_state["logged_in"]:
                         user_data = login_firebase(email_login, pass_login)
                         if "idToken" in user_data:
                             uid = user_data["localId"]
+                            
+                            # Record login
+                            record_login(uid, email_login)
                             
                             if email_login in ADMIN_EMAILS_CONFIG:
                                 st.session_state["logged_in"] = True
@@ -445,8 +493,7 @@ else:
                                 for u in users:
                                     uid = u.id
                                     sekarang = datetime.now()
-                                    # Set tanggal berakhir ke akhir hari (23:59:59)
-                                    tanggal_berakhir_baru = (sekarang + timedelta(days=30)).replace(hour=23, minute=59, second=59)
+                                    tanggal_berakhir_baru = sekarang + timedelta(days=30)
                                     
                                     if new_paket != "NON-AKTIF":
                                         db.collection("users").document(uid).update({
@@ -505,9 +552,9 @@ else:
                                             
                                             tanggal_baru = tgl_akhir + timedelta(days=hari_tambahan)
                                         except:
-                                            tanggal_baru = (sekarang + timedelta(days=hari_tambahan)).replace(hour=23, minute=59, second=59)
+                                            tanggal_baru = sekarang + timedelta(days=hari_tambahan)
                                     else:
-                                        tanggal_baru = (sekarang + timedelta(days=hari_tambahan)).replace(hour=23, minute=59, second=59)
+                                        tanggal_baru = sekarang + timedelta(days=hari_tambahan)
                                     
                                     db.collection("users").document(uid).update({
                                         "status_subscription": "aktif",
@@ -544,8 +591,7 @@ else:
                                     uid = new_user["localId"]
                                     
                                     sekarang = datetime.now()
-                                    # FIX: Set tanggal berakhir ke jam 23:59:59 agar full 30 hari
-                                    tanggal_berakhir = (sekarang + timedelta(days=30)).replace(hour=23, minute=59, second=59)
+                                    tanggal_berakhir = sekarang + timedelta(days=30)
                                     
                                     if paket_reg != "NON-AKTIF":
                                         status_reg = "aktif"
@@ -564,9 +610,11 @@ else:
                                         "kuota_upload": kuota_upload,
                                         "tanggal_mulai": sekarang.isoformat(),
                                         "tanggal_berakhir": tanggal_berakhir.isoformat(),
-                                        "reset_kuota_terakhir": sekarang.isoformat()
+                                        "reset_kuota_terakhir": sekarang.isoformat(),
+                                        "last_login": "Belum pernah login",
+                                        "login_count": 0
                                     })
-                                    st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}! Masa aktif: 30 hari penuh.")
+                                    st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}! Masa aktif: 30 hari.")
                                     st.rerun()
                                 else:
                                     err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
@@ -576,118 +624,21 @@ else:
 
             st.markdown("---")
             
-            # =====================================================================
-            # DAFTAR KLIEN DENGAN TOMBOL EDIT
-            # =====================================================================
-            col_refresh1, col_refresh2 = st.columns([3, 1])
-            with col_refresh1:
-                st.markdown("### 📋 Daftar Klien Terdaftar")
-            with col_refresh2:
-                if st.button("🔄 Refresh Status", use_container_width=True):
-                    users_ref = db.collection("users").stream()
-                    jumlah_expired = 0
-                    for doc in users_ref:
-                        user_data = doc.to_dict()
-                        if cek_dan_update_status_kadaluarsa(doc.id, user_data):
-                            jumlah_expired += 1
-                    
-                    if jumlah_expired > 0:
-                        st.success(f"✅ {jumlah_expired} akun telah dinonaktifkan karena kadaluarsa.")
-                    else:
-                        st.info("Tidak ada akun yang kadaluarsa.")
-                    st.rerun()
+            # ===== BAGIAN DAFTAR KLIEN YANG SUDAH DIRAPIHKAN =====
+            st.markdown("### 📋 Manajemen Klien Terdaftar")
             
-            # FORM EDIT KLIEN
-            if st.session_state.get("edit_mode") and st.session_state.get("edit_email"):
-                st.markdown("---")
-                st.markdown("### ✏️ Edit Data Klien")
-                st.info(f"Mengedit data untuk: **{st.session_state.edit_email}**")
-                
-                # Ambil data user
-                users = db.collection("users").where("email", "==", st.session_state.edit_email).stream()
-                user_doc = None
-                for u in users:
-                    user_doc = u
-                    break
-                
-                if user_doc:
-                    user_data = user_doc.to_dict()
-                    uid = user_doc.id
-                    
-                    with st.form("edit_client_form", clear_on_submit=False):
-                        col_edit1, col_edit2 = st.columns(2)
-                        with col_edit1:
-                            new_paket_edit = st.selectbox(
-                                "Paket", 
-                                ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"],
-                                index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(user_data.get("paket", "BASIC"))
-                            )
-                            new_status = st.selectbox(
-                                "Status",
-                                ["aktif", "non-aktif"],
-                                index=0 if user_data.get("status_subscription") == "aktif" else 1
-                            )
-                        with col_edit2:
-                            new_kuota_ai = st.number_input("Kuota AI", min_value=0, value=user_data.get("kuota_ai", 0))
-                            new_kuota_upload = st.number_input("Kuota Upload", min_value=0, value=user_data.get("kuota_upload", 0))
-                        
-                        # Tanggal berakhir
-                        tanggal_berakhir_str = user_data.get("tanggal_berakhir")
-                        if tanggal_berakhir_str:
-                            try:
-                                tgl_akhir = datetime.fromisoformat(tanggal_berakhir_str)
-                            except:
-                                tgl_akhir = datetime.now() + timedelta(days=30)
-                        else:
-                            tgl_akhir = datetime.now() + timedelta(days=30)
-                        
-                        new_tanggal_berakhir = st.date_input("Tanggal Berakhir", value=tgl_akhir.date())
-                        new_tanggal_berakhir_dt = datetime.combine(new_tanggal_berakhir, datetime.max.time())
-                        
-                        col_btn1, col_btn2, col_btn3 = st.columns(3)
-                        with col_btn1:
-                            btn_save_edit = st.form_submit_button("💾 Simpan Perubahan", type="primary", use_container_width=True)
-                        with col_btn2:
-                            btn_cancel_edit = st.form_submit_button("❌ Batal", use_container_width=True)
-                        
-                        if btn_save_edit:
-                            update_data = {
-                                "paket": new_paket_edit,
-                                "status_subscription": new_status,
-                                "kuota_ai": new_kuota_ai,
-                                "kuota_upload": new_kuota_upload,
-                                "tanggal_berakhir": new_tanggal_berakhir_dt.isoformat()
-                            }
-                            
-                            if new_status == "non-aktif":
-                                update_data.update({
-                                    "kuota_ai": 0,
-                                    "kuota_upload": 0
-                                })
-                            else:
-                                # Jika aktif, pastikan ada limit sesuai paket jika belum diisi manual
-                                if new_kuota_ai == 0 and new_paket_edit in PAKET_LANGGANAN:
-                                    update_data["kuota_ai"] = PAKET_LANGGANAN[new_paket_edit]["ai_limit"]
-                                if new_kuota_upload == 0 and new_paket_edit in PAKET_LANGGANAN:
-                                    update_data["kuota_upload"] = PAKET_LANGGANAN[new_paket_edit]["upload_limit"]
-                            
-                            db.collection("users").document(uid).update(update_data)
-                            st.success(f"✅ Data {st.session_state.edit_email} berhasil diupdate!")
-                            st.session_state["edit_mode"] = False
-                            st.session_state["edit_email"] = None
-                            st.rerun()
-                        
-                        if btn_cancel_edit:
-                            st.session_state["edit_mode"] = False
-                            st.session_state["edit_email"] = None
-                            st.rerun()
-                else:
-                    st.error("Data user tidak ditemukan!")
-                    st.session_state["edit_mode"] = False
-                    st.session_state["edit_email"] = None
-                    st.rerun()
+            # Search dan Filter Bar
+            col_search1, col_search2, col_search3 = st.columns([3, 2, 2])
+            with col_search1:
+                search_query = st.text_input("🔍 Cari email atau paket...", placeholder="Ketik untuk filter...")
+            with col_search2:
+                filter_status = st.selectbox("📊 Filter Status", ["Semua", "Aktif", "Non-Aktif", "Admin"])
+            with col_search3:
+                filter_paket = st.selectbox("📦 Filter Paket", ["Semua", "BASIC", "EXECUTIVE", "MASTER"])
             
-            # TAMPILAN DAFTAR KLIEN
+            # Stats Cards
+            col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+            
             with st.spinner("Memuat data klien..."):
                 users_ref = db.collection("users").stream()
                 users_list = []
@@ -697,6 +648,13 @@ else:
                     
                     email_user = user_info.get("email", "-")
                     
+                    # Cek status kadaluarsa
+                    cek_dan_update_status_kadaluarsa(doc.id, user_info)
+                    
+                    # Ambil data terbaru
+                    doc_refresh = db.collection("users").document(doc.id).get()
+                    user_info = doc_refresh.to_dict()
+                    
                     sisa_hari_display = "-"
                     
                     if email_user in ADMIN_EMAILS_CONFIG:
@@ -705,11 +663,15 @@ else:
                         sisa_ai = "∞"
                         sisa_up = "∞"
                         sisa_hari_display = "∞"
+                        last_login = user_info.get("last_login", "Tidak diketahui")
+                        login_count = user_info.get("login_count", 0)
                     else:
                         status_user = user_info.get("status_subscription", "non-aktif")
                         paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
                         sisa_ai = user_info.get("kuota_ai", 0)
                         sisa_up = user_info.get("kuota_upload", 0)
+                        last_login = user_info.get("last_login", "Belum pernah login")
+                        login_count = user_info.get("login_count", 0)
                         
                         tanggal_berakhir = user_info.get("tanggal_berakhir")
                         if status_user == "aktif" and tanggal_berakhir:
@@ -724,16 +686,15 @@ else:
                         elif status_user != "aktif":
                             sisa_hari_display = "Kadaluarsa"
                     
-                    # Tambahkan tombol edit (kecuali untuk admin)
-                    if email_user not in ADMIN_EMAILS_CONFIG and email_user != "-":
-                        edit_btn = f'<button class="edit-btn" onclick="parent.document.getElementById(\'edit_{email_user}\').click();">✏️ Edit</button>'
-                        # Hidden button untuk trigger
-                        hidden_btn = f'<button id="edit_{email_user}" style="display:none;" onclick="parent.document.querySelector(\'[data-testid="stForm"]\')">Edit</button>'
-                        # Gunakan st.button sebagai gantinya
+                    # Format last login
+                    if isinstance(last_login, str) and last_login != "Belum pernah login" and last_login != "Tidak diketahui":
+                        try:
+                            last_login_display = last_login[:19] if len(last_login) > 19 else last_login
+                        except:
+                            last_login_display = last_login
                     else:
-                        edit_btn = "-"
-                        hidden_btn = ""
-                    
+                        last_login_display = last_login
+
                     users_list.append({
                         "Email": email_user,
                         "Status": status_user,
@@ -741,73 +702,287 @@ else:
                         "Sisa AI": sisa_ai,
                         "Sisa Upload": sisa_up,
                         "Sisa Hari": sisa_hari_display,
-                        "UID": doc.id[:8] + "...",
-                        "Aksi": email_user  # Temporary untuk identifikasi
+                        "Last Login": last_login_display,
+                        "Login Count": login_count,
+                        "UID": doc.id,
+                        "UID_Short": doc.id[:8] + "..."
                     })
+            
+            # Filter data berdasarkan search dan filter
+            filtered_users = users_list.copy()
+            
+            if search_query:
+                search_query = search_query.lower()
+                filtered_users = [u for u in filtered_users if 
+                                 search_query in u['Email'].lower() or 
+                                 search_query in u['Paket'].lower()]
+            
+            if filter_status != "Semua":
+                if filter_status == "Aktif":
+                    filtered_users = [u for u in filtered_users if u['Status'] == 'aktif']
+                elif filter_status == "Non-Aktif":
+                    filtered_users = [u for u in filtered_users if 'non-aktif' in str(u['Status'])]
+                elif filter_status == "Admin":
+                    filtered_users = [u for u in filtered_users if u['Status'] == 'admin']
+            
+            if filter_paket != "Semua":
+                filtered_users = [u for u in filtered_users if u['Paket'] == filter_paket]
+            
+            # Update stats
+            total_aktif = sum(1 for u in users_list if u['Status'] == 'aktif')
+            total_nonaktif = sum(1 for u in users_list if 'non-aktif' in str(u['Status']))
+            total_admin = sum(1 for u in users_list if u['Status'] == 'admin')
+            total_users = len(users_list)
+            active_now = get_active_users_count()
+            
+            # Tampilkan stats cards
+            with col_stat1:
+                st.metric("👥 Total Users", total_users, delta=f"{active_now} online sekarang", delta_color="normal")
+            with col_stat2:
+                st.metric("✅ Aktif", total_aktif)
+            with col_stat3:
+                st.metric("❌ Non-Aktif", total_nonaktif)
+            with col_stat4:
+                st.metric("👑 Admin", total_admin)
+            
+            # Quick alerts
+            users_near_expiry = [u for u in users_list if "⚠️" in str(u.get('Sisa Hari', ''))]
+            never_logged = [u for u in users_list if u['Last Login'] == 'Belum pernah login' and u['Status'] != 'admin']
+            
+            if users_near_expiry or never_logged:
+                alert_col1, alert_col2 = st.columns(2)
+                with alert_col1:
+                    if users_near_expiry:
+                        st.warning(f"⚠️ {len(users_near_expiry)} user hampir kadaluarsa (≤ 3 hari)")
+                with alert_col2:
+                    if never_logged:
+                        st.info(f"💤 {len(never_logged)} user belum pernah login")
+            
+            st.markdown("---")
+            
+            # Tampilkan tabel user
+            if filtered_users:
+                # Buat dataframe untuk display
+                df_display = pd.DataFrame([{
+                    "📧 Email": u['Email'],
+                    "📊 Status": u['Status'],
+                    "📦 Paket": u['Paket'],
+                    "💎 AI": u['Sisa AI'],
+                    "📤 Upload": u['Sisa Upload'],
+                    "⏳ Sisa Hari": u['Sisa Hari'],
+                    "🕒 Last Login": u['Last Login'],
+                    "🔢 Login": u['Login Count'],
+                    "🔑 ID": u['UID_Short']
+                } for u in filtered_users])
                 
-                if users_list:
-                    # Tampilkan dengan kolom aksi yang bisa di-klik
-                    for idx, user in enumerate(users_list):
-                        cols = st.columns([2, 1, 1, 1, 1, 1.5, 1, 0.8])
+                # Fungsi styling
+                def color_status(val):
+                    if val == "admin":
+                        return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                    elif val == "aktif":
+                        return 'background-color: #d1fae5; color: #065f46; font-weight: bold'
+                    elif "non-aktif" in str(val):
+                        return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                    return ''
+                
+                def color_sisa_hari(val):
+                    if val == "∞":
+                        return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                    elif "Kadaluarsa" in str(val):
+                        return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                    elif "⚠️" in str(val):
+                        return 'background-color: #fef3c7; color: #92400e; font-weight: bold'
+                    elif "hari" in str(val):
+                        try:
+                            hari = int(''.join(filter(str.isdigit, str(val))))
+                            if hari > 7:
+                                return 'background-color: #d1fae5; color: #065f46'
+                        except:
+                            pass
+                    return ''
+                
+                # Styling
+                try:
+                    styled_df = df_display.style \
+                        .map(color_status, subset=['📊 Status']) \
+                        .map(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                except:
+                    styled_df = df_display.style \
+                        .applymap(color_status, subset=['📊 Status']) \
+                        .applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                
+                st.dataframe(
+                    styled_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    height=400
+                )
+                
+                st.markdown(f"*Menampilkan {len(filtered_users)} dari {total_users} total pengguna*")
+                
+                st.markdown("---")
+                
+                # Fitur Manajemen User Individual
+                st.markdown("### 🔧 Manajemen Individual User")
+                
+                with st.expander("🎯 Pilih User untuk Dikelola", expanded=True):
+                    # Select user dari list
+                    user_options = [u['Email'] for u in filtered_users if u['Status'] != 'admin']
+                    if user_options:
+                        selected_email = st.selectbox("Pilih Email User:", user_options, key="user_management_select")
                         
-                        # Email
-                        cols[0].write(user["Email"])
-                        
-                        # Status dengan warna
-                        status = user["Status"]
-                        if status == "admin":
-                            cols[1].markdown(f'<span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:10px; font-weight:bold;">{status}</span>', unsafe_allow_html=True)
-                        elif "aktif" in status:
-                            cols[1].markdown(f'<span style="background:#d1fae5; color:#065f46; padding:2px 8px; border-radius:10px; font-weight:bold;">{status}</span>', unsafe_allow_html=True)
-                        elif "non-aktif" in status:
-                            cols[1].markdown(f'<span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px; font-weight:bold;">{status}</span>', unsafe_allow_html=True)
-                        
-                        # Paket
-                        cols[2].write(user["Paket"])
-                        
-                        # Sisa AI
-                        cols[3].write(user["Sisa AI"])
-                        
-                        # Sisa Upload
-                        cols[4].write(user["Sisa Upload"])
-                        
-                        # Sisa Hari
-                        sisa_hari = user["Sisa Hari"]
-                        if "⚠️" in str(sisa_hari):
-                            cols[5].markdown(f'<span style="color:#92400e; font-weight:bold; background:#fef3c7; padding:2px 8px; border-radius:10px;">{sisa_hari}</span>', unsafe_allow_html=True)
-                        elif "Kadaluarsa" in str(sisa_hari):
-                            cols[5].markdown(f'<span style="color:#991b1b; font-weight:bold; background:#fee2e2; padding:2px 8px; border-radius:10px;">{sisa_hari}</span>', unsafe_allow_html=True)
-                        elif "∞" in str(sisa_hari):
-                            cols[5].markdown(f'<span style="color:#1e40af; font-weight:bold; background:#dbeafe; padding:2px 8px; border-radius:10px;">{sisa_hari}</span>', unsafe_allow_html=True)
-                        else:
-                            cols[5].write(sisa_hari)
-                        
-                        # UID
-                        cols[6].write(user["UID"])
-                        
-                        # Tombol Edit (kecuali admin)
-                        if user["Email"] not in ADMIN_EMAILS_CONFIG and user["Email"] != "-":
-                            if cols[7].button("✏️", key=f"edit_btn_{idx}", help="Edit data klien"):
-                                st.session_state["edit_mode"] = True
-                                st.session_state["edit_email"] = user["Email"]
-                                st.rerun()
-                        else:
-                            cols[7].write("-")
+                        if selected_email:
+                            selected_user = next((u for u in filtered_users if u['Email'] == selected_email), None)
+                            if selected_user:
+                                st.markdown("---")
+                                
+                                # Info user
+                                col_info1, col_info2, col_info3 = st.columns(3)
+                                with col_info1:
+                                    st.markdown(f"""
+                                    <div style='background-color:#f1f5f9; padding:15px; border-radius:10px;'>
+                                        <p style='font-size:12px; color:#64748b; margin:0;'>📧 Email</p>
+                                        <p style='font-weight:bold; color:#1e293b; margin:5px 0;'>{selected_user['Email']}</p>
+                                        <p style='font-size:12px; color:#64748b; margin:10px 0 0 0;'>📦 Paket</p>
+                                        <p style='font-weight:bold; color:#1e293b; margin:5px 0;'>{selected_user['Paket']}</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                with col_info2:
+                                    st.markdown(f"""
+                                    <div style='background-color:#f1f5f9; padding:15px; border-radius:10px;'>
+                                        <p style='font-size:12px; color:#64748b; margin:0;'>💎 Kuota AI</p>
+                                        <p style='font-weight:bold; color:#1e293b; margin:5px 0;'>{selected_user['Sisa AI']}</p>
+                                        <p style='font-size:12px; color:#64748b; margin:10px 0 0 0;'>📤 Kuota Upload</p>
+                                        <p style='font-weight:bold; color:#1e293b; margin:5px 0;'>{selected_user['Sisa Upload']}</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                with col_info3:
+                                    st.markdown(f"""
+                                    <div style='background-color:#f1f5f9; padding:15px; border-radius:10px;'>
+                                        <p style='font-size:12px; color:#64748b; margin:0;'>⏳ Masa Aktif</p>
+                                        <p style='font-weight:bold; color:#1e293b; margin:5px 0;'>{selected_user['Sisa Hari']}</p>
+                                        <p style='font-size:12px; color:#64748b; margin:10px 0 0 0;'>🕒 Last Login</p>
+                                        <p style='font-weight:bold; color:#1e293b; margin:5px 0; font-size:12px;'>{selected_user['Last Login']}</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                st.markdown("---")
+                                
+                                # Tombol aksi
+                                col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+                                
+                                with col_btn1:
+                                    if st.button("🔍 Riwayat Login", use_container_width=True, key="btn_history"):
+                                        with st.spinner("Memuat riwayat login..."):
+                                            login_history = get_user_login_history(selected_user['UID'])
+                                            if login_history:
+                                                st.write("**📜 10 Login Terakhir:**")
+                                                history_df = pd.DataFrame([{
+                                                    "Waktu": h.get('timestamp', '')[:19] if h.get('timestamp') else '-',
+                                                    "Platform": h.get('platform', 'Streamlit Cloud')
+                                                } for h in login_history[:10]])
+                                                st.dataframe(history_df, use_container_width=True, hide_index=True)
+                                            else:
+                                                st.info("Belum ada riwayat login")
+                                
+                                with col_btn2:
+                                    if st.button("🔄 Reset Kuota", use_container_width=True, key="btn_reset_kuota"):
+                                        if selected_user['Paket'] in PAKET_LANGGANAN:
+                                            reset_user_kuota(selected_user['UID'], selected_user['Paket'])
+                                            st.success(f"✅ Kuota user {selected_user['Email']} berhasil direset!")
+                                            st.rerun()
+                                        else:
+                                            st.error("Paket tidak valid")
+                                
+                                with col_btn3:
+                                    if selected_user['Status'] != 'aktif' and 'non-aktif' in str(selected_user['Status']):
+                                        if st.button("🔄 Aktifkan Kembali", use_container_width=True, key="btn_activate"):
+                                            sekarang = datetime.now()
+                                            tanggal_berakhir = sekarang + timedelta(days=30)
+                                            db.collection("users").document(selected_user['UID']).update({
+                                                "status_subscription": "aktif",
+                                                "paket": "BASIC",
+                                                "kuota_ai": PAKET_LANGGANAN["BASIC"]["ai_limit"],
+                                                "kuota_upload": PAKET_LANGGANAN["BASIC"]["upload_limit"],
+                                                "tanggal_mulai": sekarang.isoformat(),
+                                                "tanggal_berakhir": tanggal_berakhir.isoformat(),
+                                                "reset_kuota_terakhir": sekarang.isoformat()
+                                            })
+                                            st.success(f"✅ User {selected_user['Email']} diaktifkan kembali dengan paket BASIC!")
+                                            st.rerun()
+                                
+                                with col_btn4:
+                                    if st.button("❌ Hapus User", type="secondary", use_container_width=True, key="btn_delete"):
+                                        if st.session_state.get('confirm_delete') != selected_user['UID']:
+                                            st.session_state['confirm_delete'] = selected_user['UID']
+                                            st.error(f"⚠️ KLIK LAGI untuk konfirmasi penghapusan **{selected_user['Email']}**. Data tidak dapat dikembalikan!")
+                                        else:
+                                            success, message = delete_user(selected_user['UID'], selected_user['Email'])
+                                            if success:
+                                                st.success(message)
+                                                st.session_state.pop('confirm_delete', None)
+                                                time.sleep(1)
+                                                st.rerun()
+                                            else:
+                                                st.error(message)
+                    else:
+                        st.info("Tidak ada user non-admin yang tersedia untuk dikelola.")
+                
+                # Bulk Actions
+                st.markdown("---")
+                with st.expander("🛠️ Bulk Actions (Operasi Massal)", expanded=False):
+                    st.markdown("### Operasi Massal untuk User Tidak Aktif")
                     
-                    # Statistik
-                    total_aktif = sum(1 for u in users_list if 'aktif' in str(u['Status']) and u['Status'] != 'admin')
-                    total_nonaktif = sum(1 for u in users_list if 'non-aktif' in str(u['Status']))
-                    total_admin = sum(1 for u in users_list if u['Status'] == 'admin')
+                    inactive_users = [u for u in users_list if 'non-aktif' in str(u['Status'])]
+                    never_logged_users = [u for u in users_list if u['Last Login'] == 'Belum pernah login' and u['Status'] != 'admin']
                     
-                    col_s1, col_s2, col_s3 = st.columns(3)
-                    with col_s1:
-                        st.metric("Total Aktif", total_aktif)
-                    with col_s2:
-                        st.metric("Total Non-Aktif", total_nonaktif)
-                    with col_s3:
-                        st.metric("Admin", total_admin)
-                else:
-                    st.info("Belum ada klien yang terdaftar di sistem.")
+                    col_bulk1, col_bulk2 = st.columns(2)
+                    
+                    with col_bulk1:
+                        st.metric("👻 User Non-Aktif", len(inactive_users))
+                        if inactive_users:
+                            if st.button("🗑️ Hapus Semua User Non-Aktif", type="secondary", use_container_width=True, key="btn_bulk_delete_inactive"):
+                                if st.session_state.get('confirm_bulk_delete') != 'inactive':
+                                    st.session_state['confirm_bulk_delete'] = 'inactive'
+                                    st.error(f"⚠️ KLIK LAGI untuk menghapus {len(inactive_users)} user non-aktif! Data tidak dapat dikembalikan!")
+                                else:
+                                    with st.spinner(f"Menghapus {len(inactive_users)} user non-aktif..."):
+                                        deleted_count = 0
+                                        for user in inactive_users:
+                                            success, _ = delete_user(user['UID'], user['Email'])
+                                            if success:
+                                                deleted_count += 1
+                                        st.success(f"✅ Berhasil menghapus {deleted_count} user non-aktif!")
+                                        st.session_state.pop('confirm_bulk_delete', None)
+                                        time.sleep(1)
+                                        st.rerun()
+                        else:
+                            st.info("Tidak ada user non-aktif.")
+                    
+                    with col_bulk2:
+                        st.metric("💤 Belum Pernah Login", len(never_logged_users))
+                        if never_logged_users:
+                            if st.button("🗑️ Hapus User Tidak Aktif", type="secondary", use_container_width=True, key="btn_bulk_delete_never_logged"):
+                                if st.session_state.get('confirm_bulk_delete') != 'never_logged':
+                                    st.session_state['confirm_bulk_delete'] = 'never_logged'
+                                    st.error(f"⚠️ KLIK LAGI untuk menghapus {len(never_logged_users)} user yang tidak pernah login!")
+                                else:
+                                    with st.spinner(f"Menghapus {len(never_logged_users)} user..."):
+                                        deleted_count = 0
+                                        for user in never_logged_users:
+                                            success, _ = delete_user(user['UID'], user['Email'])
+                                            if success:
+                                                deleted_count += 1
+                                        st.success(f"✅ Berhasil menghapus {deleted_count} user yang tidak pernah login!")
+                                        st.session_state.pop('confirm_bulk_delete', None)
+                                        time.sleep(1)
+                                        st.rerun()
+                        else:
+                            st.info("Semua user pernah login.")
+            else:
+                st.info("🔍 Tidak ada user yang sesuai dengan filter yang dipilih.")
 
     else:
         tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])

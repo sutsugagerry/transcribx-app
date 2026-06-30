@@ -53,39 +53,32 @@ PAKET_LANGGANAN = {
 # =====================================================================
 # KONFIGURASI EMAIL ADMIN (SUPPORT MULTIPLE ADMIN)
 # =====================================================================
-# Ambil dari secrets, support list/array
 ADMIN_EMAILS_CONFIG = st.secrets.get("ADMIN_EMAILS", [])
 
-# Fallback: jika ADMIN_EMAILS tidak ada, coba ADMIN_EMAIL (single)
 if not ADMIN_EMAILS_CONFIG:
     single_admin = st.secrets.get("ADMIN_EMAIL", "")
     if single_admin:
         ADMIN_EMAILS_CONFIG = [single_admin]
     else:
-        # Default fallback jika tidak ada konfigurasi sama sekali
         ADMIN_EMAILS_CONFIG = ["sutsuga.gery@gmail.com"]
 
 # =====================================================================
 # FUNGSI UNTUK CEK APAKAH USER ADALAH ADMIN
 # =====================================================================
 def is_admin():
-    """Cek apakah user yang login adalah admin (support multiple admin)"""
     return st.session_state.get("user_email") in ADMIN_EMAILS_CONFIG
 
 # =====================================================================
 # FUNGSI HELPER UNTUK TANGGAL
 # =====================================================================
 def hitung_sisa_hari(tanggal_berakhir_str):
-    """Hitung sisa hari dari sekarang sampai tanggal berakhir"""
     if not tanggal_berakhir_str:
         return 0
     
     try:
-        # Parse tanggal dari format string ISO
         if isinstance(tanggal_berakhir_str, str):
             tanggal_berakhir = datetime.fromisoformat(tanggal_berakhir_str)
         elif hasattr(tanggal_berakhir_str, 'timestamp'):
-            # Jika dari Firestore Timestamp
             tanggal_berakhir = tanggal_berakhir_str.replace(tzinfo=None)
         else:
             return 0
@@ -95,21 +88,15 @@ def hitung_sisa_hari(tanggal_berakhir_str):
         sisa_hari = selisih.days
         
         return sisa_hari if sisa_hari > 0 else 0
-    except Exception as e:
+    except:
         return 0
 
 def cek_dan_update_status_kadaluarsa(uid, user_data):
-    """
-    Cek apakah subscription sudah kadaluarsa.
-    Jika iya, update status ke non-aktif dan reset kuota.
-    Return True jika status berubah.
-    """
     if not user_data:
         return False
     
     status = user_data.get("status_subscription", "non-aktif")
     
-    # Skip untuk admin atau yang sudah non-aktif
     if status == "non-aktif" or user_data.get("email") in ADMIN_EMAILS_CONFIG:
         return False
     
@@ -119,9 +106,7 @@ def cek_dan_update_status_kadaluarsa(uid, user_data):
     
     sisa_hari = hitung_sisa_hari(tanggal_berakhir)
     
-    # Jika sudah kadaluarsa (sisa_hari <= 0)
     if sisa_hari <= 0:
-        # Update database ke non-aktif
         db.collection("users").document(uid).update({
             "status_subscription": "non-aktif",
             "paket": "NON-AKTIF",
@@ -154,20 +139,16 @@ def check_subscription(uid):
     if doc.exists:
         data = doc.to_dict()
         
-        # Cek dan update status kadaluarsa
         cek_dan_update_status_kadaluarsa(uid, data)
         
-        # Refresh data setelah kemungkinan update
         doc = doc_ref.get()
         data = doc.to_dict()
         
-        # [PERBAIKAN] Auto-Migrasi untuk user lama yang belum punya field paket
         if "paket" not in data and data.get("status_subscription") == "aktif":
             data["paket"] = "BASIC"
             data["kuota_ai"] = PAKET_LANGGANAN["BASIC"]["ai_limit"]
             data["kuota_upload"] = PAKET_LANGGANAN["BASIC"]["upload_limit"]
             data["tanggal_berakhir"] = (datetime.now() + timedelta(days=30)).isoformat()
-            # Simpan update ke database agar permanen
             doc_ref.update({
                 "paket": data["paket"],
                 "kuota_ai": data["kuota_ai"],
@@ -177,18 +158,10 @@ def check_subscription(uid):
         return data
     return {"status_subscription": "non-aktif", "paket": "NON-AKTIF"}
 
-# =====================================================================
-# FUNGSI UNTUK RESET KUOTA BULANAN (Dipanggil saat login/refresh)
-# =====================================================================
 def cek_reset_kuota_bulanan(uid, user_data):
-    """
-    Cek apakah sudah waktunya reset kuota bulanan.
-    Reset terjadi setiap 30 hari dari tanggal_mulai atau tanggal_reset_terakhir.
-    """
     if not user_data or user_data.get("status_subscription") != "aktif":
         return False
     
-    # Skip admin
     if user_data.get("email") in ADMIN_EMAILS_CONFIG:
         return False
     
@@ -196,7 +169,6 @@ def cek_reset_kuota_bulanan(uid, user_data):
     if paket not in PAKET_LANGGANAN:
         return False
     
-    # Cek apakah perlu reset kuota
     sekarang = datetime.now()
     reset_terakhir_str = user_data.get("reset_kuota_terakhir")
     
@@ -209,13 +181,11 @@ def cek_reset_kuota_bulanan(uid, user_data):
             else:
                 reset_terakhir = reset_terakhir_str.replace(tzinfo=None)
             
-            # Reset setiap 30 hari
             if (sekarang - reset_terakhir).days >= 30:
                 perlu_reset = True
         except:
             perlu_reset = True
     else:
-        # Jika belum ada catatan reset, cek dari tanggal_mulai
         tanggal_mulai_str = user_data.get("tanggal_mulai")
         if tanggal_mulai_str:
             try:
@@ -232,7 +202,6 @@ def cek_reset_kuota_bulanan(uid, user_data):
             perlu_reset = True
     
     if perlu_reset:
-        # Reset kuota ke nilai default paket
         kuota_default = PAKET_LANGGANAN[paket]
         db.collection("users").document(uid).update({
             "kuota_ai": kuota_default["ai_limit"],
@@ -240,7 +209,6 @@ def cek_reset_kuota_bulanan(uid, user_data):
             "reset_kuota_terakhir": sekarang.isoformat()
         })
         
-        # Update session state
         st.session_state["user_kuota_ai"] = kuota_default["ai_limit"]
         st.session_state["user_kuota_upload"] = kuota_default["upload_limit"]
         return True
@@ -315,11 +283,9 @@ with st.sidebar:
     st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold;'>GERMIC System Online</p>", unsafe_allow_html=True)
     st.markdown("---")
     
-    # Menampilkan Info Akun jika sudah login
     if st.session_state.get("logged_in"):
         st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
         
-        # [PERBAIKAN] Tampilan khusus untuk Admin (support multiple admin)
         if is_admin():
             st.markdown("**🏷️ Paket:** 👑 ADMIN (Unlimited Access)")
             st.markdown("**✨ Sisa AI Summary:** ♾️ Unlimited", unsafe_allow_html=True)
@@ -329,13 +295,11 @@ with st.sidebar:
             st.markdown(f"**🏷️ Paket:** {paket}")
             
             if paket != 'NON-AKTIF':
-                # Highlight merah jika kuota habis
                 ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
                 up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
                 st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
                 st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
                 
-                # Tampilkan sisa hari
                 sisa_hari = st.session_state.get('sisa_hari', 0)
                 hari_color = "red" if sisa_hari <= 3 else "green" if sisa_hari > 7 else "orange"
                 st.markdown(f"**⏳ Sisa Masa Aktif:** <span style='color:{hari_color}; font-weight:bold;'>{sisa_hari} hari</span>", unsafe_allow_html=True)
@@ -379,14 +343,13 @@ if not st.session_state["logged_in"]:
                         if "idToken" in user_data:
                             uid = user_data["localId"]
                             
-                            # [PERBAIKAN] Cek apakah ini admin (support multiple admin)
                             if email_login in ADMIN_EMAILS_CONFIG:
                                 st.session_state["logged_in"] = True
                                 st.session_state["user_email"] = email_login
                                 st.session_state["user_uid"] = uid
                                 st.session_state["user_paket"] = "ADMIN"
-                                st.session_state["user_kuota_ai"] = 999999  # Unlimited
-                                st.session_state["user_kuota_upload"] = 999999  # Unlimited
+                                st.session_state["user_kuota_ai"] = 999999
+                                st.session_state["user_kuota_upload"] = 999999
                                 st.session_state["sisa_hari"] = 999999
                                 st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
                                 st.rerun()
@@ -394,11 +357,9 @@ if not st.session_state["logged_in"]:
                             user_db_info = check_subscription(uid)
                             sub_status = user_db_info.get("status_subscription", "non-aktif")
                             
-                            # Hitung sisa hari
                             sisa_hari = hitung_sisa_hari(user_db_info.get("tanggal_berakhir"))
                             
                             if sub_status == "aktif":
-                                # Cek reset kuota bulanan
                                 cek_reset_kuota_bulanan(uid, user_db_info)
                                 
                                 st.session_state["logged_in"] = True
@@ -434,25 +395,20 @@ else:
 
     if is_admin():
         tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
-        tab_admin = tabs[0]
-        tab1 = tabs[1]
-        tab2 = tabs[2]
-        tab_paket = tabs[3]
+        tab_admin, tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3]
         
         # --- TAB ADMIN PANEL ---
         with tab_admin:
             st.markdown("### 👑 Dashboard Admin: Kelola Akun Klien")
             
-            # Tampilkan daftar admin yang terdaftar
             with st.expander("👥 Daftar Admin Sistem", expanded=False):
-                st.info(f"Admin yang terdaftar di sistem:")
+                st.info("Admin yang terdaftar di sistem:")
                 for i, admin_email in enumerate(ADMIN_EMAILS_CONFIG, 1):
                     st.markdown(f"{i}. 👑 **{admin_email}**")
                 st.caption("Untuk menambah admin, edit `ADMIN_EMAILS` di Streamlit Secrets.")
             
-            # [FITUR BARU] Update / Upgrade Paket Klien Lama
             with st.expander("🚀 UPDATE / UPGRADE PAKET KLIEN LAMA", expanded=False):
-                st.info("Gunakan form ini untuk mengubah paket klien lama (misal naik dari BASIC ke EXECUTIVE). Kuota akan di-reset dan masa aktif 30 hari dari sekarang.")
+                st.info("Gunakan form ini untuk mengubah paket klien lama. Kuota akan di-reset dan masa aktif 30 hari dari sekarang.")
                 
                 col_up1, col_up2 = st.columns(2)
                 with col_up1:
@@ -462,7 +418,6 @@ else:
                         btn_update = st.form_submit_button("🔄 Update Paket Klien", type="primary")
 
                         if btn_update and email_to_update:
-                            # Cegah admin mengubah paket admin lain
                             if email_to_update in ADMIN_EMAILS_CONFIG:
                                 st.error("⚠️ Tidak dapat mengubah paket Admin! Admin memiliki akses Unlimited.")
                             else:
@@ -500,7 +455,6 @@ else:
                                     st.error(f"⚠️ Email {email_to_update} tidak ditemukan di database.")
                 
                 with col_up2:
-                    # Form perpanjang manual
                     with st.form("admin_extend_form", clear_on_submit=True):
                         email_extend = st.text_input("Email Klien untuk Diperpanjang")
                         hari_tambahan = st.number_input("Tambah Hari", min_value=1, max_value=365, value=30)
@@ -516,7 +470,6 @@ else:
                                     uid = u.id
                                     user_doc = u.to_dict()
                                     
-                                    # Hitung tanggal berakhir baru
                                     sekarang = datetime.now()
                                     tanggal_berakhir_lama = user_doc.get("tanggal_berakhir")
                                     
@@ -527,7 +480,6 @@ else:
                                             else:
                                                 tgl_akhir = tanggal_berakhir_lama.replace(tzinfo=None)
                                             
-                                            # Jika sudah kadaluarsa, mulai dari sekarang
                                             if tgl_akhir < sekarang:
                                                 tgl_akhir = sekarang
                                             
@@ -563,7 +515,6 @@ else:
                 
                 if btn_reg:
                     if email_reg and len(pass_reg) >= 6:
-                        # Cegah registrasi dengan email admin
                         if email_reg in ADMIN_EMAILS_CONFIG:
                             st.error("⚠️ Email ini terdaftar sebagai Admin. Tidak dapat mendaftarkan admin sebagai klien.")
                         else:
@@ -604,13 +555,11 @@ else:
 
             st.markdown("---")
             
-            # Tombol Refresh Status
             col_refresh1, col_refresh2 = st.columns([3, 1])
             with col_refresh1:
                 st.markdown("### 📋 Daftar Klien Terdaftar")
             with col_refresh2:
                 if st.button("🔄 Refresh Status", use_container_width=True):
-                    # Force check semua user untuk kadaluarsa
                     users_ref = db.collection("users").stream()
                     jumlah_expired = 0
                     for doc in users_ref:
@@ -633,10 +582,8 @@ else:
                     
                     email_user = user_info.get("email", "-")
                     
-                    # Inisialisasi default untuk sisa_hari_display
                     sisa_hari_display = "-"
                     
-                    # Hitung sisa hari dan status
                     if email_user in ADMIN_EMAILS_CONFIG:
                         status_user = "admin"
                         paket_user = "ADMIN"
@@ -649,7 +596,6 @@ else:
                         sisa_ai = user_info.get("kuota_ai", 0)
                         sisa_up = user_info.get("kuota_upload", 0)
                         
-                        # Hitung sisa hari
                         tanggal_berakhir = user_info.get("tanggal_berakhir")
                         if status_user == "aktif" and tanggal_berakhir:
                             sisa_hari = hitung_sisa_hari(tanggal_berakhir)
@@ -662,8 +608,6 @@ else:
                                 sisa_hari_display = f"{sisa_hari} hari"
                         elif status_user != "aktif":
                             sisa_hari_display = "Kadaluarsa"
-                        else:
-                            sisa_hari_display = "-"
 
                     users_list.append({
                         "Email": email_user,
@@ -672,13 +616,13 @@ else:
                         "Sisa AI": sisa_ai,
                         "Sisa Upload": sisa_up,
                         "Sisa Hari": sisa_hari_display,
-                        "UID": doc.id[:8] + "..."  # Potong UID untuk tampilan
+                        "UID": doc.id[:8] + "..."
                     })
                 
                 if users_list:
                     df_users = pd.DataFrame(users_list)
                     
-                    # Styling dataframe
+                    # Fungsi styling
                     def color_status(val):
                         if val == "admin":
                             return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
@@ -697,7 +641,6 @@ else:
                             return 'background-color: #fef3c7; color: #92400e; font-weight: bold'
                         elif "hari" in str(val):
                             try:
-                                # Ambil angka hari dari string
                                 hari = int(''.join(filter(str.isdigit, str(val))))
                                 if hari > 7:
                                     return 'background-color: #d1fae5; color: #065f46'
@@ -705,10 +648,14 @@ else:
                                 pass
                         return ''
                     
-                    styled_df = df_users.style.applymap(color_status, subset=['Status']).applymap(color_sisa_hari, subset=['Sisa Hari'])
+                    # Styling - gunakan try-except untuk kompatibilitas
+                    try:
+                        styled_df = df_users.style.map(color_status, subset=['Status']).map(color_sisa_hari, subset=['Sisa Hari'])
+                    except:
+                        styled_df = df_users.style.applymap(color_status, subset=['Status']).applymap(color_sisa_hari, subset=['Sisa Hari'])
+                    
                     st.dataframe(styled_df, use_container_width=True, hide_index=True)
                     
-                    # Ringkasan
                     total_aktif = sum(1 for u in users_list if u['Status'] == 'aktif')
                     total_nonaktif = sum(1 for u in users_list if 'non-aktif' in str(u['Status']))
                     total_admin = sum(1 for u in users_list if u['Status'] == 'admin')
@@ -724,18 +671,15 @@ else:
                     st.info("Belum ada klien yang terdaftar di sistem.")
 
     else:
-        # Jika bukan Admin (Klien Biasa)
         tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
-        tab1 = tabs[0]
-        tab2 = tabs[1]
-        tab_paket = tabs[2]
+        tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2]
 
     # =====================================================================
-    # TAB BARU: INFO PAKET LANGGANAN
+    # TAB INFO PAKET LANGGANAN
     # =====================================================================
     with tab_paket:
         st.markdown("### 📊 Pilihan Paket Langganan TranscribX")
-        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai dengan kebutuhan Anda atau perusahaan. Hubungi admin untuk upgrade.")
+        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai. Hubungi admin untuk upgrade.")
         st.write("")
         
         col_p1, col_p2, col_p3 = st.columns(3)
@@ -744,7 +688,7 @@ else:
             <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
                 <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
                 <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
-                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin yang rapatnya tidak terlalu sering.</p>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin.</p>
                 <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
@@ -760,7 +704,7 @@ else:
                 <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
                 <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
                 <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
-                <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, apoteker, atau profesional yang rutin memimpin rapat.</p>
+                <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, atau profesional.</p>
                 <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
@@ -775,7 +719,7 @@ else:
             <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
                 <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
                 <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
-                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass, pembuat SOP, atau institusi dengan arsip jumlah besar.</p>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass atau institusi.</p>
                 <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
@@ -823,7 +767,6 @@ else:
                 .line-final { margin-bottom: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #3b82f6; font-size: 14px; line-height: 1.5; }
                 .line-interim { margin-bottom: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #cbd5e1; font-size: 14px; opacity: 0.7; font-style: italic; }
                 .timestamp { font-weight: bold; color: #64748b; margin-right: 8px; font-size: 12px; }
-                .reconnecting { color: #ef4444; font-size: 12px; margin-left: 8px; font-style: italic; }
                 #audioContainer { display: flex; flex-direction: column; gap: 10px; }
                 .audio-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
                 .fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -833,7 +776,6 @@ else:
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
-                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT
                 window.downloadMarkmapImage = function(wrapperId, title, event) {
                     const container = document.getElementById(wrapperId);
                     const svgEl = container.querySelector('svg');
@@ -841,30 +783,25 @@ else:
                     const btn = event.currentTarget;
                     const originalText = btn.innerHTML;
                     btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
                     try {
                         const g = svgEl.querySelector('g');
                         if (!g) throw new Error("G element not found");
-
                         const originalContainerWidth = container.style.width; const originalContainerHeight = container.style.height;
                         const originalContainerOverflow = container.style.overflow;
                         const originalSvgWidth = svgEl.style.width; const originalSvgHeight = svgEl.style.height;
                         const originalSvgAttrWidth = svgEl.getAttribute('width'); const originalSvgAttrHeight = svgEl.getAttribute('height');
                         const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
-
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
                         const bbox = g.getBBox();
                         const padding = 50;
                         const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                         const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-
-                        g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
+                        g.setAttribute('transform', 'translate(' + (-bbox.x + padding) + ', ' + (-bbox.y + padding) + ') scale(1)');
                         svgEl.removeAttribute('viewBox');
                         svgEl.setAttribute('width', trueWidth); svgEl.setAttribute('height', trueHeight);
                         svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                         container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px';
                         container.style.overflow = 'visible';
-
                         setTimeout(() => {
                             html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueHeight })
                             .then(canvas => {
@@ -874,13 +811,10 @@ else:
                                 if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-
-                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
+                                const link = document.createElement('a'); link.download = 'MindMap_' + title.replace(/[^a-zA-Z0-9]/g, '_') + '.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
-
                                 btn.innerHTML = originalText; btn.disabled = false;
                             }).catch(err => {
-                                console.error(err);
                                 container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
                                 svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
                                 if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
@@ -889,7 +823,7 @@ else:
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
                                 btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
                             });
-                        }, 800); 
+                        }, 800);
                     } catch (err) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
                 };
 
@@ -898,14 +832,13 @@ else:
                     const btn = event.currentTarget;
                     const originalText = btn.innerHTML;
                     btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
                     const originalOverflow = container.style.overflow;
-                    container.style.overflow = 'visible'; 
+                    container.style.overflow = 'visible';
                     setTimeout(() => {
                         html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
                         .then(canvas => {
                             container.style.overflow = originalOverflow;
-                            const link = document.createElement('a'); link.download = `Mermaid_${title}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                            const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                             btn.innerHTML = originalText; btn.disabled = false;
                         }).catch(err => { container.style.overflow = originalOverflow; btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); });
                     }, 500);
@@ -922,17 +855,17 @@ else:
                 function exportNotulensiTxt() {
                     if(!window.lastAiData) return alert("Data Notulensi belum ada!");
                     const root = window.lastAiData; const data = root.notulensi_rapat;
-                    let txt = `NOTULENSI RAPAT\\n========================\\n\\nRINGKASAN EKSEKUTIF:\\n`;
-                    if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += `- ${r}\\n`);
-                    txt += `\\nAgenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\nJalannya Diskusi:\\n`;
-                    if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += `- ${d}\\n`);
-                    txt += `\\nKeputusan Utama:\\n`;
-                    if(data.keputusan) data.keputusan.forEach(k => txt += `- ${k}\\n`);
-                    txt += `\\nRencana Tindak Lanjut:\\n`; 
+                    let txt = 'NOTULENSI RAPAT\\n========================\\n\\nRINGKASAN EKSEKUTIF:\\n';
+                    if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += '- ' + r + '\\n');
+                    txt += '\\nAgenda: ' + (data.agenda || '-') + '\\nPeserta: ' + (data.peserta ? data.peserta.join(', ') : '-') + '\\n\\nJalannya Diskusi:\\n';
+                    if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += '- ' + d + '\\n');
+                    txt += '\\nKeputusan Utama:\\n';
+                    if(data.keputusan) data.keputusan.forEach(k => txt += '- ' + k + '\\n');
+                    txt += '\\nRencana Tindak Lanjut:\\n';
                     if(data.rencana_tindak_lanjut && data.rencana_tindak_lanjut.length > 0) {
-                        data.rencana_tindak_lanjut.forEach(t => txt += `- [${t.prioritas}] ${t.tugas} (PIC: ${t.pic}, Deadline: ${t.deadline})\\n`);
+                        data.rencana_tindak_lanjut.forEach(t => txt += '- [' + t.prioritas + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\\n');
                     } else {
-                        txt += `- [Default] Belum ada action item.\\n`;
+                        txt += '- [Default] Belum ada action item.\\n';
                     }
                     const blob = new Blob([txt], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Notulensi_Resmi.txt'; a.click();
                 }
@@ -993,7 +926,7 @@ else:
                     recognition = new SpeechRecognition();
                     recognition.continuous = true; recognition.interimResults = true;
 
-                    function getTimestamp() { const now = new Date(); return `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`; }
+                    function getTimestamp() { const now = new Date(); return '[' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0') + ']'; }
 
                     recognition.onresult = (event) => {
                         let interimTranscript = ''; let finalTranscript = '';
@@ -1001,14 +934,13 @@ else:
                             if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
                             else interimTranscript += event.results[i][0].transcript;
                         }
-
                         if (finalTranscript) {
                             if (finalTranscript.trim() === lastFinalText.trim()) return;
                             lastFinalText = finalTranscript; const timeStr = getTimestamp();
                             if (currentInterimDiv) {
-                                currentInterimDiv.className = 'line-final'; currentInterimDiv.innerHTML = `<span class="timestamp">${timeStr}</span> ${finalTranscript}`; currentInterimDiv = null;
+                                currentInterimDiv.className = 'line-final'; currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + finalTranscript; currentInterimDiv = null;
                             } else {
-                                const line = document.createElement('div'); line.className = 'line-final'; line.innerHTML = `<span class="timestamp">${timeStr}</span> ${finalTranscript}`; transcriptBox.appendChild(line);
+                                const line = document.createElement('div'); line.className = 'line-final'; line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + finalTranscript; transcriptBox.appendChild(line);
                             }
                             transcriptBox.scrollTop = transcriptBox.scrollHeight;
                         } else if (interimTranscript) {
@@ -1050,7 +982,7 @@ else:
                                 const blob = new Blob(audioChunks, { type: 'audio/webm' });
                                 const audioUrl = URL.createObjectURL(blob); const fileName = 'Rekaman_TranscribX_' + new Date().getTime() + '.webm';
                                 const audioItem = document.createElement('div'); audioItem.className = 'audio-item';
-                                audioItem.innerHTML = `<audio controls src="${audioUrl}"></audio> <a href="${audioUrl}" download="${fileName}" class="btn-custom" style="background:#10b981;">💾 Download Audio</a>`;
+                                audioItem.innerHTML = '<audio controls src="' + audioUrl + '"></audio> <a href="' + audioUrl + '" download="' + fileName + '" class="btn-custom" style="background:#10b981;">💾 Download Audio</a>';
                                 audioContainer.prepend(audioItem);
                             };
                             setupVisualizer(audioStream); mediaRecorder.start(); recognition.start(); drawVisualizer(); isRecording = true;
@@ -1096,44 +1028,10 @@ else:
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
                         if (!apiKey) { alert("⚠️ Masukkan API Key LiteLLM/Gemini terlebih dahulu."); apiKeyInput.focus(); return; }
                         if (!transcript) { alert("⚠️ Transkrip masih kosong."); return; }
-
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
-                        aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
+                        aiContent.innerHTML = '<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>';
 
-                        const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
-                        - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
-                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-
-                        ATURAN MARKMAP (PENTING!):
-                        Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
-                        # [Judul Topik Utama Rapat]
-                        ## Ringkasan Eksekutif
-                        - [Poin ringkas]
-                        ## Agenda / Topik
-                        - [Poin]
-                        ## Peserta
-                        - [Nama]
-                        ## Jalannya Diskusi
-                        - [Poin diskusi ringkas 1]
-                          - [Detail singkat]
-                        - [Poin diskusi ringkas 2]
-                        ## Kendala & Solusi (Jika ada)
-                        - [Kendala]
-                          - [Solusi]
-                        ## Keputusan Utama
-                        - [Poin keputusan]
-                        ## Rencana Tindak Lanjut
-                        - [Nama Tugas]
-                          - PIC: [Nama]
-                          - Deadline: [Waktu]
-                          - Prioritas: [Level]
-
-                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
-                        Transkrip Rapat: "${transcript}"`;
+                        const prompt = 'Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON. ATURAN JSON NOTULENSI: - ringkasan_eksekutif: Buat array of strings (poin-poin padat). - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP. - keputusan: Array of strings. - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT. - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting. ATURAN MARKMAP: Gunakan kode murni markdown dengan struktur lengkap. ATURAN MERMAID: WAJIB format graph LR. Transkrip Rapat: "' + transcript + '"';
 
                         const payload = {
                             "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
@@ -1164,101 +1062,38 @@ else:
                         try {
                             const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", { method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                             const resJson = await response.json();
-
                             if (resJson.choices && resJson.choices[0].message.content) {
                                 const data = JSON.parse(resJson.choices[0].message.content);
                                 window.lastAiData = data;
                                 const reportDiv = document.createElement('div'); reportDiv.className = "fade-in space-y-6 mt-6 mb-10";
                                 
-                                let taskListHtml = `<div class="mt-6 pt-4 border-t border-slate-100">
-                                    <p class="font-black text-blue-600 uppercase text-[11px] mb-3">📋 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
-                                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                                        <table class="w-full text-left border-collapse bg-white">
-                                            <tr class="bg-blue-50 text-blue-800 text-[11px] uppercase"><th class="p-3 border-b border-r">Tugas</th><th class="p-3 border-b border-r">PIC</th><th class="p-3 border-b border-r">Deadline</th><th class="p-3 border-b">Prioritas</th></tr>
-                                            ${data.notulensi_rapat.rencana_tindak_lanjut.map(t => `<tr class="text-[12px] border-b hover:bg-slate-50 transition"><td class="p-3 border-r font-medium text-slate-800">${t.tugas}</td><td class="p-3 border-r text-slate-600">${t.pic}</td><td class="p-3 border-r text-slate-600">${t.deadline}</td><td class="p-3 font-bold ${t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600'}">${t.prioritas}</td></tr>`).join('')}
-                                        </table>
-                                    </div>
-                                </div>`;
+                                let taskListHtml = '<div class="mt-6 pt-4 border-t border-slate-100"><p class="font-black text-blue-600 uppercase text-[11px] mb-3">📋 RENCANA TINDAK LANJUT (ACTION ITEMS):</p><div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm"><table class="w-full text-left border-collapse bg-white"><tr class="bg-blue-50 text-blue-800 text-[11px] uppercase"><th class="p-3 border-b border-r">Tugas</th><th class="p-3 border-b border-r">PIC</th><th class="p-3 border-b border-r">Deadline</th><th class="p-3 border-b">Prioritas</th></tr>' + data.notulensi_rapat.rencana_tindak_lanjut.map(t => '<tr class="text-[12px] border-b hover:bg-slate-50 transition"><td class="p-3 border-r font-medium text-slate-800">' + t.tugas + '</td><td class="p-3 border-r text-slate-600">' + t.pic + '</td><td class="p-3 border-r text-slate-600">' + t.deadline + '</td><td class="p-3 font-bold ' + (t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600') + '">' + t.prioritas + '</td></tr>').join('') + '</table></div></div>';
 
-                                let notulensiHtml = `
-                                    <div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden mb-6">
-                                        <div class="flex justify-between items-center mb-6">
-                                            <h5 class="text-[15px] font-black text-slate-700 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5>
-                                            <button onclick="exportNotulensiTxt()" class="btn-export shadow-md">📝 Download TXT</button>
-                                        </div>
-                                        <div class="space-y-5 text-[13px] text-slate-700 leading-relaxed">
-                                            <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">RINGKASAN EKSEKUTIF:</p>
-                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-inner">
-                                                    <ul class="list-disc ml-5 space-y-2 font-semibold text-slate-800">${data.ringkasan_eksekutif.map(r => `<li>${r}</li>`).join('')}</ul>
-                                                </div>
-                                            </div>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">AGENDA / TOPIK:</p><p class="font-bold text-slate-800">${data.notulensi_rapat.agenda || '-'}</p></div>
-                                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p><p class="font-bold text-slate-800">${data.notulensi_rapat.peserta.join(', ') || '-'}</p></div>
-                                            </div>
-                                            <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">JALANNYA DISKUSI:</p>
-                                                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                                    <ul class="list-disc ml-5 space-y-3">${data.notulensi_rapat.jalannya_diskusi.map(d => `<li>${d}</li>`).join('')}</ul>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">KEPUTUSAN / KESIMPULAN UTAMA:</p>
-                                                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                                                    <ul class="list-disc ml-5 space-y-2 font-bold text-emerald-900">${data.notulensi_rapat.keputusan.map(k => `<li>${k}</li>`).join('')}</ul>
-                                                </div>
-                                            </div>
-                                            ${taskListHtml}
-                                        </div>
-                                    </div>
-                                `;
+                                let notulensiHtml = '<div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden mb-6"><div class="flex justify-between items-center mb-6"><h5 class="text-[15px] font-black text-slate-700 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5><button onclick="exportNotulensiTxt()" class="btn-export shadow-md">📝 Download TXT</button></div><div class="space-y-5 text-[13px] text-slate-700 leading-relaxed"><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">RINGKASAN EKSEKUTIF:</p><div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-inner"><ul class="list-disc ml-5 space-y-2 font-semibold text-slate-800">' + data.ringkasan_eksekutif.map(r => '<li>' + r + '</li>').join('') + '</ul></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">AGENDA / TOPIK:</p><p class="font-bold text-slate-800">' + (data.notulensi_rapat.agenda || '-') + '</p></div><div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p><p class="font-bold text-slate-800">' + (data.notulensi_rapat.peserta.join(', ') || '-') + '</p></div></div><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">JALANNYA DISKUSI:</p><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><ul class="list-disc ml-5 space-y-3">' + data.notulensi_rapat.jalannya_diskusi.map(d => '<li>' + d + '</li>').join('') + '</ul></div></div><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">KEPUTUSAN / KESIMPULAN UTAMA:</p><div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100"><ul class="list-disc ml-5 space-y-2 font-bold text-emerald-900">' + data.notulensi_rapat.keputusan.map(k => '<li>' + k + '</li>').join('') + '</ul></div></div>' + taskListHtml + '</div></div>';
 
                                 let rawMermaid = data.visual_mindmap.replace(/```mermaid/gi, '').replace(/```/g, '').trim();
                                 if (!rawMermaid.toLowerCase().includes('graph') && !rawMermaid.toLowerCase().includes('mindmap')) {
                                     rawMermaid = "graph LR\\n" + rawMermaid;
                                 }
-
                                 let rawMarkmap = data.markmap_code.replace(/```markdown/gi, '').replace(/```/g, '').trim();
 
-                                let visualizationHtml = `
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                                        <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Peta Konsep Rapat)</h5><button onclick="downloadMarkmapImage('markmap-capture-area', 'Markmap', event)" class="btn-export">📸 PNG</button></div>
-                                            <div id="markmap-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden markmap-svg-container relative p-2" style="min-height: 400px;"></div>
-                                        </div>
-                                        
-                                        <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Alur)</h5><button onclick="downloadMermaidImage('mermaid-capture-area', 'Mermaid', event)" class="btn-export">📸 PNG</button></div>
-                                            <div id="mermaid-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto p-4 mermaid-container">
-                                                <div class="mermaid">${rawMermaid}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col mb-6">
-                                        <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Entitas)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG Full</button></div>
-                                        <div id="cy" class="cy-container"></div>
-                                    </div>
-                                `;
+                                let visualizationHtml = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Peta Konsep Rapat)</h5><button onclick="downloadMarkmapImage(\'markmap-capture-area\', \'Markmap\', event)" class="btn-export">📸 PNG</button></div><div id="markmap-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden markmap-svg-container relative p-2" style="min-height: 400px;"></div></div><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Alur)</h5><button onclick="downloadMermaidImage(\'mermaid-capture-area\', \'Mermaid\', event)" class="btn-export">📸 PNG</button></div><div id="mermaid-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto p-4 mermaid-container"><div class="mermaid">' + rawMermaid + '</div></div></div></div><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col mb-6"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Entitas)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG Full</button></div><div id="cy" class="cy-container"></div></div>';
 
                                 reportDiv.innerHTML = notulensiHtml + visualizationHtml;
                                 aiContent.innerHTML = ""; aiContent.appendChild(reportDiv);
 
-                                // 1. Render Markmap
                                 try {
                                     if (!window.markmap) throw new Error("Library Markmap gagal dimuat.");
                                     const { Transformer, Markmap } = window.markmap; const { root } = new Transformer().transform(rawMarkmap);
                                     const svgContainer = document.getElementById('markmap-capture-area'); svgContainer.innerHTML = '<svg id="markmap-svg" style="width:100%; height:400px; min-height:400px;"></svg>';
                                     Markmap.create(document.getElementById('markmap-svg'), null, root);
-                                } catch (e) { console.error("Markmap Render Error:", e); document.getElementById('markmap-capture-area').innerHTML = `<p class="text-red-500 font-bold p-4 text-xs">Error merender Markmap: ${e.message}</p>`; }
+                                } catch (e) { document.getElementById('markmap-capture-area').innerHTML = '<p class="text-red-500 font-bold p-4 text-xs">Error merender Markmap: ' + e.message + '</p>'; }
 
-                                // 2. Render Mermaid 
                                 setTimeout(() => {
                                     try { mermaid.run({ querySelector: '.mermaid' }); }
-                                    catch (e) { document.querySelector('.mermaid').innerHTML = `<p class="text-red-500 text-xs font-bold">⚠️ Error sintaks dari AI. Coba generate ulang.</p>`; }
+                                    catch (e) { document.querySelector('.mermaid').innerHTML = '<p class="text-red-500 text-xs font-bold">⚠️ Error sintaks dari AI. Coba generate ulang.</p>'; }
                                 }, 500);
 
-                                // 3. Render Cytoscape
                                 setTimeout(() => {
                                     try {
                                         const cyElements = []; const nodesSet = new Set();
@@ -1272,11 +1107,10 @@ else:
                                             style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }],
                                             layout: { name: 'cose', padding: 20 }
                                         });
-                                    } catch (e) { console.error("Cytoscape Error:", e); document.getElementById('cy').innerHTML = `<p class="text-red-500 font-bold p-4 text-xs">Error merender Cytoscape: ${e.message}</p>`; }
+                                    } catch (e) { document.getElementById('cy').innerHTML = '<p class="text-red-500 font-bold p-4 text-xs">Error merender Cytoscape: ' + e.message + '</p>'; }
                                 }, 600);
-
-                            } else if (resJson.error) { aiContent.innerHTML = `<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Error: ${resJson.error.message}</p>`; }
-                        } catch (err) { aiContent.innerHTML = `<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Koneksi Gagal: Cek API Key. Detail: ${err.message}</p>`; }
+                            } else if (resJson.error) { aiContent.innerHTML = '<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Error: ' + resJson.error.message + '</p>'; }
+                        } catch (err) { aiContent.innerHTML = '<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Koneksi Gagal: Cek API Key. Detail: ' + err.message + '</p>'; }
                         finally { aiBtn.innerHTML = originalText; aiBtn.disabled = false; aiContent.scrollIntoView({ behavior: 'smooth' }); }
                     };
                 }
@@ -1287,11 +1121,11 @@ else:
         components.html(html_code, height=1350, scrolling=True)
 
     # =====================================================================
-    # TAB 2: FITUR OFFLINE TRANSCRIPTION (PYTHON/STREAMLIT NATIVE)
+    # TAB 2: FITUR OFFLINE TRANSCRIPTION
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
-        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Pastikan server LiteLLM Anda sudah siap.")
+        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini).")
 
         llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
         uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
@@ -1302,7 +1136,6 @@ else:
             else:
                 st.audio(uploaded_file)
                 
-                # [PERBAIKAN] Cek Kuota Upload - Admin tidak dibatasi
                 if not is_admin():
                     kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
                     if kuota_upload_sekarang <= 0:
@@ -1322,20 +1155,16 @@ else:
 
                                         if response.status_code == 200:
                                             st.session_state["offline_transcript"] = response.json().get("text", "")
-                                            
-                                            # Potong Kuota Upload setelah berhasil
                                             st.session_state["user_kuota_upload"] -= 1
                                             db.collection("users").document(st.session_state["user_uid"]).update({
                                                 "kuota_upload": st.session_state["user_kuota_upload"]
                                             })
-                                            
                                             st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
                                         else: 
                                             st.error(f"❌ Error dari API LiteLLM: {response.text}")
                                     except Exception as e: 
                                         st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
                 else:
-                    # [PERBAIKAN] Admin bisa langsung upload tanpa cek kuota
                     if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
                         if not llm_key: 
                             st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
@@ -1361,7 +1190,6 @@ else:
             transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
             st.session_state["offline_transcript"] = transcript_area 
 
-            # [PERBAIKAN] Cek Kuota AI Summary - Admin tidak dibatasi
             if not is_admin():
                 kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
                 if kuota_ai_sekarang <= 0:
@@ -1372,40 +1200,15 @@ else:
                             st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                         else:
                             with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
-                                
                                 prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                                 ATURAN JSON NOTULENSI:
                                 - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
+                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
                                 - keputusan: Array of strings. Kesimpulan utama.
-                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
                                 - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-
-                                ATURAN MARKMAP (PENTING!):
-                                Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
-                                # [Judul Topik Utama Rapat]
-                                ## Ringkasan Eksekutif
-                                - [Poin ringkas]
-                                ## Agenda / Topik
-                                - [Poin]
-                                ## Peserta
-                                - [Nama]
-                                ## Jalannya Diskusi
-                                - [Poin diskusi ringkas 1]
-                                  - [Detail singkat]
-                                - [Poin diskusi ringkas 2]
-                                ## Kendala & Solusi (Jika ada)
-                                - [Kendala]
-                                  - [Solusi]
-                                ## Keputusan Utama
-                                - [Poin keputusan]
-                                ## Rencana Tindak Lanjut
-                                - [Nama Tugas]
-                                  - PIC: [Nama]
-                                  - Deadline: [Waktu]
-                                  - Prioritas: [Level]
-
-                                ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
+                                ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                                ATURAN MERMAID: WAJIB format 'graph LR'.
                                 Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                                 payload = {
@@ -1438,8 +1241,6 @@ else:
                                     res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                                     if res.status_code == 200: 
                                         st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                                        
-                                        # Potong Kuota AI setelah berhasil
                                         st.session_state["user_kuota_ai"] -= 1
                                         db.collection("users").document(st.session_state["user_uid"]).update({
                                             "kuota_ai": st.session_state["user_kuota_ai"]
@@ -1450,46 +1251,20 @@ else:
                                 except Exception as e: 
                                     st.error(f"Koneksi LLM Gagal: {str(e)}")
             else:
-                # [PERBAIKAN] Admin bisa langsung generate tanpa cek kuota
                 if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                     if not llm_key: 
                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
                         with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
-                            
                             prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                             ATURAN JSON NOTULENSI:
                             - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                            - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
+                            - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
                             - keputusan: Array of strings. Kesimpulan utama.
-                            - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                            - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
                             - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-
-                            ATURAN MARKMAP (PENTING!):
-                            Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
-                            # [Judul Topik Utama Rapat]
-                            ## Ringkasan Eksekutif
-                            - [Poin ringkas]
-                            ## Agenda / Topik
-                            - [Poin]
-                            ## Peserta
-                            - [Nama]
-                            ## Jalannya Diskusi
-                            - [Poin diskusi ringkas 1]
-                              - [Detail singkat]
-                            - [Poin diskusi ringkas 2]
-                            ## Kendala & Solusi (Jika ada)
-                            - [Kendala]
-                              - [Solusi]
-                            ## Keputusan Utama
-                            - [Poin keputusan]
-                            ## Rencana Tindak Lanjut
-                            - [Nama Tugas]
-                              - PIC: [Nama]
-                              - Deadline: [Waktu]
-                              - Prioritas: [Level]
-
-                            ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
+                            ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                            ATURAN MERMAID: WAJIB format 'graph LR'.
                             Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                             payload = {
@@ -1626,15 +1401,13 @@ else:
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
                             const originalOverflow = container.style.overflow;
                             container.style.overflow = 'visible'; 
-                            
                             setTimeout(() => {{
                                 html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff' }})
                                 .then(canvas => {{
                                     container.style.overflow = originalOverflow;
-                                    const link = document.createElement('a'); link.download = `Mermaid_${{title}}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
                                 }}).catch(err => {{
                                     container.style.overflow = originalOverflow; btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
@@ -1674,57 +1447,45 @@ else:
                         const container = document.getElementById(wrapperId);
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
-
                         const btn = document.getElementById('dlBtnMM');
                         const originalText = btn.innerHTML;
                         btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
                         try {{
                             const g = svgEl.querySelector('g');
                             if (!g) throw new Error("G element not found");
-
                             const originalWidth = container.style.width;
                             const originalHeight = container.style.height;
                             const originalOverflow = container.style.overflow;
                             const originalTransform = g.getAttribute('transform');
                             const originalViewBox = svgEl.getAttribute('viewBox');
-
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
                             const bbox = g.getBBox();
-
                             const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-
                             container.style.width = trueWidth + 'px';
                             container.style.height = trueHeight + 'px';
                             container.style.overflow = 'visible';
-                            
-                            svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
+                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
                             svgEl.style.width = '100%'; svgEl.style.height = '100%';
-
                             setTimeout(() => {{
-                                html2canvas(container, {{
-                                    scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight
-                                }}).then(canvas => {{
+                                html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-
-                                    const link = document.createElement('a'); link.download = `MindMap_${{title}}.png`;
+                                    const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
-
                                     btn.innerHTML = originalText; btn.disabled = false;
                                 }}).catch(err => {{
-                                    console.error("html2canvas error:", err);
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                     btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                                 }});
-                            }}, 600); 
+                            }}, 600);
                         }} catch (err) {{
-                            console.error("Error saving markmap:", err); btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                            btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                         }}
                     }};
                 </script>

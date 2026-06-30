@@ -39,6 +39,16 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 # =====================================================================
+# DATA PAKET LANGGANAN
+# =====================================================================
+PAKET_LANGGANAN = {
+    "BASIC": {"ai_limit": 5, "upload_limit": 1},
+    "EXECUTIVE": {"ai_limit": 10, "upload_limit": 3},
+    "MASTER": {"ai_limit": 30, "upload_limit": 10},
+    "NON-AKTIF": {"ai_limit": 0, "upload_limit": 0}
+}
+
+# =====================================================================
 # FUNGSI FIREBASE (REST API & FIRESTORE)
 # =====================================================================
 def login_firebase(email, password):
@@ -57,11 +67,11 @@ def check_subscription(uid):
     doc_ref = db.collection("users").document(uid)
     doc = doc_ref.get()
     if doc.exists:
-        return doc.to_dict().get("status_subscription", "non-aktif")
-    return "non-aktif"
+        return doc.to_dict()
+    return {"status_subscription": "non-aktif", "paket": "NON-AKTIF"}
 
 # =====================================================================
-# AREA SIDEBAR: HIASAN ROBOT GERMIC (DENGAN EFEK MELAYANG)
+# AREA SIDEBAR: HIASAN ROBOT GERMIC & INFO AKUN
 # =====================================================================
 with st.sidebar:
     st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
@@ -127,6 +137,15 @@ with st.sidebar:
     components.html(germic_html, height=250)
     st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold;'>GERMIC System Online</p>", unsafe_allow_html=True)
     st.markdown("---")
+    
+    # Menampilkan Info Akun jika sudah login
+    if st.session_state.get("logged_in"):
+        st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
+        st.markdown(f"**🏷️ Paket:** {st.session_state.get('user_paket', 'NON-AKTIF')}")
+        if st.session_state.get('user_paket') != 'NON-AKTIF':
+            st.markdown(f"**✨ Sisa AI Summary:** {st.session_state.get('user_kuota_ai', 0)}x")
+            st.markdown(f"**📁 Sisa Upload Audio:** {st.session_state.get('user_kuota_upload', 0)}x")
+        st.markdown("---")
 
 # =====================================================================
 # INISIALISASI SESSION STATE
@@ -161,12 +180,16 @@ if not st.session_state["logged_in"]:
                         user_data = login_firebase(email_login, pass_login)
                         if "idToken" in user_data:
                             uid = user_data["localId"]
-                            sub_status = check_subscription(uid)
+                            user_db_info = check_subscription(uid)
+                            sub_status = user_db_info.get("status_subscription", "non-aktif")
                             
                             if sub_status == "aktif":
                                 st.session_state["logged_in"] = True
                                 st.session_state["user_email"] = email_login
                                 st.session_state["user_uid"] = uid
+                                st.session_state["user_paket"] = user_db_info.get("paket", "BASIC")
+                                st.session_state["user_kuota_ai"] = user_db_info.get("kuota_ai", 0)
+                                st.session_state["user_kuota_upload"] = user_db_info.get("kuota_upload", 0)
                                 st.success("Login berhasil! Memuat sistem...")
                                 st.rerun()
                             else:
@@ -176,41 +199,6 @@ if not st.session_state["logged_in"]:
                             st.error(f"⚠️ {err_msg}")
                 else:
                     st.warning("Silakan masukkan email dan password.")
-
-    # =====================================================================
-    # PENAMBAHAN: ETALASE PAKET LANGGANAN DI HALAMAN LOGIN
-    # =====================================================================
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("---")
-    st.markdown("<h2 style='text-align: center;'>📊 3 Pilihan Paket Langganan TranscribX</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 30px;'>Pilih paket yang paling sesuai dengan kebutuhan produktivitas Anda.</p>", unsafe_allow_html=True)
-    
-    col_pkg1, col_pkg2, col_pkg3 = st.columns(3)
-    
-    with col_pkg1:
-        with st.container(border=True):
-            st.markdown("<h3 style='color: #475569;'>🥉 Paket BASIC (Murah)</h3>", unsafe_allow_html=True)
-            st.markdown("### Rp 29.000 <span style='font-size:14px; font-weight:normal;'>/ bulan</span>", unsafe_allow_html=True)
-            st.info("Cocok untuk mahasiswa, asisten peneliti, atau staf admin yang rapatnya tidak terlalu sering.")
-            st.markdown("**Fitur yang didapat:**")
-            st.markdown("- ✅ **Unlimited** Live Transcribe (Tanpa batas)\n- ✅ **5x** Premium AI Summary & Mindmap\n- ✅ **1x** Upload File Audio (Max 30 menit)")
-
-    with col_pkg2:
-        with st.container(border=True):
-            st.markdown("<h3 style='color: #2563eb;'>🥈 Paket EXECUTIVE 🔥</h3>", unsafe_allow_html=True)
-            st.markdown("### Rp 49.000 <span style='font-size:14px; font-weight:normal;'>/ bulan</span>", unsafe_allow_html=True)
-            st.success("Cocok untuk ketua komite, manajer, apoteker, atau profesional yang rutin memimpin rapat dan butuh action plan cepat.")
-            st.markdown("**Fitur yang didapat:**")
-            st.markdown("- ✅ **Unlimited** Live Transcribe (Tanpa batas)\n- ✅ **10x** Premium AI Summary & Mindmap\n- ✅ **3x** Upload File Audio (Max 30 menit)")
-
-    with col_pkg3:
-        with st.container(border=True):
-            st.markdown("<h3 style='color: #8b5cf6;'>🥇 Paket MASTER / VIP</h3>", unsafe_allow_html=True)
-            st.markdown("### Rp 129.000 <span style='font-size:14px; font-weight:normal;'>/ bulan</span>", unsafe_allow_html=True)
-            st.warning("Cocok untuk panitia penyelenggara masterclass, pembuat SOP, atau institusi yang butuh arsip rekaman besar.")
-            st.markdown("**Fitur yang didapat:**")
-            st.markdown("- ✅ **Unlimited** Live Transcribe (Tanpa batas)\n- ✅ **30x** Premium AI Summary & Mindmap\n- ✅ **10x** Upload File Audio (Max 30 menit)\n- 🌟 **Prioritas Support** via WhatsApp")
-
 
 # =====================================================================
 # APLIKASI UTAMA (Setelah Login)
@@ -228,19 +216,20 @@ else:
     # ---------------------------------------------------------
     # KONFIGURASI EMAIL ADMIN (Ubah dengan email Anda sendiri!)
     # ---------------------------------------------------------
-    ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com") # Pastikan menyesuaikan dengan konfigurasi Anda
+    ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com") 
 
-    # Logika Penampilan Tab (Jika Admin, muncul tab Admin Panel)
+    # Logika Penampilan Tab
     if st.session_state.get("user_email") == ADMIN_EMAIL:
-        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
+        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab_admin = tabs[0]
         tab1 = tabs[1]
         tab2 = tabs[2]
+        tab_paket = tabs[3]
         
         # --- TAB ADMIN PANEL ---
         with tab_admin:
             st.markdown("### 👑 Dashboard Admin: Registrasi Akun Klien")
-            st.info("Form ini hanya bisa dilihat oleh Anda. Gunakan form ini untuk mendaftarkan akun baru bagi klien.")
+            st.info("Form ini hanya bisa dilihat oleh Anda. Gunakan form ini untuk mendaftarkan akun baru bagi klien beserta kuotanya.")
             
             with st.form("admin_register_form", clear_on_submit=True):
                 col_reg1, col_reg2 = st.columns(2)
@@ -249,7 +238,8 @@ else:
                 with col_reg2:
                     pass_reg = st.text_input("Password Klien", type="password", help="Minimal 6 karakter")
                 
-                status_reg = st.selectbox("Status Langganan Awal", ["aktif", "non-aktif"])
+                # Modifikasi Pilihan Paket
+                paket_reg = st.selectbox("Pilih Paket Langganan", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
                 btn_reg = st.form_submit_button("📝 Daftarkan Klien", type="primary")
                 
                 if btn_reg:
@@ -258,12 +248,25 @@ else:
                             new_user = register_firebase(email_reg, pass_reg)
                             if "idToken" in new_user:
                                 uid = new_user["localId"]
-                                # Simpan data user ke database beserta status langganannya
+                                
+                                # Set status dan kuota berdasarkan paket
+                                if paket_reg != "NON-AKTIF":
+                                    status_reg = "aktif"
+                                    kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"]
+                                    kuota_upload = PAKET_LANGGANAN[paket_reg]["upload_limit"]
+                                else:
+                                    status_reg = "non-aktif"
+                                    kuota_ai = 0
+                                    kuota_upload = 0
+                                
                                 db.collection("users").document(uid).set({
                                     "email": email_reg,
-                                    "status_subscription": status_reg
+                                    "status_subscription": status_reg,
+                                    "paket": paket_reg,
+                                    "kuota_ai": kuota_ai,
+                                    "kuota_upload": kuota_upload
                                 })
-                                st.success(f"✅ Akun {email_reg} berhasil dibuat dengan status: {status_reg}!")
+                                st.success(f"✅ Akun {email_reg} berhasil dibuat dengan paket {paket_reg}!")
                                 st.rerun()
                             else:
                                 err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
@@ -271,9 +274,6 @@ else:
                     else:
                         st.warning("Pastikan email terisi dan password minimal 6 karakter.")
 
-            # ---------------------------------------------------------
-            # DAFTAR USER TERDAFTAR
-            # ---------------------------------------------------------
             st.markdown("---")
             st.markdown("### 📋 Daftar Klien Terdaftar")
             
@@ -284,53 +284,84 @@ else:
                 for doc in users_ref:
                     user_info = doc.to_dict()
                     users_list.append({
-                        "UID / ID Dokumen": doc.id,
-                        "Email Klien": user_info.get("email", "-"),
-                        "Status Langganan": user_info.get("status_subscription", "non-aktif")
+                        "UID": doc.id,
+                        "Email": user_info.get("email", "-"),
+                        "Status": user_info.get("status_subscription", "non-aktif"),
+                        "Paket": user_info.get("paket", "-"),
+                        "Sisa AI": user_info.get("kuota_ai", 0),
+                        "Sisa Upload": user_info.get("kuota_upload", 0)
                     })
                 
                 if users_list:
                     df_users = pd.DataFrame(users_list)
-                    st.dataframe(
-                        df_users, 
-                        use_container_width=True, 
-                        hide_index=True 
-                    )
+                    st.dataframe(df_users, use_container_width=True, hide_index=True)
                 else:
                     st.info("Belum ada klien yang terdaftar di sistem.")
 
-            # ---------------------------------------------------------
-            # PENAMBAHAN: HITUNGAN BISNIS & PROFITABILITAS (ADMIN ONLY)
-            # ---------------------------------------------------------
-            st.markdown("---")
-            st.markdown("### 💰 Hitungan Bisnis & Profitabilitas Paket")
-            with st.expander("Lihat Rincian Margin Keuntungan per Paket", expanded=True):
-                col_profit1, col_profit2, col_profit3 = st.columns(3)
-                
-                with col_profit1:
-                    st.markdown("**1. Paket BASIC** (Rp 29.000)")
-                    st.markdown("- **Modal Maksimal:**\n  (5 x Rp 300) + (1 x Rp 5.000) = **Rp 6.500**")
-                    st.markdown("- **Profit Bersih:**\n  **Rp 22.500** per user")
-                    st.success("**Margin 77%**")
-                    
-                with col_profit2:
-                    st.markdown("**2. Paket EXECUTIVE** (Rp 49.000)")
-                    st.markdown("- **Modal Maksimal:**\n  (10 x Rp 300) + (3 x Rp 5.000) = **Rp 18.000**")
-                    st.markdown("- **Profit Bersih:**\n  **Rp 31.000** per user")
-                    st.success("**Margin 63%**")
-                    
-                with col_profit3:
-                    st.markdown("**3. Paket MASTER/VIP** (Rp 129.000)")
-                    st.markdown("- **Modal Maksimal:**\n  (30 x Rp 300) + (10 x Rp 5.000) = **Rp 59.000**")
-                    st.markdown("- **Profit Bersih:**\n  **Rp 70.000** per user")
-                    st.success("**Margin 54%**")
-
     else:
-        # Jika bukan Admin (Klien Biasa), hanya melihat 2 tab utama
-        tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
+        # Jika bukan Admin (Klien Biasa)
+        tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab1 = tabs[0]
         tab2 = tabs[1]
-    
+        tab_paket = tabs[2]
+
+    # =====================================================================
+    # TAB BARU: INFO PAKET LANGGANAN
+    # =====================================================================
+    with tab_paket:
+        st.markdown("### 📊 Pilihan Paket Langganan TranscribX")
+        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai dengan kebutuhan Anda atau perusahaan.")
+        st.write("")
+        
+        col_p1, col_p2, col_p3 = st.columns(3)
+        
+        with col_p1:
+            st.markdown("""
+            <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+                <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
+                <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ bulan</span></h4>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin yang rapatnya tidak terlalu sering.</p>
+                <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>5x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload File Audio (Max 30 menit)</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_p2:
+            st.markdown("""
+            <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative;'>
+                <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
+                <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
+                <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ bulan</span></h4>
+                <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, apoteker, atau profesional yang rutin memimpin rapat.</p>
+                <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>3x</b> Upload File Audio (Max 30 menit)</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_p3:
+            st.markdown("""
+            <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+                <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
+                <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ bulan</span></h4>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass, pembuat SOP, atau institusi dengan arsip jumlah besar.</p>
+                <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>30x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>10x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>🌟 <b>Prioritas Support</b> via WhatsApp</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
     # =====================================================================
     # TAB 1: LIVE CAPTURE (HTML/JS)
     # =====================================================================
@@ -1152,5 +1183,5 @@ else:
             """
             components.html(markmap_html, height=450)
 
-            with st.expander("Lihat Source Code Markdown"):
-                st.code(raw_markmap, language="markdown")
+        with st.expander("Lihat Source Code Markdown"):
+            st.code(raw_markmap, language="markdown")

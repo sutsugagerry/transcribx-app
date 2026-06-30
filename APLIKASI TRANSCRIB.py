@@ -10,11 +10,11 @@ from firebase_admin import credentials, firestore
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
 
 # =====================================================================
-# HIDE STREAMLIT DEFAULT ICONS (Menu & Deploy)
+# HIDE STREAMLIT DEFAULT ICONS (Menu, Deploy, & Viewer Badge)
 # =====================================================================
 hide_streamlit_style = """
             <style>
-            /* Sembunyikan tombol GitHub / Deploy */
+            /* Sembunyikan tombol GitHub / Deploy di pojok atas */
             .stAppDeployButton {visibility: hidden;}
             
             /* Sembunyikan ikon titik tiga (Main Menu) */
@@ -23,7 +23,10 @@ hide_streamlit_style = """
             /* Sembunyikan seluruh toolbar di pojok kanan atas */
             [data-testid="stToolbar"] {visibility: hidden;}
             
-            /* Opsional: Sembunyikan tulisan 'Made with Streamlit' */
+            /* Sembunyikan tombol profil dan Manage App (ikon perahu kertas merah) di pojok bawah */
+            [data-testid="viewerBadge"] {display: none;}
+            
+            /* Opsional: Sembunyikan tulisan 'Made with Streamlit' di bagian paling bawah */
             footer {visibility: hidden;}
             </style>
             """

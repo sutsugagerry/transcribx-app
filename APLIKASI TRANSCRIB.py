@@ -67,7 +67,19 @@ def check_subscription(uid):
     doc_ref = db.collection("users").document(uid)
     doc = doc_ref.get()
     if doc.exists:
-        return doc.to_dict()
+        data = doc.to_dict()
+        # [PERBAIKAN] Auto-Migrasi untuk user lama yang belum punya field paket
+        if "paket" not in data and data.get("status_subscription") == "aktif":
+            data["paket"] = "BASIC"
+            data["kuota_ai"] = PAKET_LANGGANAN["BASIC"]["ai_limit"]
+            data["kuota_upload"] = PAKET_LANGGANAN["BASIC"]["upload_limit"]
+            # Simpan update ke database agar permanen
+            doc_ref.update({
+                "paket": data["paket"],
+                "kuota_ai": data["kuota_ai"],
+                "kuota_upload": data["kuota_upload"]
+            })
+        return data
     return {"status_subscription": "non-aktif", "paket": "NON-AKTIF"}
 
 # =====================================================================
@@ -143,8 +155,11 @@ with st.sidebar:
         st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
         st.markdown(f"**🏷️ Paket:** {st.session_state.get('user_paket', 'NON-AKTIF')}")
         if st.session_state.get('user_paket') != 'NON-AKTIF':
-            st.markdown(f"**✨ Sisa AI Summary:** {st.session_state.get('user_kuota_ai', 0)}x")
-            st.markdown(f"**📁 Sisa Upload Audio:** {st.session_state.get('user_kuota_upload', 0)}x")
+            # Highlight merah jika kuota habis
+            ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
+            up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
+            st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
+            st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
         st.markdown("---")
 
 # =====================================================================
@@ -168,7 +183,6 @@ if not st.session_state["logged_in"]:
         st.markdown("<h2 style='text-align: center;'>🔒 Portal TranscribX Enterprise</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #64748b;'>Gunakan kredensial Anda untuk mengakses sistem Notulensi AI.</p>", unsafe_allow_html=True)
         
-        # Form Login Tunggal
         with st.form("login_form"):
             email_login = st.text_input("Email", placeholder="Ketik email Anda di sini...")
             pass_login = st.text_input("Password", type="password", placeholder="Ketik password Anda...")
@@ -213,12 +227,9 @@ else:
 
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")
     
-    # ---------------------------------------------------------
-    # KONFIGURASI EMAIL ADMIN (Ubah dengan email Anda sendiri!)
-    # ---------------------------------------------------------
+    # KONFIGURASI EMAIL ADMIN
     ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com") 
 
-    # Logika Penampilan Tab
     if st.session_state.get("user_email") == ADMIN_EMAIL:
         tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab_admin = tabs[0]
@@ -228,9 +239,45 @@ else:
         
         # --- TAB ADMIN PANEL ---
         with tab_admin:
-            st.markdown("### 👑 Dashboard Admin: Registrasi Akun Klien")
-            st.info("Form ini hanya bisa dilihat oleh Anda. Gunakan form ini untuk mendaftarkan akun baru bagi klien beserta kuotanya.")
+            st.markdown("### 👑 Dashboard Admin: Kelola Akun Klien")
             
+            # [FITUR BARU] Update / Upgrade Paket Klien Lama
+            with st.expander("🚀 UPDATE / UPGRADE PAKET KLIEN LAMA", expanded=False):
+                st.info("Gunakan form ini untuk mengubah paket klien lama (misal naik dari BASIC ke EXECUTIVE). Kuota mereka akan di-reset otomatis sesuai paket baru.")
+                with st.form("admin_update_form", clear_on_submit=True):
+                    email_to_update = st.text_input("Masukkan Email Klien Terdaftar")
+                    new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
+                    btn_update = st.form_submit_button("🔄 Update Paket Klien", type="primary")
+
+                    if btn_update and email_to_update:
+                        users = db.collection("users").where("email", "==", email_to_update).stream()
+                        updated = False
+                        for u in users:
+                            uid = u.id
+                            if new_paket != "NON-AKTIF":
+                                db.collection("users").document(uid).update({
+                                    "status_subscription": "aktif",
+                                    "paket": new_paket,
+                                    "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
+                                    "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"]
+                                })
+                            else:
+                                db.collection("users").document(uid).update({
+                                    "status_subscription": "non-aktif",
+                                    "paket": "NON-AKTIF",
+                                    "kuota_ai": 0,
+                                    "kuota_upload": 0
+                                })
+                            updated = True
+                        
+                        if updated:
+                            st.success(f"✅ Berhasil! Paket untuk {email_to_update} telah diubah menjadi {new_paket}.")
+                            st.rerun()
+                        else:
+                            st.error(f"⚠️ Email {email_to_update} tidak ditemukan di database.")
+
+            st.markdown("---")
+            st.markdown("### 📝 Registrasi Akun Klien Baru")
             with st.form("admin_register_form", clear_on_submit=True):
                 col_reg1, col_reg2 = st.columns(2)
                 with col_reg1:
@@ -238,9 +285,8 @@ else:
                 with col_reg2:
                     pass_reg = st.text_input("Password Klien", type="password", help="Minimal 6 karakter")
                 
-                # Modifikasi Pilihan Paket
-                paket_reg = st.selectbox("Pilih Paket Langganan", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
-                btn_reg = st.form_submit_button("📝 Daftarkan Klien", type="primary")
+                paket_reg = st.selectbox("Pilih Paket Langganan Awal", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
+                btn_reg = st.form_submit_button("➕ Daftarkan Klien", type="primary")
                 
                 if btn_reg:
                     if email_reg and len(pass_reg) >= 6:
@@ -249,7 +295,6 @@ else:
                             if "idToken" in new_user:
                                 uid = new_user["localId"]
                                 
-                                # Set status dan kuota berdasarkan paket
                                 if paket_reg != "NON-AKTIF":
                                     status_reg = "aktif"
                                     kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"]
@@ -283,13 +328,20 @@ else:
                 
                 for doc in users_ref:
                     user_info = doc.to_dict()
+                    
+                    # Logika tampilan agar tabel rapi meskipun datanya adalah data lama (belum update)
+                    status_user = user_info.get("status_subscription", "non-aktif")
+                    paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
+                    sisa_ai = user_info.get("kuota_ai", PAKET_LANGGANAN["BASIC"]["ai_limit"] if paket_user == "BASIC" else 0)
+                    sisa_up = user_info.get("kuota_upload", PAKET_LANGGANAN["BASIC"]["upload_limit"] if paket_user == "BASIC" else 0)
+
                     users_list.append({
                         "UID": doc.id,
                         "Email": user_info.get("email", "-"),
-                        "Status": user_info.get("status_subscription", "non-aktif"),
-                        "Paket": user_info.get("paket", "-"),
-                        "Sisa AI": user_info.get("kuota_ai", 0),
-                        "Sisa Upload": user_info.get("kuota_upload", 0)
+                        "Status": status_user,
+                        "Paket": paket_user,
+                        "Sisa AI": sisa_ai,
+                        "Sisa Upload": sisa_up
                     })
                 
                 if users_list:
@@ -310,11 +362,10 @@ else:
     # =====================================================================
     with tab_paket:
         st.markdown("### 📊 Pilihan Paket Langganan TranscribX")
-        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai dengan kebutuhan Anda atau perusahaan.")
+        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai dengan kebutuhan Anda atau perusahaan. Hubungi admin untuk upgrade.")
         st.write("")
         
         col_p1, col_p2, col_p3 = st.columns(3)
-        
         with col_p1:
             st.markdown("""
             <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
@@ -329,7 +380,6 @@ else:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            
         with col_p2:
             st.markdown("""
             <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative;'>
@@ -345,7 +395,6 @@ else:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            
         with col_p3:
             st.markdown("""
             <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
@@ -675,7 +724,6 @@ else:
                         const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
                         aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
 
-                        // PENGUNCIAN PROMPT DUA WAJAH (Naratif Detail untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN JSON NOTULENSI:
                         - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
@@ -877,106 +925,131 @@ else:
                 st.error("⚠️ Ukuran file melebihi 25MB. Silakan kompres audio Anda terlebih dahulu.")
             else:
                 st.audio(uploaded_file)
-                if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
-                    if not llm_key: 
-                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                    else:
-                        with st.spinner("⏳ Sedang mentranskripsi audio... Proses ini memakan waktu tergantung durasi file."):
-                            try:
-                                url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                headers = {"Authorization": f"Bearer {llm_key}"}
-                                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                                data = {"model": "whisper-1", "response_format": "json"}
-                                response = requests.post(url, headers=headers, files=files, data=data)
+                
+                # Cek Kuota Upload sebelum mengizinkan tombol ditekan
+                kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+                if kuota_upload_sekarang <= 0:
+                    st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
+                else:
+                    if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
+                        if not llm_key: 
+                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                        else:
+                            with st.spinner("⏳ Sedang mentranskripsi audio..."):
+                                try:
+                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                    headers = {"Authorization": f"Bearer {llm_key}"}
+                                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                                    data = {"model": "whisper-1", "response_format": "json"}
+                                    response = requests.post(url, headers=headers, files=files, data=data)
 
-                                if response.status_code == 200:
-                                    st.session_state["offline_transcript"] = response.json().get("text", "")
-                                    st.success("✅ Transkripsi berhasil!")
-                                else: 
-                                    st.error(f"❌ Error dari API LiteLLM: {response.text}")
-                            except Exception as e: 
-                                st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
+                                    if response.status_code == 200:
+                                        st.session_state["offline_transcript"] = response.json().get("text", "")
+                                        
+                                        # [PERBAIKAN] Potong Kuota Upload setelah berhasil
+                                        st.session_state["user_kuota_upload"] -= 1
+                                        db.collection("users").document(st.session_state["user_uid"]).update({
+                                            "kuota_upload": st.session_state["user_kuota_upload"]
+                                        })
+                                        
+                                        st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
+                                    else: 
+                                        st.error(f"❌ Error dari API LiteLLM: {response.text}")
+                                except Exception as e: 
+                                    st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
 
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
             transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
             st.session_state["offline_transcript"] = transcript_area 
 
-            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                if not llm_key: 
-                    st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                else:
-                    with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
-                        
-                        prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
-                        - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
-                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+            # Cek Kuota AI Summary
+            kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
+            if kuota_ai_sekarang <= 0:
+                st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
+            else:
+                if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                    if not llm_key: 
+                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                    else:
+                        with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
+                            
+                            prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                            ATURAN JSON NOTULENSI:
+                            - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                            - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
+                            - keputusan: Array of strings. Kesimpulan utama.
+                            - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                            - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
 
-                        ATURAN MARKMAP (PENTING!):
-                        Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
-                        # [Judul Topik Utama Rapat]
-                        ## Ringkasan Eksekutif
-                        - [Poin ringkas]
-                        ## Agenda / Topik
-                        - [Poin]
-                        ## Peserta
-                        - [Nama]
-                        ## Jalannya Diskusi
-                        - [Poin diskusi ringkas 1]
-                          - [Detail singkat]
-                        - [Poin diskusi ringkas 2]
-                        ## Kendala & Solusi (Jika ada)
-                        - [Kendala]
-                          - [Solusi]
-                        ## Keputusan Utama
-                        - [Poin keputusan]
-                        ## Rencana Tindak Lanjut
-                        - [Nama Tugas]
-                          - PIC: [Nama]
-                          - Deadline: [Waktu]
-                          - Prioritas: [Level]
+                            ATURAN MARKMAP (PENTING!):
+                            Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
+                            # [Judul Topik Utama Rapat]
+                            ## Ringkasan Eksekutif
+                            - [Poin ringkas]
+                            ## Agenda / Topik
+                            - [Poin]
+                            ## Peserta
+                            - [Nama]
+                            ## Jalannya Diskusi
+                            - [Poin diskusi ringkas 1]
+                              - [Detail singkat]
+                            - [Poin diskusi ringkas 2]
+                            ## Kendala & Solusi (Jika ada)
+                            - [Kendala]
+                              - [Solusi]
+                            ## Keputusan Utama
+                            - [Poin keputusan]
+                            ## Rencana Tindak Lanjut
+                            - [Nama Tugas]
+                              - PIC: [Nama]
+                              - Deadline: [Waktu]
+                              - Prioritas: [Level]
 
-                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
-                        Transkrip Rapat: "{st.session_state['offline_transcript']}" """
+                            ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
+                            Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
-                        payload = {
-                            "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
-                            "response_format": {
-                                "type": "json_schema",
-                                "json_schema": {
-                                    "name": "meeting_summary", "strict": True,
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                            "notulensi_rapat": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
-                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
-                                                }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
-                                            },
-                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
+                            payload = {
+                                "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                                "response_format": {
+                                    "type": "json_schema",
+                                    "json_schema": {
+                                        "name": "meeting_summary", "strict": True,
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                                "notulensi_rapat": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                        "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                        "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
+                                                        "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
+                                                    }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
+                                                },
+                                                "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                            }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        try:
-                            res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
-                            if res.status_code == 200: 
-                                st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                            else: 
-                                st.error(f"Error AI: {res.text}")
-                        except Exception as e: 
-                            st.error(f"Koneksi LLM Gagal: {str(e)}")
+                            try:
+                                res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                                if res.status_code == 200: 
+                                    st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                    
+                                    # [PERBAIKAN] Potong Kuota AI setelah berhasil
+                                    st.session_state["user_kuota_ai"] -= 1
+                                    db.collection("users").document(st.session_state["user_uid"]).update({
+                                        "kuota_ai": st.session_state["user_kuota_ai"]
+                                    })
+                                    st.success(f"✅ AI Summary berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
+                                else: 
+                                    st.error(f"Error AI: {res.text}")
+                            except Exception as e: 
+                                st.error(f"Koneksi LLM Gagal: {str(e)}")
 
         if st.session_state["offline_summary"]:
             data = st.session_state["offline_summary"]
@@ -1183,5 +1256,5 @@ else:
             """
             components.html(markmap_html, height=450)
 
-        with st.expander("Lihat Source Code Markdown"):
-            st.code(raw_markmap, language="markdown")
+            with st.expander("Lihat Source Code Markdown"):
+                st.code(raw_markmap, language="markdown")

@@ -49,6 +49,17 @@ PAKET_LANGGANAN = {
 }
 
 # =====================================================================
+# KONFIGURASI EMAIL ADMIN
+# =====================================================================
+ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com")
+
+# =====================================================================
+# FUNGSI UNTUK CEK APAKAH USER ADALAH ADMIN
+# =====================================================================
+def is_admin():
+    return st.session_state.get("user_email") == ADMIN_EMAIL
+
+# =====================================================================
 # FUNGSI FIREBASE (REST API & FIRESTORE)
 # =====================================================================
 def login_firebase(email, password):
@@ -153,13 +164,20 @@ with st.sidebar:
     # Menampilkan Info Akun jika sudah login
     if st.session_state.get("logged_in"):
         st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
-        st.markdown(f"**🏷️ Paket:** {st.session_state.get('user_paket', 'NON-AKTIF')}")
-        if st.session_state.get('user_paket') != 'NON-AKTIF':
-            # Highlight merah jika kuota habis
-            ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
-            up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
-            st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
-            st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
+        
+        # [PERBAIKAN] Tampilan khusus untuk Admin
+        if is_admin():
+            st.markdown("**🏷️ Paket:** 👑 ADMIN (Unlimited Access)")
+            st.markdown("**✨ Sisa AI Summary:** ♾️ Unlimited", unsafe_allow_html=True)
+            st.markdown("**📁 Sisa Upload Audio:** ♾️ Unlimited", unsafe_allow_html=True)
+        else:
+            st.markdown(f"**🏷️ Paket:** {st.session_state.get('user_paket', 'NON-AKTIF')}")
+            if st.session_state.get('user_paket') != 'NON-AKTIF':
+                # Highlight merah jika kuota habis
+                ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
+                up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
+                st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
+                st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
         st.markdown("---")
 
 # =====================================================================
@@ -194,6 +212,18 @@ if not st.session_state["logged_in"]:
                         user_data = login_firebase(email_login, pass_login)
                         if "idToken" in user_data:
                             uid = user_data["localId"]
+                            
+                            # [PERBAIKAN] Cek apakah ini admin
+                            if email_login == ADMIN_EMAIL:
+                                st.session_state["logged_in"] = True
+                                st.session_state["user_email"] = email_login
+                                st.session_state["user_uid"] = uid
+                                st.session_state["user_paket"] = "ADMIN"
+                                st.session_state["user_kuota_ai"] = 999999  # Unlimited
+                                st.session_state["user_kuota_upload"] = 999999  # Unlimited
+                                st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
+                                st.rerun()
+                            
                             user_db_info = check_subscription(uid)
                             sub_status = user_db_info.get("status_subscription", "non-aktif")
                             
@@ -226,11 +256,8 @@ else:
             st.rerun()
 
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")
-    
-    # KONFIGURASI EMAIL ADMIN
-    ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com") 
 
-    if st.session_state.get("user_email") == ADMIN_EMAIL:
+    if is_admin():
         tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab_admin = tabs[0]
         tab1 = tabs[1]
@@ -926,11 +953,41 @@ else:
             else:
                 st.audio(uploaded_file)
                 
-                # Cek Kuota Upload sebelum mengizinkan tombol ditekan
-                kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
-                if kuota_upload_sekarang <= 0:
-                    st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
+                # [PERBAIKAN] Cek Kuota Upload sebelum mengizinkan tombol ditekan
+                # Admin tidak dibatasi
+                if not is_admin():
+                    kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+                    if kuota_upload_sekarang <= 0:
+                        st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
+                    else:
+                        if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
+                            if not llm_key: 
+                                st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                            else:
+                                with st.spinner("⏳ Sedang mentranskripsi audio..."):
+                                    try:
+                                        url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                        headers = {"Authorization": f"Bearer {llm_key}"}
+                                        files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                                        data = {"model": "whisper-1", "response_format": "json"}
+                                        response = requests.post(url, headers=headers, files=files, data=data)
+
+                                        if response.status_code == 200:
+                                            st.session_state["offline_transcript"] = response.json().get("text", "")
+                                            
+                                            # Potong Kuota Upload setelah berhasil
+                                            st.session_state["user_kuota_upload"] -= 1
+                                            db.collection("users").document(st.session_state["user_uid"]).update({
+                                                "kuota_upload": st.session_state["user_kuota_upload"]
+                                            })
+                                            
+                                            st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
+                                        else: 
+                                            st.error(f"❌ Error dari API LiteLLM: {response.text}")
+                                    except Exception as e: 
+                                        st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
                 else:
+                    # [PERBAIKAN] Admin bisa langsung upload tanpa cek kuota
                     if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
                         if not llm_key: 
                             st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
@@ -945,14 +1002,7 @@ else:
 
                                     if response.status_code == 200:
                                         st.session_state["offline_transcript"] = response.json().get("text", "")
-                                        
-                                        # [PERBAIKAN] Potong Kuota Upload setelah berhasil
-                                        st.session_state["user_kuota_upload"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({
-                                            "kuota_upload": st.session_state["user_kuota_upload"]
-                                        })
-                                        
-                                        st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
+                                        st.success(f"✅ Transkripsi berhasil! (Admin Mode: Unlimited Access)")
                                     else: 
                                         st.error(f"❌ Error dari API LiteLLM: {response.text}")
                                 except Exception as e: 
@@ -963,11 +1013,96 @@ else:
             transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
             st.session_state["offline_transcript"] = transcript_area 
 
-            # Cek Kuota AI Summary
-            kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
-            if kuota_ai_sekarang <= 0:
-                st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
+            # [PERBAIKAN] Cek Kuota AI Summary
+            if not is_admin():
+                kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
+                if kuota_ai_sekarang <= 0:
+                    st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
+                else:
+                    if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                        if not llm_key: 
+                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                        else:
+                            with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
+                                
+                                prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                                ATURAN JSON NOTULENSI:
+                                - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
+                                - keputusan: Array of strings. Kesimpulan utama.
+                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
+                                - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+
+                                ATURAN MARKMAP (PENTING!):
+                                Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
+                                # [Judul Topik Utama Rapat]
+                                ## Ringkasan Eksekutif
+                                - [Poin ringkas]
+                                ## Agenda / Topik
+                                - [Poin]
+                                ## Peserta
+                                - [Nama]
+                                ## Jalannya Diskusi
+                                - [Poin diskusi ringkas 1]
+                                  - [Detail singkat]
+                                - [Poin diskusi ringkas 2]
+                                ## Kendala & Solusi (Jika ada)
+                                - [Kendala]
+                                  - [Solusi]
+                                ## Keputusan Utama
+                                - [Poin keputusan]
+                                ## Rencana Tindak Lanjut
+                                - [Nama Tugas]
+                                  - PIC: [Nama]
+                                  - Deadline: [Waktu]
+                                  - Prioritas: [Level]
+
+                                ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
+                                Transkrip Rapat: "{st.session_state['offline_transcript']}" """
+
+                                payload = {
+                                    "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                                    "response_format": {
+                                        "type": "json_schema",
+                                        "json_schema": {
+                                            "name": "meeting_summary", "strict": True,
+                                            "schema": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                                    "notulensi_rapat": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                            "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                            "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
+                                                            "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
+                                                        }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
+                                                    },
+                                                    "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                                }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
+                                            }
+                                        }
+                                    }
+                                }
+
+                                try:
+                                    res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                                    if res.status_code == 200: 
+                                        st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                        
+                                        # Potong Kuota AI setelah berhasil
+                                        st.session_state["user_kuota_ai"] -= 1
+                                        db.collection("users").document(st.session_state["user_uid"]).update({
+                                            "kuota_ai": st.session_state["user_kuota_ai"]
+                                        })
+                                        st.success(f"✅ AI Summary berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
+                                    else: 
+                                        st.error(f"Error AI: {res.text}")
+                                except Exception as e: 
+                                    st.error(f"Koneksi LLM Gagal: {str(e)}")
             else:
+                # [PERBAIKAN] Admin bisa langsung generate tanpa cek kuota
                 if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                     if not llm_key: 
                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
@@ -1039,13 +1174,7 @@ else:
                                 res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                                 if res.status_code == 200: 
                                     st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                                    
-                                    # [PERBAIKAN] Potong Kuota AI setelah berhasil
-                                    st.session_state["user_kuota_ai"] -= 1
-                                    db.collection("users").document(st.session_state["user_uid"]).update({
-                                        "kuota_ai": st.session_state["user_kuota_ai"]
-                                    })
-                                    st.success(f"✅ AI Summary berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
+                                    st.success(f"✅ AI Summary berhasil digenerate! (Admin Mode: Unlimited Access)")
                                 else: 
                                     st.error(f"Error AI: {res.text}")
                             except Exception as e: 

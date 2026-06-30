@@ -10,6 +10,26 @@ from firebase_admin import credentials, firestore
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
 
 # =====================================================================
+# HIDE STREAMLIT DEFAULT ICONS (Menu & Deploy)
+# =====================================================================
+hide_streamlit_style = """
+            <style>
+            /* Sembunyikan tombol GitHub / Deploy */
+            .stAppDeployButton {visibility: hidden;}
+            
+            /* Sembunyikan ikon titik tiga (Main Menu) */
+            #MainMenu {visibility: hidden;}
+            
+            /* Sembunyikan seluruh toolbar di pojok kanan atas */
+            [data-testid="stToolbar"] {visibility: hidden;}
+            
+            /* Opsional: Sembunyikan tulisan 'Made with Streamlit' */
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# =====================================================================
 # INISIALISASI FIREBASE ADMIN (Dijalankan sekali)
 # =====================================================================
 if not firebase_admin._apps:
@@ -1041,5 +1061,5 @@ else:
             """
             components.html(markmap_html, height=450)
 
-            with st.expander("Lihat Source Code Markdown"):
-                st.code(raw_markmap, language="markdown")
+        with st.expander("Lihat Source Code Markdown"):
+            st.code(raw_markmap, language="markdown")

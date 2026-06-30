@@ -151,19 +151,16 @@ with st.sidebar:
     st.markdown("---")
     
     # Menampilkan Info Akun jika sudah login
-  if st.session_state.get("logged_in"):
-    st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
-    st.markdown(f"**🏷️ Paket:** {'Admin (Unlimited)' if IS_ADMIN else st.session_state.get('user_paket', 'NON-AKTIF')}")
-    
-    if not IS_ADMIN and st.session_state.get('user_paket') != 'NON-AKTIF':
-        ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
-        up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
-        st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
-        st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
-    elif IS_ADMIN:
-        st.markdown("**✨ AI Summary:** <span style='color:green; font-weight:bold;'>Unlimited</span>", unsafe_allow_html=True)
-        st.markdown("**📁 Upload Audio:** <span style='color:green; font-weight:bold;'>Unlimited</span>", unsafe_allow_html=True)
-    st.markdown("---")
+    if st.session_state.get("logged_in"):
+        st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
+        st.markdown(f"**🏷️ Paket:** {st.session_state.get('user_paket', 'NON-AKTIF')}")
+        if st.session_state.get('user_paket') != 'NON-AKTIF':
+            # Highlight merah jika kuota habis
+            ai_color = "red" if st.session_state.get('user_kuota_ai', 0) == 0 else "black"
+            up_color = "red" if st.session_state.get('user_kuota_upload', 0) == 0 else "black"
+            st.markdown(f"**✨ Sisa AI Summary:** <span style='color:{ai_color}; font-weight:bold;'>{st.session_state.get('user_kuota_ai', 0)}x</span>", unsafe_allow_html=True)
+            st.markdown(f"**📁 Sisa Upload Audio:** <span style='color:{up_color}; font-weight:bold;'>{st.session_state.get('user_kuota_upload', 0)}x</span>", unsafe_allow_html=True)
+        st.markdown("---")
 
 # =====================================================================
 # INISIALISASI SESSION STATE
@@ -232,7 +229,6 @@ else:
     
     # KONFIGURASI EMAIL ADMIN
     ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com") 
-    IS_ADMIN = st.session_state.get("user_email") == ADMIN_EMAIL        
 
     if st.session_state.get("user_email") == ADMIN_EMAIL:
         tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
@@ -930,10 +926,9 @@ else:
             else:
                 st.audio(uploaded_file)
                 
-                # Cek Kuota Upload (Admin tidak terikat kuota)
+                # Cek Kuota Upload sebelum mengizinkan tombol ditekan
                 kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
-                
-                if not IS_ADMIN and kuota_upload_sekarang <= 0:
+                if kuota_upload_sekarang <= 0:
                     st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
                 else:
                     if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
@@ -951,32 +946,26 @@ else:
                                     if response.status_code == 200:
                                         st.session_state["offline_transcript"] = response.json().get("text", "")
                                         
-                                        # Pengurangan kuota hanya jika BUKAN admin
-                                        if not IS_ADMIN:
-                                            st.session_state["user_kuota_upload"] -= 1
-                                            db.collection("users").document(st.session_state["user_uid"]).update({
-                                                "kuota_upload": st.session_state["user_kuota_upload"]
-                                            })
-                                            st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
-                                        else:
-                                            st.success("✅ Transkripsi berhasil! (Admin Mode: Kuota tidak dikurangi)")
-                                            
+                                        # [PERBAIKAN] Potong Kuota Upload setelah berhasil
+                                        st.session_state["user_kuota_upload"] -= 1
+                                        db.collection("users").document(st.session_state["user_uid"]).update({
+                                            "kuota_upload": st.session_state["user_kuota_upload"]
+                                        })
+                                        
+                                        st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
                                     else: 
                                         st.error(f"❌ Error dari API LiteLLM: {response.text}")
                                 except Exception as e: 
                                     st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
 
-        # Area Tampilan Hasil & AI Summary
         if st.session_state["offline_transcript"]:
-            st.markdown("---")
             st.markdown("#### 📝 Hasil Transkripsi")
             transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
             st.session_state["offline_transcript"] = transcript_area 
 
-            # Cek Kuota AI Summary (Admin tidak terikat kuota)
+            # Cek Kuota AI Summary
             kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
-            
-            if not IS_ADMIN and kuota_ai_sekarang <= 0:
+            if kuota_ai_sekarang <= 0:
                 st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
             else:
                 if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):

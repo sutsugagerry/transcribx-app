@@ -151,7 +151,7 @@ with st.sidebar:
     st.markdown("---")
     
     # Menampilkan Info Akun jika sudah login
-    if st.session_state.get("logged_in"):
+  if st.session_state.get("logged_in"):
     st.markdown(f"**👤 Pengguna:**<br><span style='font-size:12px;'>{st.session_state.get('user_email')}</span>", unsafe_allow_html=True)
     st.markdown(f"**🏷️ Paket:** {'Admin (Unlimited)' if IS_ADMIN else st.session_state.get('user_paket', 'NON-AKTIF')}")
     

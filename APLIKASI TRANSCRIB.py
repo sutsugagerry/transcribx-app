@@ -1181,7 +1181,7 @@ else:
             </body>
             </html>
             """
-            components.html(markmap_html, height=450)
+        components.html(markmap_html, height=450)
 
         with st.expander("Lihat Source Code Markdown"):
              st.code(raw_markmap, language="markdown")

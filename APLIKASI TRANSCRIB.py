@@ -7,7 +7,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
 import time
-import plotly.express as px  # Tambahan untuk visualisasi chart
 
 # Konfigurasi Halaman (Hanya boleh dipanggil sekali di paling atas)
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
@@ -605,30 +604,25 @@ else:
             col_stat3.metric("❌ Non-Aktif", total_nonaktif)
             col_stat4.metric("👑 Admin", total_admin)
 
-            # Menampilkan Plotly Charts
+            # Menampilkan Charts (Bawaan Streamlit)
             st.markdown("#### 📊 Analitik Klien")
             col_chart1, col_chart2 = st.columns(2)
             
             with col_chart1:
-                # Menyiapkan data untuk chart status
-                status_df = pd.DataFrame([u['Status'] for u in users_list], columns=['Status']).value_counts().reset_index(name='Jumlah')
-                fig_status = px.pie(status_df, names='Status', values='Jumlah', 
-                                    title='Distribusi Status Pengguna',
-                                    color='Status',
-                                    color_discrete_map={'aktif': '#10b981', 'non-aktif': '#ef4444', 'admin': '#3b82f6'},
-                                    hole=0.4)
-                fig_status.update_layout(margin=dict(t=40, b=0, l=0, r=0))
-                st.plotly_chart(fig_status, use_container_width=True)
+                st.markdown("**Distribusi Status Pengguna**")
+                # Chart Status menggunakan bawaan Streamlit
+                status_counts = pd.DataFrame([u['Status'] for u in users_list], columns=['Status']).value_counts().reset_index(name='Jumlah')
+                st.bar_chart(status_counts, x="Status", y="Jumlah", color="#3b82f6")
                 
             with col_chart2:
-                # Menyiapkan data untuk chart paket
-                paket_df = pd.DataFrame([u['Paket'] for u in users_list if u['Paket'] != 'ADMIN'], columns=['Paket']).value_counts().reset_index(name='Jumlah')
-                fig_paket = px.bar(paket_df, x='Paket', y='Jumlah', 
-                                   title='Distribusi Paket Langganan',
-                                   color='Paket',
-                                   color_discrete_map={'BASIC': '#cbd5e1', 'EXECUTIVE': '#3b82f6', 'MASTER': '#8b5cf6', 'NON-AKTIF': '#94a3b8'})
-                fig_paket.update_layout(margin=dict(t=40, b=0, l=0, r=0), showlegend=False)
-                st.plotly_chart(fig_paket, use_container_width=True)
+                st.markdown("**Distribusi Paket Langganan**")
+                # Chart Paket menggunakan bawaan Streamlit
+                paket_list = [u['Paket'] for u in users_list if u['Paket'] != 'ADMIN']
+                if paket_list:
+                    paket_counts = pd.DataFrame(paket_list, columns=['Paket']).value_counts().reset_index(name='Jumlah')
+                    st.bar_chart(paket_counts, x="Paket", y="Jumlah", color="#10b981")
+                else:
+                    st.info("Belum ada data paket klien.")
 
             st.markdown("---")
             
@@ -997,7 +991,7 @@ else:
                         container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px';
                         container.style.overflow = 'visible';
                         setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueHeight })
+                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueWidth })
                             .then(canvas => {
                                 container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
                                 svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;

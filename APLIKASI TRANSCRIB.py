@@ -1689,7 +1689,7 @@ else:
                                 setTimeout(() => {
                                     let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
                                     if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) { 
-                                        rawMer = "graph LR\n" + rawMer; 
+                                        rawMer = "graph LR\\n" + rawMer; 
                                     }
                                     const mermaidDiv = document.getElementById('mermaidLive');
                                     mermaidDiv.innerHTML = rawMer;

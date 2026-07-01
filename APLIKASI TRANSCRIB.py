@@ -292,7 +292,7 @@ if not st.session_state["logged_in"]:
     </style>
     """, unsafe_allow_html=True)
 
-    # 2. Injeksi Javascript murni untuk animasi Node DAN Mouse Tracking GERMIC
+    # 2. Injeksi Javascript murni untuk animasi Jalur Listrik, Core Jantung, & Mouse Tracking
     components.html("""
     <script>
         const parentWindow = window.parent;
@@ -320,82 +320,168 @@ if not st.session_state["logged_in"]:
 
         const ctx = canvas.getContext('2d');
         let w, h;
-        let nodes = [];
-        const maxDistance = 150;
+        let points = [];
+        let edges = [];
+        let sparks = [];
+        let time = 0;
+        let maxLayer = 6;
 
         function resize() {
             w = canvas.width = parentWindow.innerWidth;
             h = canvas.height = parentWindow.innerHeight;
+            initNetwork();
         }
+
+        // --- FUNGSI MEMBUAT JALUR (PATH) MENUJU CORE ---
+        function initNetwork() {
+            points = [];
+            edges = [];
+            sparks = [];
+
+            // Titik 0: Core Jantung di tengah layar
+            points.push({ x: w/2, y: h/2, layer: 0 });
+
+            // Membuat titik-titik yang menyebar ke luar (layaknya jaring laba-laba/kabel)
+            for(let l = 1; l <= maxLayer; l++) {
+                let radius = l * (Math.max(w, h) / 1.8) / maxLayer;
+                let count = l * 12; // Semakin ke luar, semakin banyak titiknya
+                for(let i = 0; i < count; i++) {
+                    let angle = (i / count) * Math.PI * 2 + (Math.random() * 0.4);
+                    points.push({
+                        x: w/2 + Math.cos(angle) * (radius + (Math.random() * 60 - 30)),
+                        y: h/2 + Math.sin(angle) * (radius + (Math.random() * 60 - 30)),
+                        layer: l
+                    });
+                }
+            }
+
+            // Menyambungkan setiap titik ke titik terdekat di layer sebelumnya (mengarah ke tengah)
+            for(let i = 1; i < points.length; i++) {
+                let p = points[i];
+                let targets = points.filter(t => t.layer === p.layer - 1);
+                if (targets.length > 0) {
+                    let closest = targets.reduce((prev, curr) => {
+                        return (Math.hypot(p.x - curr.x, p.y - curr.y) < Math.hypot(p.x - prev.x, p.y - prev.y)) ? curr : prev;
+                    });
+                    edges.push({ from: p, to: closest }); // Jalur dari luar (from) ke dalam (to)
+                }
+            }
+        }
+
+        // --- CLASS UNTUK SINAR LISTRIK YANG BERJALAN ---
+        class Spark {
+            constructor(startNode) {
+                this.currentNode = startNode;
+                this.findNextEdge();
+                this.progress = 0;
+                this.speed = 0.01 + Math.random() * 0.015; // Kecepatan lari listrik
+            }
+            findNextEdge() {
+                // Cari jalur yang mengarah ke dalam dari node saat ini
+                let nextEdges = edges.filter(e => e.from === this.currentNode);
+                if (nextEdges.length > 0) {
+                    // Pilih jalur (biasanya cuma 1 karena struktur pohon)
+                    this.edge = nextEdges[Math.floor(Math.random() * nextEdges.length)];
+                } else {
+                    this.edge = null; // Sudah sampai di core
+                }
+            }
+            update() {
+                if (!this.edge) return true; // Hapus jika sudah di tengah
+                this.progress += this.speed;
+                if (this.progress >= 1) {
+                    this.currentNode = this.edge.to; // Pindah ke titik selanjutnya
+                    this.progress = 0;
+                    this.findNextEdge(); // Lanjut cari jalan ke dalam
+                    if (!this.edge) return true;
+                }
+                return false;
+            }
+            draw() {
+                if (!this.edge) return;
+                let x = this.edge.from.x + (this.edge.to.x - this.edge.from.x) * this.progress;
+                let y = this.edge.from.y + (this.edge.to.y - this.edge.from.y) * this.progress;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#38bdf8'; // Warna biru elektrik
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#0ea5e9'; // Efek nyala listrik (glow)
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
         parentWindow.addEventListener('resize', resize);
         resize();
 
-        class Node {
-            constructor() {
-                this.x = Math.random() * w;
-                this.y = Math.random() * h;
-                this.vx = (Math.random() - 0.5) * 1.5;
-                this.vy = (Math.random() - 0.5) * 1.5;
-                this.radius = Math.random() * 2 + 1.5;
-            }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < 0 || this.x > w) this.vx *= -1;
-                if (this.y < 0 || this.y > h) this.vy *= -1;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#818cf8'; 
-                ctx.fill();
-            }
-        }
-
-        function initNodes() {
-            nodes = [];
-            const numNodes = Math.floor((w * h) / 10000); 
-            for (let i = 0; i < numNodes; i++) {
-                nodes.push(new Node());
-            }
-        }
-        initNodes();
-
+        // --- ANIMASI UTAMA ---
         function animate() {
             ctx.clearRect(0, 0, w, h);
-            
-            for (let i = 0; i < nodes.length; i++) {
-                nodes[i].update();
-                nodes[i].draw();
-                
-                for (let j = i + 1; j < nodes.length; j++) {
-                    const dx = nodes[i].x - nodes[j].x;
-                    const dy = nodes[i].y - nodes[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < maxDistance) {
-                        ctx.beginPath();
-                        ctx.moveTo(nodes[i].x, nodes[i].y);
-                        ctx.lineTo(nodes[j].x, nodes[j].y);
-                        const opacity = 1 - (dist / maxDistance);
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${opacity * 0.6})`; 
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                    }
+            time += 0.05;
+
+            // 1. Gambar Jalur/Kabel Statis (Redup)
+            ctx.lineWidth = 1;
+            edges.forEach(e => {
+                ctx.beginPath();
+                ctx.moveTo(e.from.x, e.from.y);
+                ctx.lineTo(e.to.x, e.to.y);
+                ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)'; // Warna indigo redup
+                ctx.stroke();
+            });
+
+            // 2. Spawn Sinar Listrik Baru dari Pinggir Layar
+            if (Math.random() < 0.3) {
+                let outerNodes = points.filter(p => p.layer === maxLayer || p.layer === maxLayer - 1);
+                if(outerNodes.length > 0) {
+                    let startNode = outerNodes[Math.floor(Math.random() * outerNodes.length)];
+                    sparks.push(new Spark(startNode));
                 }
             }
+
+            // 3. Update & Gambar Sinar Listrik yang Berjalan
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                let s = sparks[i];
+                if (s.update()) {
+                    sparks.splice(i, 1); // Hapus jika sudah diserap core
+                } else {
+                    s.draw();
+                }
+            }
+
+            // 4. Gambar Core (Jantung yang Berdetak / Menyala)
+            let pulse = Math.sin(time) * 8; 
+            
+            // Cahaya luar jantung (Glow)
+            ctx.beginPath();
+            ctx.arc(w/2, h/2, 35 + pulse, 0, Math.PI * 2);
+            let grad = ctx.createRadialGradient(w/2, h/2, 5, w/2, h/2, 45 + pulse);
+            grad.addColorStop(0, '#fcd34d'); // Kuning cerah di tengah
+            grad.addColorStop(0.4, '#f59e0b'); // Orange
+            grad.addColorStop(1, 'rgba(239, 68, 68, 0)'); // Merah memudar di ujung
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            // Inti padat jantung
+            ctx.beginPath();
+            ctx.arc(w/2, h/2, 12 + (pulse/3), 0, Math.PI * 2);
+            ctx.fillStyle = '#fffbeb';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#f59e0b';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
             parentWindow.nodeAnimFrame = requestAnimationFrame(animate);
         }
+
         animate();
 
-        // --- Logika GERMIC Melirik Mengikuti Mouse ---
+        // --- Logika GERMIC Melirik Mengikuti Mouse (Tetap Dipertahankan) ---
         parentWindow.addEventListener('mousemove', (e) => {
             const face = parentDoc.getElementById('germic-login-face');
             if (face) {
-                // Kalkulasi batasan lirik mata
                 const limit = 8;
                 const rect = face.getBoundingClientRect();
-                // Mengukur jarak mouse ke titik tengah GERMIC
                 const mouseX = e.clientX - (rect.left + rect.width / 2); 
                 const mouseY = e.clientY - (rect.top + rect.height / 2);
                 

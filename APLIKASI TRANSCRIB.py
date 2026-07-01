@@ -82,6 +82,7 @@ footer {visibility: hidden;}
     background: linear-gradient(135deg, #64748b 0%, #334155 100%);
 }
 
+/* Mempercantik Tombol Utama Streamlit */
 .stButton>button {
     border-radius: 8px !important;
     transition: all 0.3s ease !important;
@@ -91,6 +92,7 @@ footer {visibility: hidden;}
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
+/* Mempercantik Tab Navigasi */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
 }
@@ -779,14 +781,13 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE - SCREEN CAPTURE DENGAN getDisplayMedia
+    # TAB 1: LIVE CAPTURE - SCREEN CAPTURE (FIXED)
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
-        st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share audio'** → Klik Share. Gunakan Chrome/Edge untuk hasil terbaik.")
-        st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share audio'**!")
+        st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
+        st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
         
-        # HTML DENGAN getDisplayMedia UNTUK SCREEN CAPTURE
         html_code = """
         <!DOCTYPE html>
         <html>
@@ -890,6 +891,12 @@ else:
                     margin-bottom: 16px; font-size: 13px; color: #92400e;
                 }
                 
+                .debug-box {
+                    background: #f0fdf4; border: 1px solid #86efac; padding: 10px; border-radius: 8px;
+                    margin-top: 10px; font-size: 11px; color: #166534; font-family: monospace;
+                    max-height: 150px; overflow-y: auto;
+                }
+                
                 @media (max-width: 640px) {
                     .controls-row { flex-direction: column; align-items: stretch; }
                     .controls-row > * { width: 100%; }
@@ -902,12 +909,13 @@ else:
         <body>
             <!-- INSTRUCTION BOX -->
             <div class="instruction-box">
-                <strong>📺 CARA SCREEN CAPTURE (ZOOM / YOUTUBE):</strong><br>
-                1. Klik <b>"Start Capture"</b> di bawah<br>
-                2. Akan muncul dialog: pilih tab/window <b>Zoom</b> atau <b>YouTube</b><br>
-                3. <b>CENTANG "Share audio"</b> (ini WAJIB!)<br>
-                4. Klik <b>Share</b><br>
-                5. Suara dari tab/window tersebut akan otomatis ditranskrip
+                <strong>📺 CARA SCREEN CAPTURE:</strong><br>
+                1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b><br>
+                2. Klik <b>"Start Capture"</b> di bawah<br>
+                3. Pilih tab/window <b>Zoom</b> atau <b>YouTube</b><br>
+                4. <b>CENTANG "Share tab audio"</b><br>
+                5. Klik <b>Share</b> → Audio akan ditranskrip<br>
+                6. Rekaman muncul di <b>Arsip Rekaman</b> setelah Stop
             </div>
         
             <!-- MAIN CONTROLS -->
@@ -917,10 +925,9 @@ else:
                         <option value="id-ID">🇮🇩 Indonesia</option>
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ja-JP">🇯🇵 Japanese</option>
-                        <option value="ko-KR">🇰🇷 Korean</option>
                     </select>
                     <button id="startBtn" class="btn-custom btn-start">▶️ Start Capture</button>
-                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop</button>
+                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop & Simpan Rekaman</button>
                     <div class="status-badge" style="margin-left:auto;">
                         <div id="indicator" class="indicator-dot"></div>
                         <span id="status" style="color: #64748b;">Standby</span>
@@ -929,6 +936,11 @@ else:
                 
                 <div class="visualizer-container">
                     <canvas id="visualizer"></canvas>
+                </div>
+                
+                <!-- DEBUG INFO -->
+                <div id="debugInfo" class="debug-box" style="display:none;">
+                    <strong>🔍 Debug Log:</strong>
                 </div>
                 
                 <div class="ai-section">
@@ -960,7 +972,9 @@ else:
             <!-- AUDIO ARCHIVE -->
             <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
                 <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
-                <div id="audioContainer"></div>
+                <div id="audioContainer">
+                    <p style="color:#94a3b8; font-size:13px; text-align:center;">Rekaman akan muncul di sini setelah Stop</p>
+                </div>
             </div>
 
             <script>
@@ -983,26 +997,34 @@ else:
                     const audioContainer = document.getElementById('audioContainer');
                     const visualizer = document.getElementById('visualizer');
                     const canvasCtx = visualizer.getContext('2d');
+                    const debugInfo = document.getElementById('debugInfo');
 
                     // ======== STATE ========
                     let isRecording = false;
                     let recognition = null;
                     let mediaRecorder = null;
                     let audioChunks = [];
-                    let audioStream = null;
+                    let displayStream = null;
                     let audioContext = null;
                     let analyser = null;
                     let dataArray = null;
                     let drawVisual = null;
                     let currentInterimDiv = null;
                     let lastFinalText = "";
-                    let displayStream = null;
+
+                    function updateDebug(msg) {
+                        debugInfo.style.display = 'block';
+                        const time = new Date().toLocaleTimeString();
+                        debugInfo.innerHTML += '<br><span style="color:#64748b;">' + time + '</span> ' + msg;
+                        debugInfo.scrollTop = debugInfo.scrollHeight;
+                    }
 
                     // ======== INIT SPEECH RECOGNITION ========
                     function initSpeechRecognition() {
                         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                         if (!SpeechRecognition) {
                             status.innerText = "❌ Browser tidak mendukung Speech API";
+                            updateDebug('ERROR: Speech API not supported');
                             return null;
                         }
                         const rec = new SpeechRecognition();
@@ -1012,36 +1034,30 @@ else:
 
                         rec.onstart = function() {
                             isRecording = true;
-                            status.innerText = "🎤 Menangkap audio (" + (langSelect.value === 'id-ID' ? 'ID' : langSelect.value) + ")...";
+                            status.innerText = "🎤 Menangkap audio (" + langSelect.value + ")...";
                             indicator.className = 'indicator-dot recording';
                             startBtn.disabled = true;
                             stopBtn.disabled = false;
                             langSelect.disabled = true;
                             const placeholder = document.getElementById('placeholder');
                             if (placeholder) placeholder.style.display = 'none';
+                            updateDebug('Speech recognition STARTED');
                         };
 
                         rec.onerror = function(event) {
-                            console.error('Speech recognition error:', event.error);
-                            if (event.error === 'not-allowed') {
-                                status.innerText = "❌ Izin mikrofon/screen capture ditolak!";
-                            } else if (event.error === 'no-speech') {
-                                // No speech - normal
-                            } else if (event.error === 'aborted') {
-                                // Normal abort
-                            } else {
-                                status.innerText = "⚠️ Error: " + event.error;
-                            }
+                            updateDebug('Speech error: ' + event.error);
+                            if (event.error === 'no-speech') return;
+                            if (event.error === 'aborted') return;
+                            status.innerText = "⚠️ Speech Error: " + event.error;
                         };
 
                         rec.onend = function() {
-                            // Restart jika masih recording
+                            updateDebug('Speech ended. isRecording=' + isRecording);
                             if (isRecording) {
-                                try { 
-                                    rec.start();
-                                } catch(e) {
-                                    console.log('Restart recognition error:', e);
-                                }
+                                setTimeout(() => {
+                                    try { rec.start(); updateDebug('Speech restarted'); } 
+                                    catch(e) { updateDebug('Restart failed: ' + e.message); }
+                                }, 200);
                             }
                         };
 
@@ -1097,10 +1113,11 @@ else:
                     // ======== VISUALIZER ========
                     function setupVisualizer(stream) {
                         try {
-                            // Get only audio track for visualizer
                             const audioTracks = stream.getAudioTracks();
-                            if (audioTracks.length === 0) return;
-                            
+                            if (audioTracks.length === 0) {
+                                updateDebug('WARNING: No audio tracks for visualizer');
+                                return;
+                            }
                             const audioOnlyStream = new MediaStream(audioTracks);
                             audioContext = new (window.AudioContext || window.webkitAudioContext)();
                             const source = audioContext.createMediaStreamSource(audioOnlyStream);
@@ -1108,8 +1125,9 @@ else:
                             analyser.fftSize = 256;
                             dataArray = new Uint8Array(analyser.frequencyBinCount);
                             source.connect(analyser);
+                            updateDebug('Visualizer OK. AudioContext state: ' + audioContext.state);
                         } catch(e) {
-                            console.warn('Visualizer setup error:', e);
+                            updateDebug('Visualizer error: ' + e.message);
                         }
                     }
 
@@ -1141,89 +1159,169 @@ else:
                         }
                     }
 
-                    // ======== START - GUNAKAN getDisplayMedia UNTUK SCREEN CAPTURE ========
+                    // ======== SETUP MEDIA RECORDER ========
+                    function setupMediaRecorder(stream) {
+                        audioChunks = [];
+                        
+                        const options = { mimeType: 'video/webm;codecs=vp9,opus' };
+                        
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            options.mimeType = 'video/webm;codecs=vp8,opus';
+                        }
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            options.mimeType = 'video/webm';
+                        }
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            options.mimeType = '';
+                        }
+                        
+                        updateDebug('MediaRecorder mimeType: ' + (options.mimeType || 'browser default'));
+                        
+                        try {
+                            mediaRecorder = new MediaRecorder(stream, options.mimeType ? options : undefined);
+                        } catch(e) {
+                            updateDebug('MediaRecorder with options failed, trying default');
+                            mediaRecorder = new MediaRecorder(stream);
+                        }
+                        
+                        mediaRecorder.ondataavailable = function(e) {
+                            if (e.data && e.data.size > 0) {
+                                audioChunks.push(e.data);
+                                updateDebug('Chunk: ' + (e.data.size / 1024).toFixed(1) + ' KB');
+                            }
+                        };
+                        
+                        mediaRecorder.onstart = function() {
+                            updateDebug('MediaRecorder STARTED recording');
+                        };
+                        
+                        mediaRecorder.onstop = function() {
+                            updateDebug('MediaRecorder STOPPED. Total chunks: ' + audioChunks.length);
+                            
+                            if (audioChunks.length > 0) {
+                                const mimeType = mediaRecorder.mimeType || 'video/webm';
+                                const blob = new Blob(audioChunks, { type: mimeType });
+                                const blobSizeKB = (blob.size / 1024).toFixed(1);
+                                updateDebug('BLOB created: ' + blobSizeKB + ' KB, type: ' + blob.type);
+                                
+                                const audioUrl = URL.createObjectURL(blob);
+                                const timestamp = Date.now();
+                                const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                                const fileName = 'ScreenCapture_' + timestamp + '.' + ext;
+                                
+                                // Clear previous content
+                                audioContainer.innerHTML = '';
+                                
+                                const audioItem = document.createElement('div');
+                                audioItem.className = 'audio-item fade-in';
+                                audioItem.innerHTML = `
+                                    <audio controls src="${audioUrl}" preload="auto" style="flex:1; min-width:200px;"></audio>
+                                    <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; white-space:nowrap; text-decoration:none;">💾 Download</a>
+                                    <small style="color:#94a3b8; white-space:nowrap;">${blobSizeKB} KB</small>
+                                `;
+                                audioContainer.appendChild(audioItem);
+                                updateDebug('✅ Audio player ADDED to container');
+                            } else {
+                                audioContainer.innerHTML = '<p style="color:#ef4444; text-align:center; padding:20px;">⚠️ Tidak ada data audio. Pastikan "Share tab audio" DICENTANG saat capture!</p>';
+                                updateDebug('❌ NO audio chunks recorded!');
+                            }
+                            
+                            // Reset chunks
+                            audioChunks = [];
+                        };
+                        
+                        mediaRecorder.onerror = function(e) {
+                            updateDebug('MediaRecorder ERROR: ' + (e.error?.message || 'unknown'));
+                        };
+                    }
+
+                    // ======== START ========
                     startBtn.onclick = async function() {
                         try {
-                            // Reset
+                            // Reset state
                             lastFinalText = "";
+                            currentInterimDiv = null;
+                            audioChunks = [];
+                            debugInfo.innerHTML = '<strong>🔍 Debug Log:</strong>';
+                            debugInfo.style.display = 'block';
                             transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Bicara atau putar audio di tab yang dipilih.</div>';
                             
-                            // GUNAKAN getDisplayMedia untuk screen capture DENGAN AUDIO
+                            updateDebug('=== START CAPTURE ===');
+                            updateDebug('Browser: ' + navigator.userAgent.substring(0, 50));
+                            
+                            // Request screen capture
                             displayStream = await navigator.mediaDevices.getDisplayMedia({ 
-                                video: true,  // Perlu video untuk screen capture (bisa diabaikan)
-                                audio: true   // INI YANG PENTING: tangkap system audio
+                                video: {
+                                    width: { ideal: 640 },
+                                    height: { ideal: 480 },
+                                    frameRate: { ideal: 1 }
+                                },
+                                audio: true
                             });
                             
-                            // Cek apakah audio track tersedia
+                            updateDebug('Display stream obtained');
+                            
+                            // Check tracks
+                            const videoTracks = displayStream.getVideoTracks();
                             const audioTracks = displayStream.getAudioTracks();
+                            updateDebug('Video tracks: ' + videoTracks.length);
+                            updateDebug('Audio tracks: ' + audioTracks.length);
+                            
+                            if (audioTracks.length > 0) {
+                                audioTracks.forEach(t => {
+                                    updateDebug('Audio track: ' + t.label + ' | enabled: ' + t.enabled + ' | muted: ' + t.muted);
+                                });
+                            }
+                            
                             if (audioTracks.length === 0) {
-                                status.innerText = "⚠️ Tidak ada audio! Pastikan 'Share audio' dicentang.";
+                                status.innerText = "⚠️ TIDAK ADA AUDIO! Centang 'Share tab audio'";
+                                updateDebug('ERROR: No audio tracks in stream!');
+                                videoTracks.forEach(t => t.stop());
                                 startBtn.disabled = false;
+                                stopBtn.disabled = true;
                                 return;
                             }
                             
-                            // Gunakan audio stream untuk MediaRecorder
-                            audioStream = new MediaStream(audioTracks);
-                            
                             // Setup MediaRecorder
-                            audioChunks = [];
-                            let mimeType = 'audio/webm';
-                            if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                                mimeType = 'audio/mp4';
-                            }
+                            setupMediaRecorder(displayStream);
                             
-                            mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
-                            
-                            mediaRecorder.ondataavailable = function(e) {
-                                if (e.data.size > 0) audioChunks.push(e.data);
-                            };
-                            
-                            mediaRecorder.onstop = function() {
-                                if (audioChunks.length > 0) {
-                                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
-                                    const audioUrl = URL.createObjectURL(blob);
-                                    const fileName = 'ScreenCapture_' + Date.now() + '.webm';
-                                    const audioItem = document.createElement('div');
-                                    audioItem.className = 'audio-item';
-                                    audioItem.innerHTML = `
-                                        <audio controls src="${audioUrl}"></audio>
-                                        <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:4px 12px; font-size:12px;">💾 Download</a>
-                                        <small style="color:#94a3b8;">WEBM</small>
-                                    `;
-                                    audioContainer.prepend(audioItem);
-                                }
-                                audioChunks = [];
-                            };
-
-                            // Setup visualizer dengan full displayStream (ada audionya)
-                            setupVisualizer(displayStream);
-                            
-                            // Start MediaRecorder
+                            // Start recording with 1 second interval
                             mediaRecorder.start(1000);
                             
-                            // Init dan start speech recognition
+                            // Setup visualizer
+                            setupVisualizer(displayStream);
+                            if (audioContext && audioContext.state === 'suspended') {
+                                audioContext.resume();
+                                updateDebug('AudioContext resumed');
+                            }
+                            drawVisualizer();
+                            
+                            // Init speech recognition
                             recognition = initSpeechRecognition();
                             if (recognition) {
                                 recognition.start();
-                            } else {
-                                throw new Error('Speech recognition tidak tersedia');
                             }
                             
-                            // Start visualizer
-                            drawVisualizer();
+                            // Auto-stop when user stops sharing
+                            videoTracks[0]?.addEventListener('ended', () => {
+                                updateDebug('Video track ended (user stopped sharing from browser)');
+                                if (isRecording) {
+                                    updateDebug('Auto-stopping...');
+                                    stopBtn.click();
+                                }
+                            });
+                            
+                            // Also listen for audio track end
+                            audioTracks[0]?.addEventListener('ended', () => {
+                                updateDebug('Audio track ended');
+                            });
+                            
                             resizeVisualizer();
+                            updateDebug('=== CAPTURE STARTED SUCCESSFULLY ===');
                             
                         } catch(err) {
-                            console.error('Start error:', err);
-                            let errorMsg = "❌ Gagal: ";
-                            if (err.name === 'NotAllowedError') {
-                                errorMsg += "Screen capture dibatalkan atau izin ditolak.";
-                            } else if (err.name === 'AbortError') {
-                                errorMsg += "Screen capture dibatalkan.";
-                            } else {
-                                errorMsg += err.message;
-                            }
-                            status.innerText = errorMsg;
+                            updateDebug('ERROR: ' + err.name + ' - ' + err.message);
+                            status.innerText = "❌ Gagal: " + (err.name === 'NotAllowedError' ? 'Screen capture dibatalkan' : err.message);
                             startBtn.disabled = false;
                             stopBtn.disabled = true;
                         }
@@ -1231,47 +1329,58 @@ else:
 
                     // ======== STOP ========
                     stopBtn.onclick = function() {
+                        updateDebug('=== STOP BUTTON CLICKED ===');
                         isRecording = false;
                         
+                        // Stop speech recognition
                         if (recognition) {
                             try { recognition.stop(); } catch(e) {}
                             recognition = null;
+                            updateDebug('Speech recognition stopped');
                         }
                         
-                        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        // Stop MediaRecorder
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            updateDebug('Requesting MediaRecorder stop... Current state: ' + mediaRecorder.state);
                             mediaRecorder.stop();
-                            mediaRecorder = null;
+                            // onstop handler will be called automatically
+                        } else if (mediaRecorder) {
+                            updateDebug('MediaRecorder state: ' + (mediaRecorder ? mediaRecorder.state : 'null') + ' - forcing data');
+                            // Force request data
+                            if (mediaRecorder.state === 'inactive' && audioChunks.length === 0) {
+                                updateDebug('WARNING: No chunks recorded. MediaRecorder was already inactive.');
+                            }
                         }
                         
-                        if (audioStream) {
-                            audioStream.getTracks().forEach(track => track.stop());
-                            audioStream = null;
-                        }
-                        
-                        // Stop display stream (screen sharing)
+                        // Stop all display stream tracks
                         if (displayStream) {
-                            displayStream.getTracks().forEach(track => track.stop());
+                            displayStream.getTracks().forEach(track => {
+                                updateDebug('Stopping track: ' + track.kind + ' - ' + track.label);
+                                track.stop();
+                            });
                             displayStream = null;
                         }
                         
+                        // Stop visualizer
                         if (drawVisual) {
                             cancelAnimationFrame(drawVisual);
                             drawVisual = null;
                         }
-                        
                         if (audioContext) {
                             try { audioContext.close(); } catch(e) {}
                             audioContext = null;
                             analyser = null;
                         }
                         
+                        // Update UI
                         canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
-                        status.innerText = "⏸️ Stopped";
+                        status.innerText = "⏸️ Stopped - Cek Arsip Rekaman ↓";
                         indicator.className = 'indicator-dot';
                         startBtn.disabled = false;
                         stopBtn.disabled = true;
                         langSelect.disabled = false;
                         
+                        // Convert interim to final
                         if (currentInterimDiv) {
                             currentInterimDiv.className = 'line-final';
                             const now = new Date();
@@ -1283,19 +1392,12 @@ else:
                             currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + text;
                             currentInterimDiv = null;
                         }
+                        
+                        updateDebug('=== STOP COMPLETE ===');
                     };
-
-                    // ======== LISTEN: Saat user stop sharing dari browser ========
-                    // Deteksi saat stream dihentikan dari luar (user klik "Stop sharing")
-                    if (displayStream) {
-                        displayStream.getVideoTracks()[0]?.addEventListener('ended', () => {
-                            if (isRecording) stopBtn.click();
-                        });
-                    }
 
                     // ======== RESIZE VISUALIZER ========
                     function resizeVisualizer() {
-                        const rect = visualizer.parentElement.getBoundingClientRect();
                         visualizer.width = visualizer.parentElement.clientWidth || 600;
                         visualizer.height = 80;
                     }
@@ -1305,40 +1407,34 @@ else:
                     // ======== COPY ========
                     copyBtn.onclick = function() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) { alert('Belum ada teks untuk dicopy!'); return; }
+                        if (lines.length === 0) { alert('Belum ada teks!'); return; }
                         const text = Array.from(lines).map(line => line.innerText).join('\\n');
                         navigator.clipboard.writeText(text).then(() => {
-                            const orig = copyBtn.innerText;
                             copyBtn.innerText = '✅ Copied!';
-                            setTimeout(() => copyBtn.innerText = orig, 2000);
+                            setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
                         }).catch(() => {
                             const ta = document.createElement('textarea');
-                            ta.value = text;
-                            document.body.appendChild(ta);
-                            ta.select();
-                            document.execCommand('copy');
-                            ta.remove();
-                            const orig = copyBtn.innerText;
+                            ta.value = text; document.body.appendChild(ta);
+                            ta.select(); document.execCommand('copy'); ta.remove();
                             copyBtn.innerText = '✅ Copied!';
-                            setTimeout(() => copyBtn.innerText = orig, 2000);
+                            setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
                         });
                     };
 
                     // ======== DOWNLOAD TXT ========
                     downloadTxtBtn.onclick = function() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) { alert('Belum ada teks untuk disimpan!'); return; }
+                        if (lines.length === 0) { alert('Belum ada teks!'); return; }
                         const text = Array.from(lines).map(line => line.innerText).join('\\n');
                         const blob = new Blob([text], { type: 'text/plain' });
                         const a = document.createElement('a');
                         a.href = URL.createObjectURL(blob);
-                        a.download = 'Transkrip_ScreenCapture_' + Date.now() + '.txt';
+                        a.download = 'Transkrip_Capture_' + Date.now() + '.txt';
                         a.click();
                     };
 
                     // ======== CLEAR ========
                     clearBtn.onclick = function() {
-                        if (!confirm('Yakin ingin menghapus semua teks?')) return;
                         transcriptBox.innerHTML = `
                             <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
                                 🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
@@ -1349,390 +1445,68 @@ else:
                         aiContent.innerHTML = "";
                     };
 
-                    // ======== GET TRANSCRIPT TEXT ========
+                    // ======== GET TRANSCRIPT ========
                     function getTranscriptText() {
-                        const lines = transcriptBox.querySelectorAll('.line-final');
-                        return Array.from(lines).map(line => line.innerText).join('\\n');
+                        return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
                     }
 
                     // ======== AI SUMMARY ========
                     aiBtn.onclick = async function() {
                         const transcript = getTranscriptText();
                         const apiKey = apiKeyInput.value.trim();
+                        if (!apiKey) { alert('Masukkan API Key!'); return; }
+                        if (!transcript) { alert('Transkrip kosong!'); return; }
                         
-                        if (!apiKey) {
-                            alert('⚠️ Masukkan API Key LiteLLM / Gemini terlebih dahulu.');
-                            apiKeyInput.focus();
-                            return;
-                        }
-                        if (!transcript) {
-                            alert('⚠️ Transkrip masih kosong. Lakukan capture terlebih dahulu.');
-                            return;
-                        }
-                        
-                        const originalText = aiBtn.innerHTML;
                         aiBtn.innerHTML = '⏳ Memproses...';
                         aiBtn.disabled = true;
-                        aiContent.innerHTML = `
-                            <div class="p-6 bg-purple-50 rounded-2xl border border-purple-200 text-center mt-4 fade-in">
-                                <p class="text-purple-600 font-bold">🔄 AI sedang memproses Notulensi... Mohon tunggu.</p>
-                            </div>
-                        `;
+                        aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi...</p></div>';
 
-                        const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - notulensi_rapat: Object dengan agenda, peserta, jalannya_diskusi (array narasi detail), keputusan (array), rencana_tindak_lanjut (array of objects dengan tugas, pic, deadline, prioritas), hubungan_topik (array of objects dengan sumber, target, relasi).
-                        - visual_mindmap: Kode Mermaid graph LR.
-                        - markmap_code: Kode Markdown untuk Markmap.
-                        Transkrip Rapat: "${transcript}"`;
-
-                        const payload = {
-                            "model": "gemini/gemini-2.5-flash",
-                            "messages": [{ "role": "user", "content": prompt }],
-                            "temperature": 0.2,
-                            "response_format": {
-                                "type": "json_schema",
-                                "json_schema": {
-                                    "name": "meeting_summary",
-                                    "strict": true,
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                            "notulensi_rapat": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "agenda": { "type": "string" },
-                                                    "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } },
-                                                    "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "tugas": { "type": "string" },
-                                                                "pic": { "type": "string" },
-                                                                "deadline": { "type": "string" },
-                                                                "prioritas": { "type": "string" }
-                                                            },
-                                                            "required": ["tugas", "pic", "deadline", "prioritas"],
-                                                            "additionalProperties": false
-                                                        }
-                                                    },
-                                                    "hubungan_topik": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "sumber": { "type": "string" },
-                                                                "target": { "type": "string" },
-                                                                "relasi": { "type": "string" }
-                                                            },
-                                                            "required": ["sumber", "target", "relasi"],
-                                                            "additionalProperties": false
-                                                        }
-                                                    }
-                                                },
-                                                "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"],
-                                                "additionalProperties": false
-                                            },
-                                            "visual_mindmap": { "type": "string" },
-                                            "markmap_code": { "type": "string" }
-                                        },
-                                        "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"],
-                                        "additionalProperties": false
-                                    }
-                                }
-                            }
-                        };
+                        const prompt = `Anda adalah Ahli Pembuat Notulensi. Analisis transkrip berikut dan hasilkan JSON lengkap dengan ringkasan_eksekutif, notulensi_rapat (agenda, peserta, jalannya_diskusi, keputusan, rencana_tindak_lanjut, hubungan_topik), visual_mindmap (Mermaid graph LR), dan markmap_code.\n\nTranskrip: "${transcript}"`;
 
                         try {
                             const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
                                 method: "POST",
-                                headers: {
-                                    "Authorization": "Bearer " + apiKey,
-                                    "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify(payload)
+                                headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    model: "gemini/gemini-2.5-flash",
+                                    messages: [{ role: "user", content: prompt }],
+                                    temperature: 0.2
+                                })
                             });
-                            
                             const resJson = await response.json();
-                            
-                            if (resJson.choices && resJson.choices[0].message.content) {
+                            if (resJson.choices) {
                                 const data = JSON.parse(resJson.choices[0].message.content);
                                 window.lastAiData = data;
                                 
-                                const tasks = data.notulensi_rapat.rencana_tindak_lanjut || [];
-                                let taskRows = tasks.map(t => `
-                                    <tr class="text-[12px] border-b hover:bg-slate-50">
-                                        <td class="p-3 border-r font-medium text-slate-800">${t.tugas}</td>
-                                        <td class="p-3 border-r text-slate-600">${t.pic}</td>
-                                        <td class="p-3 border-r text-slate-600">${t.deadline}</td>
-                                        <td class="p-3 font-bold ${t.prioritas && t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600'}">${t.prioritas || '-'}</td>
-                                    </tr>
-                                `).join('');
-
-                                const ringkasanItems = (data.ringkasan_eksekutif || []).map(r => `<li>${r}</li>`).join('');
-                                const diskusiItems = (data.notulensi_rapat.jalannya_diskusi || []).map(d => `<li>${d}</li>`).join('');
-                                const keputusanItems = (data.notulensi_rapat.keputusan || []).map(k => `<li>${k}</li>`).join('');
-                                const pesertaList = (data.notulensi_rapat.peserta || []).join(', ') || '-';
-
-                                let reportHtml = `
-                                    <div class="fade-in space-y-6 mt-6 mb-10">
-                                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                                            <div class="flex justify-between items-center mb-4">
-                                                <h5 class="text-sm font-bold text-slate-700 uppercase tracking-wide">📋 NOTULENSI RAPAT</h5>
-                                                <button onclick="exportNotulensiTxt()" class="btn-export">📝 Download TXT</button>
-                                            </div>
-                                            <div class="space-y-4 text-sm text-slate-700">
-                                                <div>
-                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">RINGKASAN EKSEKUTIF:</p>
-                                                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                                        <ul class="list-disc ml-5 space-y-1 font-semibold text-slate-800">${ringkasanItems}</ul>
-                                                    </div>
-                                                </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div class="bg-white p-3 rounded-xl border border-slate-200">
-                                                        <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">AGENDA:</p>
-                                                        <p class="font-bold text-slate-800">${data.notulensi_rapat.agenda || '-'}</p>
-                                                    </div>
-                                                    <div class="bg-white p-3 rounded-xl border border-slate-200">
-                                                        <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p>
-                                                        <p class="font-bold text-slate-800">${pesertaList}</p>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">JALANNYA DISKUSI:</p>
-                                                    <div class="bg-white p-4 rounded-xl border border-slate-200">
-                                                        <ul class="list-disc ml-5 space-y-2">${diskusiItems}</ul>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">KEPUTUSAN UTAMA:</p>
-                                                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                                                        <ul class="list-disc ml-5 space-y-1 font-bold text-emerald-900">${keputusanItems}</ul>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">📋 RENCANA TINDAK LANJUT:</p>
-                                                    <div class="overflow-x-auto rounded-xl border border-slate-200">
-                                                        <table class="w-full text-left border-collapse bg-white text-xs">
-                                                            <thead>
-                                                                <tr class="bg-blue-50 text-blue-800 uppercase">
-                                                                    <th class="p-3 border-b border-r">Tugas</th>
-                                                                    <th class="p-3 border-b border-r">PIC</th>
-                                                                    <th class="p-3 border-b border-r">Deadline</th>
-                                                                    <th class="p-3 border-b">Prioritas</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>${taskRows || '<tr><td colspan="4" class="p-3 text-center text-slate-400">Belum ada action item</td></tr>'}</tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
+                                    `<tr class="text-xs border-b"><td class="p-2">${t.tugas}</td><td class="p-2">${t.pic}</td><td class="p-2">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
+                                ).join('');
+                                
+                                aiContent.innerHTML = `
+                                    <div class="fade-in space-y-4 mt-6 mb-10">
+                                        <div class="p-6 bg-slate-50 rounded-2xl border">
+                                            <h5 class="font-bold uppercase text-sm mb-4">📋 NOTULENSI RAPAT</h5>
+                                            <p class="font-bold text-blue-600 text-xs">RINGKASAN:</p>
+                                            <ul class="list-disc ml-5 text-sm">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul>
+                                            <p class="font-bold text-blue-600 text-xs mt-3">AGENDA: ${data.notulensi_rapat.agenda || '-'}</p>
+                                            <p class="font-bold text-blue-600 text-xs">PESERTA: ${(data.notulensi_rapat.peserta || []).join(', ') || '-'}</p>
+                                            <p class="font-bold text-blue-600 text-xs mt-3">DISKUSI:</p>
+                                            <ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li>' + d + '</li>').join('')}</ul>
+                                            <p class="font-bold text-emerald-600 text-xs mt-3">KEPUTUSAN:</p>
+                                            <ul class="list-disc ml-5 text-sm font-bold">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul>
+                                            <p class="font-bold text-blue-600 text-xs mt-3">TINDAK LANJUT:</p>
+                                            <table class="w-full text-xs mt-2"><thead><tr class="bg-blue-50"><th class="p-2">Tugas</th><th class="p-2">PIC</th><th class="p-2">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table>
                                         </div>
-                                        
-                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                            <div class="p-4 bg-white rounded-2xl border border-slate-200">
-                                                <div class="flex justify-between items-center mb-3">
-                                                    <h5 class="text-[10px] font-bold text-emerald-600 uppercase">🌿 Markmap</h5>
-                                                    <button onclick="downloadMarkmapImage('markmap-area', 'Markmap', event)" class="btn-export">📸 PNG</button>
-                                                </div>
-                                                <div id="markmap-area" class="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden p-2" style="min-height:350px;">
-                                                    <svg id="markmap-svg" style="width:100%; height:350px;"></svg>
-                                                </div>
-                                            </div>
-                                            <div class="p-4 bg-white rounded-2xl border border-slate-200">
-                                                <div class="flex justify-between items-center mb-3">
-                                                    <h5 class="text-[10px] font-bold text-indigo-600 uppercase">🌊 Mermaid</h5>
-                                                    <button onclick="downloadMermaidImage('mermaid-area', 'Mermaid', event)" class="btn-export">📸 PNG</button>
-                                                </div>
-                                                <div id="mermaid-area" class="bg-slate-50 border border-slate-100 rounded-xl overflow-x-auto p-4">
-                                                    <div class="mermaid">${data.visual_mindmap || 'graph LR; A[No Data]'}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="p-4 bg-white rounded-2xl border border-slate-200">
-                                            <div class="flex justify-between items-center mb-3">
-                                                <h5 class="text-[10px] font-bold text-rose-600 uppercase">🕸️ Cytoscape</h5>
-                                                <button onclick="exportCyToPng()" class="btn-export">📸 PNG</button>
-                                            </div>
-                                            <div id="cy" class="cy-container"></div>
-                                        </div>
-                                    </div>
-                                `;
-
-                                aiContent.innerHTML = reportHtml;
-
-                                // Render Markmap
-                                try {
-                                    const markdownCode = data.markmap_code || '# Mindmap\\n## Topik Utama';
-                                    const { Transformer, Markmap } = window.markmap;
-                                    const { root } = new Transformer().transform(markdownCode);
-                                    Markmap.create('#markmap-svg', null, root);
-                                } catch(e) {
-                                    document.getElementById('markmap-area').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Markmap</p>';
-                                }
-
-                                // Render Mermaid
-                                setTimeout(() => {
-                                    try { mermaid.run({ querySelector: '.mermaid' }); } catch(e) {}
-                                }, 300);
-
-                                // Render Cytoscape
-                                setTimeout(() => {
-                                    try {
-                                        const relaciones = data.notulensi_rapat.hubungan_topik || [];
-                                        const cyElements = [];
-                                        const nodesSet = new Set();
-                                        relaciones.forEach(rel => {
-                                            if (!nodesSet.has(rel.sumber)) {
-                                                nodesSet.add(rel.sumber);
-                                                cyElements.push({ data: { id: rel.sumber, label: rel.sumber } });
-                                            }
-                                            if (!nodesSet.has(rel.target)) {
-                                                nodesSet.add(rel.target);
-                                                cyElements.push({ data: { id: rel.target, label: rel.target } });
-                                            }
-                                            cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
-                                        });
-                                        
-                                        if (window.myCyInstance) window.myCyInstance.destroy();
-                                        
-                                        window.myCyInstance = cytoscape({
-                                            container: document.getElementById('cy'),
-                                            elements: cyElements.length ? cyElements : [{ data: { id: 'no-data', label: 'Tidak ada data' } }],
-                                            style: [
-                                                { selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } },
-                                                { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }
-                                            ],
-                                            layout: { name: 'cose', padding: 20 }
-                                        });
-                                    } catch(e) {
-                                        document.getElementById('cy').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Cytoscape</p>';
-                                    }
-                                }, 500);
-
+                                    </div>`;
                             } else {
-                                aiContent.innerHTML = `<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Error: ${resJson.error?.message || 'Unknown error'}</div>`;
+                                aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Error: ' + (resJson.error?.message || 'Unknown') + '</div>';
                             }
                         } catch(err) {
-                            aiContent.innerHTML = `<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Koneksi Gagal: ${err.message}</div>`;
+                            aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Koneksi Gagal: ' + err.message + '</div>';
                         } finally {
-                            aiBtn.innerHTML = originalText;
+                            aiBtn.innerHTML = '✨ Generate AI Summary';
                             aiBtn.disabled = false;
-                            aiContent.scrollIntoView({ behavior: 'smooth' });
                         }
-                    };
-
-                    // ======== GLOBAL EXPORT FUNCTIONS ========
-                    window.exportCyToPng = function() {
-                        if (!window.myCyInstance) { alert('Cytoscape belum siap!'); return; }
-                        const b64 = window.myCyInstance.png({ full: true, scale: 4, bg: 'white' });
-                        const a = document.createElement('a');
-                        a.href = b64;
-                        a.download = 'Cytoscape_Map_HighRes.png';
-                        a.click();
-                    };
-
-                    window.exportNotulensiTxt = function() {
-                        if (!window.lastAiData) { alert('Data Notulensi belum ada!'); return; }
-                        const data = window.lastAiData;
-                        let txt = 'NOTULENSI RAPAT\\n========================\\n\\n';
-                        txt += 'RINGKASAN EKSEKUTIF:\\n';
-                        (data.ringkasan_eksekutif || []).forEach(r => txt += '- ' + r + '\\n');
-                        txt += '\\nAgenda: ' + (data.notulensi_rapat.agenda || '-') + '\\n';
-                        txt += 'Peserta: ' + (data.notulensi_rapat.peserta ? data.notulensi_rapat.peserta.join(', ') : '-') + '\\n\\n';
-                        txt += 'Jalannya Diskusi:\\n';
-                        (data.notulensi_rapat.jalannya_diskusi || []).forEach(d => txt += '- ' + d + '\\n');
-                        txt += '\\nKeputusan Utama:\\n';
-                        (data.notulensi_rapat.keputusan || []).forEach(k => txt += '- ' + k + '\\n');
-                        txt += '\\nRencana Tindak Lanjut:\\n';
-                        (data.notulensi_rapat.rencana_tindak_lanjut || []).forEach(t => {
-                            txt += '- [' + (t.prioritas || 'Normal') + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\\n';
-                        });
-                        const blob = new Blob([txt], { type: 'text/plain' });
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = 'Notulensi_Resmi.txt';
-                        a.click();
-                    };
-
-                    window.downloadMarkmapImage = function(wrapperId, title, event) {
-                        const container = document.getElementById(wrapperId);
-                        const svgEl = container.querySelector('svg');
-                        if (!svgEl) return;
-                        const btn = event.currentTarget;
-                        const origText = btn.innerHTML;
-                        btn.innerHTML = '⏳ Saving...';
-                        btn.disabled = true;
-                        
-                        try {
-                            const g = svgEl.querySelector('g');
-                            if (!g) throw new Error('No g element');
-                            const bbox = g.getBBox();
-                            const padding = 50;
-                            const width = Math.max(bbox.width, 300) + padding * 2;
-                            const height = Math.max(bbox.height, 300) + padding * 2;
-                            
-                            const originalViewBox = svgEl.getAttribute('viewBox');
-                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + width + ' ' + height);
-                            svgEl.style.width = width + 'px';
-                            svgEl.style.height = height + 'px';
-                            container.style.overflow = 'visible';
-                            
-                            setTimeout(() => {
-                                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
-                                .then(canvas => {
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                    else svgEl.removeAttribute('viewBox');
-                                    svgEl.style.width = '';
-                                    svgEl.style.height = '';
-                                    container.style.overflow = '';
-                                    const a = document.createElement('a');
-                                    a.download = 'Markmap_' + title + '.png';
-                                    a.href = canvas.toDataURL('image/png', 1.0);
-                                    a.click();
-                                    btn.innerHTML = origText;
-                                    btn.disabled = false;
-                                }).catch(() => {
-                                    btn.innerHTML = '❌ Failed';
-                                    setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
-                                });
-                            }, 300);
-                        } catch(e) {
-                            btn.innerHTML = '❌ Failed';
-                            setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
-                        }
-                    };
-
-                    window.downloadMermaidImage = function(wrapperId, title, event) {
-                        const container = document.getElementById(wrapperId);
-                        const btn = event.currentTarget;
-                        const origText = btn.innerHTML;
-                        btn.innerHTML = '⏳ Saving...';
-                        btn.disabled = true;
-                        const origOverflow = container.style.overflow;
-                        container.style.overflow = 'visible';
-                        setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
-                            .then(canvas => {
-                                container.style.overflow = origOverflow;
-                                const a = document.createElement('a');
-                                a.download = 'Mermaid_' + title + '.png';
-                                a.href = canvas.toDataURL('image/png', 1.0);
-                                a.click();
-                                btn.innerHTML = origText;
-                                btn.disabled = false;
-                            }).catch(() => {
-                                container.style.overflow = origOverflow;
-                                btn.innerHTML = '❌ Failed';
-                                setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
-                            });
-                        }, 300);
                     };
 
                 })();
@@ -1740,7 +1514,7 @@ else:
         </body>
         </html>
         """
-        components.html(html_code, height=1450, scrolling=True)
+        components.html(html_code, height=1500, scrolling=True)
 
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION

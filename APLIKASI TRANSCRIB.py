@@ -577,6 +577,7 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA
 # =====================================================================
 else:
+   # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun (Warna Kuning Lucu), dan perbesar GERMIC
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');

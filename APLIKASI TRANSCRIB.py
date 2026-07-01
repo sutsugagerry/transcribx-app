@@ -234,46 +234,145 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN
+# HALAMAN LOGIN (UI DENGAN ANIMASI NODE BACKGROUND)
 # =====================================================================
 if not st.session_state["logged_in"]:
+    # 1. Injeksi CSS agar Streamlit transparan dan menampilkan canvas di belakangnya
     st.markdown("""
     <style>
-    .stApp {
-        background: linear-gradient(-45deg, #4f46e5, #3b82f6, #06b6d4, #10b981);
-        background-size: 400% 400%;
-        animation: gradientBG 15s ease infinite;
-    }
-    @keyframes gradientBG {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    /* Membuat layer bawaan Streamlit menjadi transparan */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background: transparent !important;
     }
     [data-testid="stSidebar"] { display: none; }
+    
+    /* Styling form login tetap dipertahankan seperti aslinya, 
+       sedikit penyesuaian transparansi agar background node lebih menyatu */
     div[data-testid="stForm"] {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.85); /* Sedikit lebih transparan */
+        backdrop-filter: blur(12px);
         padding: 40px 30px;
         border-radius: 24px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         border: 1px solid rgba(255, 255, 255, 0.4);
     }
     .login-title {
         color: white;
         font-weight: 900;
         font-size: 3rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
         margin-bottom: 0px;
     }
     .login-subtitle {
         color: rgba(255, 255, 255, 0.9);
         font-size: 1.1rem;
         margin-bottom: 40px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
     }
     </style>
     """, unsafe_allow_html=True)
 
+    # 2. Injeksi Javascript murni untuk membuat animasi partikel/node di Body HTML (Parent)
+    components.html("""
+    <script>
+        const parentWindow = window.parent;
+        const parentDoc = parentWindow.document;
+        
+        // Cek dan hapus animasi lama jika Streamlit re-run untuk mencegah penumpukan frame
+        if (parentWindow.nodeAnimFrame) {
+            cancelAnimationFrame(parentWindow.nodeAnimFrame);
+        }
+        
+        let canvas = parentDoc.getElementById('node-bg-canvas');
+        if (!canvas) {
+            canvas = parentDoc.createElement('canvas');
+            canvas.id = 'node-bg-canvas';
+            Object.assign(canvas.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100vw',
+                height: '100vh',
+                zIndex: '-1', // Berada di paling belakang
+                background: 'radial-gradient(circle at center, #1e1b4b 0%, #020617 100%)' // Tema gelap futuristik
+            });
+            parentDoc.body.prepend(canvas);
+        }
+
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        let nodes = [];
+        const maxDistance = 150;
+
+        function resize() {
+            w = canvas.width = parentWindow.innerWidth;
+            h = canvas.height = parentWindow.innerHeight;
+        }
+        parentWindow.addEventListener('resize', resize);
+        resize();
+
+        class Node {
+            constructor() {
+                this.x = Math.random() * w;
+                this.y = Math.random() * h;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                this.radius = Math.random() * 2 + 1.5;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > w) this.vx *= -1;
+                if (this.y < 0 || this.y > h) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#818cf8'; // Warna node biru/ungu terang
+                ctx.fill();
+            }
+        }
+
+        function initNodes() {
+            nodes = [];
+            const numNodes = Math.floor((w * h) / 10000); // Kepadatan node (semakin kecil pembagi = makin banyak node)
+            for (let i = 0; i < numNodes; i++) {
+                nodes.push(new Node());
+            }
+        }
+        initNodes();
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            
+            for (let i = 0; i < nodes.length; i++) {
+                nodes[i].update();
+                nodes[i].draw();
+                
+                // Cek koneksi dengan node lain
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[i].x - nodes[j].x;
+                    const dy = nodes[i].y - nodes[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < maxDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        const opacity = 1 - (dist / maxDistance);
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${opacity * 0.6})`; // Garis koneksi
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+            parentWindow.nodeAnimFrame = requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+    """, height=0, width=0)
+
+    # 3. Struktur Form Login Tetap Menggunakan Kode Asli Anda
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.write("")
@@ -319,7 +418,6 @@ if not st.session_state["logged_in"]:
                             st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
                 else:
                     st.warning("Silakan masukkan email dan password.")
-
 # =====================================================================
 # APLIKASI UTAMA
 # =====================================================================

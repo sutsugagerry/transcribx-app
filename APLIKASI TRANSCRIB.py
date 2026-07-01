@@ -583,10 +583,15 @@ if not st.session_state["logged_in"]:
         </div>
         """
         st.markdown(title_html, unsafe_allow_html=True)
-        st.markdown("<p class='login-subtitle' style='text-align: center;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>", unsafe_allow_html=True)
+        
         
         with st.form("login_form"):
-            st.markdown("<h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 25px; letter-spacing: 1px;'>Secure Login</h3>", unsafe_allow_html=True)
+            # Pindahkan teks sambutan ke sini
+            st.markdown("""
+                <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
+                <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
+            """, unsafe_allow_html=True)
+            
             email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
             pass_login = st.text_input("Password", type="password", placeholder="••••••••")
             st.write("")

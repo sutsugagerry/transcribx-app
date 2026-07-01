@@ -8,7 +8,7 @@ from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
 import time
 
-# Konfigurasi Halaman (Hanya boleh dipanggil sekali di paling atas)
+# Konfigurasi Halaman
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
 
 # =====================================================================
@@ -796,35 +796,38 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE (HTML/JS) - UI MODERN & JAVASCRIPT ASLI
+    # TAB 1: LIVE CAPTURE - VERSI DIPERBAIKI
     # =====================================================================
     with tab1:
-        st.markdown("Mesin **Web Speech API** + **AI LiteLLM Summary** untuk Notulensi Otomatis dengan UI Enterprise.")
-        st.info("💡 **TIPS ZOOM:** Agar web ini bisa mendengar Zoom, pastikan mikrofon browser menggunakan **Stereo Mix** atau **VB-Cable**.")
-
+        st.markdown("### 🎙️ Live Transcribe - Web Speech API + AI Summarizer")
+        st.info("💡 **TIPS:** Pastikan izin mikrofon diberikan. Gunakan browser Chrome/Edge untuk hasil terbaik.")
+        
+        # HTML yang sudah diperbaiki dengan Markmap yang benar
         html_code = """
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-                body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
+                * { box-sizing: border-box; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
                 
                 .controls-wrapper { 
                     background: #ffffff; border-radius: 20px; padding: 24px; 
                     box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
                     border: 1px solid #e2e8f0; margin-bottom: 24px;
-                    display: flex; flex-direction: column; gap: 20px;
+                    display: flex; flex-direction: column; gap: 16px;
                 }
                 
-                .controls-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+                .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
                 
                 .visualizer-container { 
                     width: 100%; height: 80px; border-radius: 16px; overflow: hidden; 
@@ -834,339 +837,505 @@ else:
                 #visualizer { width: 100%; height: 100%; display: block; }
                 
                 .transcript-box { 
-                    background: #f8fafc; border: 1px solid #cbd5e1; padding: 24px; 
-                    border-radius: 20px; height: 350px; overflow-y: auto; 
-                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 24px; 
+                    background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px 20px; 
+                    border-radius: 20px; height: 300px; overflow-y: auto; 
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 16px; 
                 }
                 
                 .line-final { 
-                    margin-bottom: 16px; padding: 16px; background: #ffffff; 
+                    margin-bottom: 12px; padding: 12px 16px; background: #ffffff; 
                     border-radius: 12px; border-left: 5px solid #3b82f6; 
-                    font-size: 15px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                    font-size: 14px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
                 }
                 .line-interim { 
-                    margin-bottom: 16px; padding: 16px; background: rgba(255,255,255,0.5); 
+                    margin-bottom: 12px; padding: 12px 16px; background: rgba(255,255,255,0.5); 
                     border-radius: 12px; border-left: 5px solid #94a3b8; 
-                    font-size: 15px; opacity: 0.6; font-style: italic; 
+                    font-size: 14px; opacity: 0.6; font-style: italic; 
                 }
-                .timestamp { font-weight: 800; color: #3b82f6; margin-right: 12px; font-size: 13px; background: #eff6ff; padding: 4px 8px; border-radius: 6px;}
+                .timestamp { font-weight: 700; color: #3b82f6; margin-right: 10px; font-size: 12px; background: #eff6ff; padding: 2px 8px; border-radius: 6px; display: inline-block; }
                 
                 .btn-custom { 
-                    font-family: inherit; color: white; padding: 12px 24px; border: none; 
-                    border-radius: 12px; cursor: pointer; font-weight: 700; 
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-                    display: flex; align-items: center; gap: 8px; font-size: 14px; 
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    font-family: inherit; color: white; padding: 10px 20px; border: none; 
+                    border-radius: 10px; cursor: pointer; font-weight: 600; 
+                    transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }
-                .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+                .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
                 .btn-custom:active { transform: translateY(0); }
-                .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b;}
+                .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b; }
                 
-                #startBtn { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-                #stopBtn { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-                .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; width: 100%; justify-content: center;}
-                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none;} 
-                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+                .btn-start { background: #3b82f6; }
+                .btn-start:hover { background: #2563eb; }
+                .btn-stop { background: #ef4444; }
+                .btn-stop:hover { background: #dc2626; }
+                .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+                .btn-ai:hover { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none; } 
+                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                .btn-green { background: #10b981; }
+                .btn-green:hover { background: #059669; }
                 
                 select.btn-secondary, input.api-input { 
-                    outline: none; border: 1px solid #cbd5e1; padding: 12px 16px; 
-                    border-radius: 12px; font-family: inherit; font-size: 14px;
+                    outline: none; border: 1px solid #cbd5e1; padding: 10px 14px; 
+                    border-radius: 10px; font-family: inherit; font-size: 14px; background: white;
                 }
-                input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-                input.api-input { flex-grow: 1; min-width: 250px; }
+                select.btn-secondary:focus, input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+                input.api-input { flex: 1; min-width: 200px; }
                 
-                .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 14px; }
-                .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; }
+                .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }
+                .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; flex-shrink: 0; }
+                .indicator-dot.recording { background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: blink 1s infinite; }
+                @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
                 
-                .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+                .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+                .ai-section .ai-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
                 
-                #audioContainer { display: flex; flex-direction: column; gap: 12px; }
-                .audio-item { display: flex; align-items: center; gap: 15px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-                audio { height: 40px; flex-grow: 1; }
+                #audioContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+                .audio-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }
+                .audio-item audio { height: 36px; flex: 1; min-width: 200px; }
                 
                 .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; position: relative; }
-                .btn-export { cursor:pointer; background:#10b981; color:white; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:bold; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
-                .btn-export:hover { background:#059669; }
+                .btn-export { cursor: pointer; background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
+                .btn-export:hover { background: #059669; }
+                
+                .fade-in { animation: fadeIn 0.5s ease; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                
+                /* Responsive */
+                @media (max-width: 640px) {
+                    .controls-row { flex-direction: column; align-items: stretch; }
+                    .controls-row > * { width: 100%; }
+                    .status-badge { justify-content: center; }
+                    .ai-section .ai-row { flex-direction: column; }
+                    .ai-section .ai-row > * { width: 100%; }
+                }
             </style>
-            <script>
-                window.downloadMarkmapImage = function(wrapperId, title, event) {
-                    const container = document.getElementById(wrapperId);
-                    const svgEl = container.querySelector('svg');
-                    if (!svgEl) return;
-                    const btn = event.currentTarget;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-                    try {
-                        const g = svgEl.querySelector('g');
-                        if (!g) throw new Error("G element not found");
-                        const originalContainerWidth = container.style.width; const originalContainerHeight = container.style.height;
-                        const originalContainerOverflow = container.style.overflow;
-                        const originalSvgWidth = svgEl.style.width; const originalSvgHeight = svgEl.style.height;
-                        const originalSvgAttrWidth = svgEl.getAttribute('width'); const originalSvgAttrHeight = svgEl.getAttribute('height');
-                        const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
-                        g.setAttribute('transform', 'translate(0,0) scale(1)');
-                        const bbox = g.getBBox();
-                        const padding = 50;
-                        const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                        g.setAttribute('transform', 'translate(' + (-bbox.x + padding) + ', ' + (-bbox.y + padding) + ') scale(1)');
-                        svgEl.removeAttribute('viewBox');
-                        svgEl.setAttribute('width', trueWidth); svgEl.setAttribute('height', trueHeight);
-                        svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
-                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px';
-                        container.style.overflow = 'visible';
-                        setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueWidth })
-                            .then(canvas => {
-                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
-                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
-                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
-                                g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                const link = document.createElement('a'); link.download = 'MindMap_' + title.replace(/[^a-zA-Z0-9]/g, '_') + '.png';
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                btn.innerHTML = originalText; btn.disabled = false;
-                            }).catch(err => {
-                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
-                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
-                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
-                                g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
-                            });
-                        }, 800);
-                    } catch (err) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
-                };
-
-                window.downloadMermaidImage = function(wrapperId, title, event) {
-                    const container = document.getElementById(wrapperId);
-                    const btn = event.currentTarget;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-                    const originalOverflow = container.style.overflow;
-                    container.style.overflow = 'visible';
-                    setTimeout(() => {
-                        html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
-                        .then(canvas => {
-                            container.style.overflow = originalOverflow;
-                            const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                            btn.innerHTML = originalText; btn.disabled = false;
-                        }).catch(err => { container.style.overflow = originalOverflow; btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); });
-                    }, 500);
-                };
-
-                window.myCyInstance = null;
-                function exportCyToPng() {
-                    if(!window.myCyInstance) return alert("Cytoscape belum siap!");
-                    const b64 = window.myCyInstance.png({ full: true, scale: 4, bg: 'white' });
-                    const a = document.createElement('a'); a.href = b64; a.download = 'Cytoscape_Map_HighRes.png'; a.click();
-                }
-
-                window.lastAiData = null;
-                function exportNotulensiTxt() {
-                    if(!window.lastAiData) return alert("Data Notulensi belum ada!");
-                    const root = window.lastAiData; const data = root.notulensi_rapat;
-                    let txt = 'NOTULENSI RAPAT\\n========================\\n\\nRINGKASAN EKSEKUTIF:\\n';
-                    if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += '- ' + r + '\\n');
-                    txt += '\\nAgenda: ' + (data.agenda || '-') + '\\nPeserta: ' + (data.peserta ? data.peserta.join(', ') : '-') + '\\n\\nJalannya Diskusi:\\n';
-                    if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += '- ' + d + '\\n');
-                    txt += '\\nKeputusan Utama:\\n';
-                    if(data.keputusan) data.keputusan.forEach(k => txt += '- ' + k + '\\n');
-                    txt += '\\nRencana Tindak Lanjut:\\n';
-                    if(data.rencana_tindak_lanjut && data.rencana_tindak_lanjut.length > 0) {
-                        data.rencana_tindak_lanjut.forEach(t => txt += '- [' + t.prioritas + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\\n');
-                    } else {
-                        txt += '- [Default] Belum ada action item.\\n';
-                    }
-                    const blob = new Blob([txt], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Notulensi_Resmi.txt'; a.click();
-                }
-            </script>
         </head>
         <body>
+            <!-- MAIN CONTROLS -->
             <div class="controls-wrapper">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <div style="display: flex; gap: 12px; align-items: center;">
-                        <select id="langSelect" class="btn-custom btn-secondary">
-                            <option value="id-ID">🇮🇩 ID (Indonesia)</option>
-                            <option value="en-US">🇬🇧 EN (English)</option>
-                        </select>
-                        <button id="startBtn" class="btn-custom">🚀 START CAPTURE</button>
-                        <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ STOP</button>
-                    </div>
-                    <div class="status-badge">
+                <div class="controls-row">
+                    <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
+                        <option value="id-ID">🇮🇩 Indonesia</option>
+                        <option value="en-US">🇬🇧 English</option>
+                    </select>
+                    <button id="startBtn" class="btn-custom btn-start">▶️ Start Capture</button>
+                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop</button>
+                    <div class="status-badge" style="margin-left:auto;">
                         <div id="indicator" class="indicator-dot"></div>
-                        <span id="status" style="color: #64748b;">Standby...</span>
+                        <span id="status" style="color: #64748b;">Standby</span>
                     </div>
                 </div>
                 
-                <div class="visualizer-container"><canvas id="visualizer"></canvas></div>
+                <div class="visualizer-container">
+                    <canvas id="visualizer"></canvas>
+                </div>
                 
                 <div class="ai-section">
-                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                        <span style="font-size: 14px; font-weight: 800; color: #475569;">🔑 LiteLLM API Key:</span>
-                        <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-...">
+                    <div class="ai-row">
+                        <span style="font-size: 13px; font-weight: 700; color: #475569; white-space:nowrap;">🔑 API Key:</span>
+                        <input type="password" id="apiKeyInput" class="api-input" placeholder="Masukkan API Key LiteLLM / Gemini..." style="flex:1; min-width:150px;">
+                        <button id="aiBtn" class="btn-custom btn-ai" style="white-space:nowrap;">✨ Generate AI Summary</button>
                     </div>
-                    <button id="aiBtn" class="btn-custom btn-ai">✨ Generate AI Summary & Mindmap</button>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 12px;">
-                <button id="copyBtn" class="btn-custom btn-secondary">📋 Copy Text</button>
-                <button id="clearBtn" class="btn-custom btn-secondary">🗑️ Clear</button>
-                <button id="downloadTxtBtn" class="btn-custom" style="background: #10b981;">📝 Save TXT</button>
+            <!-- TRANSCRIPT CONTROLS -->
+            <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
+                <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
+                <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
+                <button id="downloadTxtBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px;">📝 Save TXT</button>
             </div>
 
+            <!-- TRANSCRIPT BOX -->
             <div id="transcriptBox" class="transcript-box">
-                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 120px; font-weight: 600;">
-                    Suara yang ditangkap akan muncul di sini...
+                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
+                    🎤 Suara yang ditangkap akan muncul di sini...
                 </div>
             </div>
 
+            <!-- AI CONTENT AREA -->
             <div id="aiContent" class="w-full"></div>
             
-            <div style="margin-top: 30px; background: #ffffff; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
-                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #1e293b;">🎧 Arsip Rekaman Suara</h3>
+            <!-- AUDIO ARCHIVE -->
+            <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman</h3>
                 <div id="audioContainer"></div>
             </div>
 
             <script>
-                mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' } });
+                (function() {
+                    'use strict';
 
-                const startBtn = document.getElementById('startBtn'); const stopBtn = document.getElementById('stopBtn');
-                const copyBtn = document.getElementById('copyBtn'); const clearBtn = document.getElementById('clearBtn');
-                const downloadTxtBtn = document.getElementById('downloadTxtBtn'); const aiBtn = document.getElementById('aiBtn');
-                const apiKeyInput = document.getElementById('apiKeyInput'); const aiContent = document.getElementById('aiContent');
-                const langSelect = document.getElementById('langSelect'); const status = document.getElementById('status');
-                const indicator = document.getElementById('indicator'); const transcriptBox = document.getElementById('transcriptBox');
-                const audioContainer = document.getElementById('audioContainer'); const visualizer = document.getElementById('visualizer');
-                const canvasCtx = visualizer.getContext('2d');
+                    // ======== DOM REFS ========
+                    const startBtn = document.getElementById('startBtn');
+                    const stopBtn = document.getElementById('stopBtn');
+                    const copyBtn = document.getElementById('copyBtn');
+                    const clearBtn = document.getElementById('clearBtn');
+                    const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+                    const aiBtn = document.getElementById('aiBtn');
+                    const apiKeyInput = document.getElementById('apiKeyInput');
+                    const aiContent = document.getElementById('aiContent');
+                    const langSelect = document.getElementById('langSelect');
+                    const status = document.getElementById('status');
+                    const indicator = document.getElementById('indicator');
+                    const transcriptBox = document.getElementById('transcriptBox');
+                    const audioContainer = document.getElementById('audioContainer');
+                    const visualizer = document.getElementById('visualizer');
+                    const canvasCtx = visualizer.getContext('2d');
 
-                let recognition, mediaRecorder, audioChunks = [], audioStream, isRecording = false;
-                let audioContext, analyser, dataArray, bufferLength, drawVisual;
-                let currentInterimDiv = null; let lastFinalText = "";
+                    // ======== STATE ========
+                    let isRecording = false;
+                    let recognition = null;
+                    let mediaRecorder = null;
+                    let audioChunks = [];
+                    let audioStream = null;
+                    let audioContext = null;
+                    let analyser = null;
+                    let dataArray = null;
+                    let drawVisual = null;
+                    let currentInterimDiv = null;
+                    let lastFinalText = "";
 
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    status.innerText = "Browser tidak mendukung Speech API.";
-                } else {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    recognition = new SpeechRecognition();
-                    recognition.continuous = true; recognition.interimResults = true;
-
-                    function getTimestamp() { const now = new Date(); return '[' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0') + ']'; }
-
-                    recognition.onresult = (event) => {
-                        let interimTranscript = ''; let finalTranscript = '';
-                        for (let i = event.resultIndex; i < event.results.length; ++i) {
-                            if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
-                            else interimTranscript += event.results[i][0].transcript;
+                    // ======== INIT SPEECH RECOGNITION ========
+                    function initSpeechRecognition() {
+                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        if (!SpeechRecognition) {
+                            status.innerText = "❌ Browser tidak mendukung Speech API";
+                            return null;
                         }
-                        if (finalTranscript) {
-                            if (finalTranscript.trim() === lastFinalText.trim()) return;
-                            lastFinalText = finalTranscript; const timeStr = getTimestamp();
-                            if (currentInterimDiv) {
-                                currentInterimDiv.className = 'line-final'; currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + finalTranscript; currentInterimDiv = null;
+                        const rec = new SpeechRecognition();
+                        rec.continuous = true;
+                        rec.interimResults = true;
+                        rec.lang = langSelect.value;
+
+                        rec.onstart = function() {
+                            isRecording = true;
+                            status.innerText = "🎤 Merekam (" + (langSelect.value === 'id-ID' ? 'ID' : 'EN') + ")...";
+                            indicator.className = 'indicator-dot recording';
+                            startBtn.disabled = true;
+                            stopBtn.disabled = false;
+                            langSelect.disabled = true;
+                            const placeholder = document.getElementById('placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
+                        };
+
+                        rec.onerror = function(event) {
+                            console.error('Speech recognition error:', event.error);
+                            if (event.error === 'not-allowed') {
+                                status.innerText = "❌ Izin mikrofon ditolak!";
+                            } else if (event.error === 'no-speech') {
+                                // ignore
                             } else {
-                                const line = document.createElement('div'); line.className = 'line-final'; line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + finalTranscript; transcriptBox.appendChild(line);
+                                status.innerText = "⚠️ Error: " + event.error;
                             }
-                            transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                        } else if (interimTranscript) {
-                            if (!currentInterimDiv) { currentInterimDiv = document.createElement('div'); currentInterimDiv.className = 'line-interim'; transcriptBox.appendChild(currentInterimDiv); }
-                            currentInterimDiv.innerText = interimTranscript; transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                        }
-                    };
+                            // Auto-restart jika masih recording
+                            if (isRecording) {
+                                try { rec.start(); } catch(e) {}
+                            }
+                        };
 
-                    recognition.onend = () => { if (isRecording) { try { recognition.start(); } catch(e){} } };
+                        rec.onend = function() {
+                            // Restart jika masih recording
+                            if (isRecording) {
+                                try { 
+                                    setTimeout(() => { rec.start(); }, 100);
+                                } catch(e) {}
+                            }
+                        };
 
+                        rec.onresult = function(event) {
+                            let interimTranscript = '';
+                            let finalTranscript = '';
+                            
+                            for (let i = event.resultIndex; i < event.results.length; i++) {
+                                const result = event.results[i];
+                                if (result.isFinal) {
+                                    finalTranscript += result[0].transcript + ' ';
+                                } else {
+                                    interimTranscript += result[0].transcript;
+                                }
+                            }
+
+                            if (finalTranscript.trim()) {
+                                const cleanFinal = finalTranscript.trim();
+                                if (cleanFinal === lastFinalText.trim()) return;
+                                lastFinalText = cleanFinal;
+                                
+                                const now = new Date();
+                                const timeStr = '[' + 
+                                    String(now.getHours()).padStart(2,'0') + ':' + 
+                                    String(now.getMinutes()).padStart(2,'0') + ':' + 
+                                    String(now.getSeconds()).padStart(2,'0') + ']';
+                                
+                                if (currentInterimDiv) {
+                                    currentInterimDiv.className = 'line-final';
+                                    currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
+                                    currentInterimDiv = null;
+                                } else {
+                                    const line = document.createElement('div');
+                                    line.className = 'line-final';
+                                    line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
+                                    transcriptBox.appendChild(line);
+                                }
+                                transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                            } else if (interimTranscript.trim()) {
+                                if (!currentInterimDiv) {
+                                    currentInterimDiv = document.createElement('div');
+                                    currentInterimDiv.className = 'line-interim';
+                                    transcriptBox.appendChild(currentInterimDiv);
+                                }
+                                currentInterimDiv.textContent = interimTranscript;
+                                transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                            }
+                        };
+
+                        return rec;
+                    }
+
+                    // ======== VISUALIZER ========
                     function setupVisualizer(stream) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        const source = audioContext.createMediaStreamSource(stream);
-                        analyser = audioContext.createAnalyser(); analyser.fftSize = 256;
-                        bufferLength = analyser.frequencyBinCount; dataArray = new Uint8Array(bufferLength);
-                        source.connect(analyser);
+                        try {
+                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const source = audioContext.createMediaStreamSource(stream);
+                            analyser = audioContext.createAnalyser();
+                            analyser.fftSize = 256;
+                            dataArray = new Uint8Array(analyser.frequencyBinCount);
+                            source.connect(analyser);
+                        } catch(e) {
+                            console.warn('Visualizer setup error:', e);
+                        }
                     }
 
                     function drawVisualizer() {
-                        canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
-                        if (analyser) analyser.getByteFrequencyData(dataArray);
-                        const barWidth = (visualizer.width / bufferLength) * 2.5; let x = 0;
-                        for(let i = 0; i < bufferLength; i++) {
-                            const barHeight = dataArray[i]; canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ', 50, 255)';
-                            canvasCtx.shadowBlur = 10; canvasCtx.shadowColor = '#3b82f6';
-                            const y = (visualizer.height / 2) - (barHeight / 2);
-                            canvasCtx.beginPath(); canvasCtx.roundRect(x, y, barWidth, barHeight, 5); canvasCtx.fill(); x += barWidth + 1;
+                        if (!analyser) return;
+                        const width = visualizer.width;
+                        const height = visualizer.height;
+                        canvasCtx.clearRect(0, 0, width, height);
+                        
+                        analyser.getByteFrequencyData(dataArray);
+                        const bufferLength = analyser.frequencyBinCount;
+                        const barWidth = (width / bufferLength) * 2.5;
+                        let x = 0;
+                        
+                        for (let i = 0; i < bufferLength; i++) {
+                            const barHeight = dataArray[i];
+                            const r = Math.min(barHeight + 100, 255);
+                            const g = Math.min(barHeight / 2 + 50, 255);
+                            const b = Math.min(barHeight + 150, 255);
+                            canvasCtx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+                            canvasCtx.shadowBlur = 10;
+                            canvasCtx.shadowColor = '#3b82f6';
+                            const y = (height / 2) - (barHeight / 2);
+                            canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 1));
+                            x += barWidth + 1;
                         }
                         drawVisual = requestAnimationFrame(drawVisualizer);
                     }
 
-                    startBtn.onclick = async () => {
+                    // ======== START ========
+                    startBtn.onclick = async function() {
                         try {
-                            lastFinalText = ""; recognition.lang = langSelect.value;
-                            audioStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                            audioChunks = []; mediaRecorder = new MediaRecorder(audioStream);
-                            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                            mediaRecorder.onstop = () => {
+                            // Reset
+                            lastFinalText = "";
+                            
+                            // Get display media with audio
+                            audioStream = await navigator.mediaDevices.getDisplayMedia({ 
+                                video: true, 
+                                audio: true 
+                            });
+                            
+                            // Setup recorder
+                            audioChunks = [];
+                            mediaRecorder = new MediaRecorder(audioStream);
+                            mediaRecorder.ondataavailable = function(e) {
+                                if (e.data.size > 0) audioChunks.push(e.data);
+                            };
+                            mediaRecorder.onstop = function() {
                                 const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                                const audioUrl = URL.createObjectURL(blob); const fileName = 'Rekaman_TranscribX_' + new Date().getTime() + '.webm';
-                                const audioItem = document.createElement('div'); audioItem.className = 'audio-item';
-                                audioItem.innerHTML = '<audio controls src="' + audioUrl + '"></audio> <a href="' + audioUrl + '" download="' + fileName + '" class="btn-custom" style="background:#10b981;">💾 Download Audio</a>';
+                                const audioUrl = URL.createObjectURL(blob);
+                                const fileName = 'Rekaman_TranscribX_' + Date.now() + '.webm';
+                                const audioItem = document.createElement('div');
+                                audioItem.className = 'audio-item';
+                                audioItem.innerHTML = `
+                                    <audio controls src="${audioUrl}"></audio>
+                                    <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:4px 12px; font-size:12px;">💾 Download</a>
+                                `;
                                 audioContainer.prepend(audioItem);
                             };
-                            setupVisualizer(audioStream); mediaRecorder.start(); recognition.start(); drawVisualizer(); isRecording = true;
-                            status.innerText = "Merekam (" + (langSelect.value === 'id-ID' ? 'ID' : 'EN') + ")..."; indicator.style.background = "#ef4444"; indicator.style.boxShadow = "0 0 10px #ef4444";
-                            startBtn.disabled = true; stopBtn.disabled = false; langSelect.disabled = true;
-                            if(document.getElementById('placeholder')) document.getElementById('placeholder').style.display = 'none';
-                        } catch(err) { console.error("Gagal akses mic:", err); status.innerText = "Izin Mic Ditolak!"; }
-                    };
 
-                    stopBtn.onclick = () => {
-                        isRecording = false; recognition.stop();
-                        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-                        if (audioStream) audioStream.getTracks().forEach(track => track.stop());
-                        cancelAnimationFrame(drawVisual); if (audioContext) audioContext.close();
-                        canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
-                        status.innerText = "Standby..."; indicator.style.background = "#cbd5e1"; indicator.style.boxShadow = "none";
-                        startBtn.disabled = false; stopBtn.disabled = true; langSelect.disabled = false;
-                    };
-
-                    function getTranscriptText() {
-                        const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) return ""; return Array.from(lines).map(line => line.innerText).join('\\n');
-                    }
-
-                    copyBtn.onclick = () => {
-                        const text = getTranscriptText(); if (!text) return alert("Belum ada teks untuk dicopy!");
-                        navigator.clipboard.writeText(text).then(() => { const originalText = copyBtn.innerText; copyBtn.innerText = "✅ Copied!"; setTimeout(() => copyBtn.innerText = originalText, 2000); });
-                    };
-
-                    downloadTxtBtn.onclick = () => {
-                        const text = getTranscriptText(); if (!text) return alert("Belum ada teks untuk disimpan!");
-                        const blob = new Blob([text], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Transkrip_Raw_' + new Date().getTime() + '.txt'; a.click();
-                    };
-
-                    clearBtn.onclick = () => {
-                        if(confirm("Yakin ingin menghapus semua teks di layar?")) {
-                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px;">Suara yang ditangkap akan muncul di sini...</div>';
-                            lastFinalText = ""; aiContent.innerHTML = "";
+                            // Setup visualizer
+                            setupVisualizer(audioStream);
+                            
+                            // Start recording
+                            mediaRecorder.start();
+                            
+                            // Init and start speech recognition
+                            recognition = initSpeechRecognition();
+                            if (recognition) {
+                                recognition.start();
+                            } else {
+                                throw new Error('Speech recognition not available');
+                            }
+                            
+                            // Start visualizer
+                            drawVisualizer();
+                            
+                            // Update visualizer size
+                            resizeVisualizer();
+                            
+                        } catch(err) {
+                            console.error('Start error:', err);
+                            status.innerText = "❌ Gagal: " + err.message;
+                            startBtn.disabled = false;
+                            stopBtn.disabled = true;
+                            if (audioStream) {
+                                audioStream.getTracks().forEach(t => t.stop());
+                                audioStream = null;
+                            }
                         }
                     };
 
-                    aiBtn.onclick = async () => {
-                        const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
-                        if (!apiKey) { alert("⚠️ Masukkan API Key LiteLLM/Gemini terlebih dahulu."); apiKeyInput.focus(); return; }
-                        if (!transcript) { alert("⚠️ Transkrip masih kosong."); return; }
-                        const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
-                        aiContent.innerHTML = '<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>';
+                    // ======== STOP ========
+                    stopBtn.onclick = function() {
+                        isRecording = false;
+                        
+                        if (recognition) {
+                            try { recognition.stop(); } catch(e) {}
+                            recognition = null;
+                        }
+                        
+                        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                            mediaRecorder.stop();
+                        }
+                        
+                        if (audioStream) {
+                            audioStream.getTracks().forEach(track => track.stop());
+                            audioStream = null;
+                        }
+                        
+                        if (drawVisual) {
+                            cancelAnimationFrame(drawVisual);
+                            drawVisual = null;
+                        }
+                        
+                        if (audioContext) {
+                            try { audioContext.close(); } catch(e) {}
+                            audioContext = null;
+                            analyser = null;
+                        }
+                        
+                        canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
+                        status.innerText = "⏸️ Stopped";
+                        indicator.className = 'indicator-dot';
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        langSelect.disabled = false;
+                    };
 
-                        const prompt = 'Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON. ATURAN JSON NOTULENSI: - ringkasan_eksekutif: Buat array of strings (poin-poin padat). - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP. - keputusan: Array of strings. - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT. - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting. ATURAN MARKMAP: Gunakan kode murni markdown dengan struktur lengkap. ATURAN MERMAID: WAJIB format graph LR. Transkrip Rapat: "' + transcript + '"';
+                    // ======== RESIZE VISUALIZER ========
+                    function resizeVisualizer() {
+                        const rect = visualizer.parentElement.getBoundingClientRect();
+                        visualizer.width = visualizer.parentElement.clientWidth || 600;
+                        visualizer.height = 80;
+                    }
+                    window.addEventListener('resize', resizeVisualizer);
+                    setTimeout(resizeVisualizer, 100);
+
+                    // ======== COPY ========
+                    copyBtn.onclick = function() {
+                        const lines = transcriptBox.querySelectorAll('.line-final');
+                        if (lines.length === 0) { alert('Belum ada teks untuk dicopy!'); return; }
+                        const text = Array.from(lines).map(line => line.innerText).join('\n');
+                        navigator.clipboard.writeText(text).then(() => {
+                            const orig = copyBtn.innerText;
+                            copyBtn.innerText = '✅ Copied!';
+                            setTimeout(() => copyBtn.innerText = orig, 2000);
+                        }).catch(() => {
+                            // Fallback
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            ta.remove();
+                            const orig = copyBtn.innerText;
+                            copyBtn.innerText = '✅ Copied!';
+                            setTimeout(() => copyBtn.innerText = orig, 2000);
+                        });
+                    };
+
+                    // ======== DOWNLOAD TXT ========
+                    downloadTxtBtn.onclick = function() {
+                        const lines = transcriptBox.querySelectorAll('.line-final');
+                        if (lines.length === 0) { alert('Belum ada teks untuk disimpan!'); return; }
+                        const text = Array.from(lines).map(line => line.innerText).join('\n');
+                        const blob = new Blob([text], { type: 'text/plain' });
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = 'Transkrip_TranscribX_' + Date.now() + '.txt';
+                        a.click();
+                    };
+
+                    // ======== CLEAR ========
+                    clearBtn.onclick = function() {
+                        if (!confirm('Yakin ingin menghapus semua teks?')) return;
+                        transcriptBox.innerHTML = `
+                            <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
+                                🎤 Suara yang ditangkap akan muncul di sini...
+                            </div>
+                        `;
+                        lastFinalText = "";
+                        aiContent.innerHTML = "";
+                    };
+
+                    // ======== GET TRANSCRIPT TEXT ========
+                    function getTranscriptText() {
+                        const lines = transcriptBox.querySelectorAll('.line-final');
+                        return Array.from(lines).map(line => line.innerText).join('\n');
+                    }
+
+                    // ======== AI SUMMARY ========
+                    aiBtn.onclick = async function() {
+                        const transcript = getTranscriptText();
+                        const apiKey = apiKeyInput.value.trim();
+                        
+                        if (!apiKey) {
+                            alert('⚠️ Masukkan API Key LiteLLM / Gemini terlebih dahulu.');
+                            apiKeyInput.focus();
+                            return;
+                        }
+                        if (!transcript) {
+                            alert('⚠️ Transkrip masih kosong. Lakukan capture terlebih dahulu.');
+                            return;
+                        }
+                        
+                        const originalText = aiBtn.innerHTML;
+                        aiBtn.innerHTML = '⏳ Memproses...';
+                        aiBtn.disabled = true;
+                        aiContent.innerHTML = `
+                            <div class="p-6 bg-purple-50 rounded-2xl border border-purple-200 text-center mt-4 fade-in">
+                                <p class="text-purple-600 font-bold">🔄 AI sedang memproses Notulensi... Mohon tunggu.</p>
+                            </div>
+                        `;
+
+                        const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                        ATURAN JSON NOTULENSI:
+                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                        - notulensi_rapat: Object dengan agenda, peserta, jalannya_diskusi (array narasi detail), keputusan (array), rencana_tindak_lanjut (array of objects dengan tugas, pic, deadline, prioritas), hubungan_topik (array of objects dengan sumber, target, relasi).
+                        - visual_mindmap: Kode Mermaid graph LR.
+                        - markmap_code: Kode Markdown untuk Markmap.
+                        Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                            "model": "gemini/gemini-2.5-flash",
+                            "messages": [{ "role": "user", "content": prompt }],
+                            "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",
                                 "json_schema": {
-                                    "name": "meeting_summary", "strict": true,
+                                    "name": "meeting_summary",
+                                    "strict": true,
                                     "schema": {
                                         "type": "object",
                                         "properties": {
@@ -1174,71 +1343,357 @@ else:
                                             "notulensi_rapat": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
-                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
-                                                }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
+                                                    "agenda": { "type": "string" },
+                                                    "peserta": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } },
+                                                    "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "rencana_tindak_lanjut": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "tugas": { "type": "string" },
+                                                                "pic": { "type": "string" },
+                                                                "deadline": { "type": "string" },
+                                                                "prioritas": { "type": "string" }
+                                                            },
+                                                            "required": ["tugas", "pic", "deadline", "prioritas"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    },
+                                                    "hubungan_topik": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "sumber": { "type": "string" },
+                                                                "target": { "type": "string" },
+                                                                "relasi": { "type": "string" }
+                                                            },
+                                                            "required": ["sumber", "target", "relasi"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    }
+                                                },
+                                                "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"],
+                                                "additionalProperties": false
                                             },
-                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": false
+                                            "visual_mindmap": { "type": "string" },
+                                            "markmap_code": { "type": "string" }
+                                        },
+                                        "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"],
+                                        "additionalProperties": false
                                     }
                                 }
                             }
                         };
 
                         try {
-                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", { method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
+                                method: "POST",
+                                headers: {
+                                    "Authorization": "Bearer " + apiKey,
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            
                             const resJson = await response.json();
+                            
                             if (resJson.choices && resJson.choices[0].message.content) {
                                 const data = JSON.parse(resJson.choices[0].message.content);
                                 window.lastAiData = data;
-                                const reportDiv = document.createElement('div'); reportDiv.className = "fade-in space-y-6 mt-6 mb-10";
                                 
-                                let taskListHtml = '<div class="mt-6 pt-4 border-t border-slate-100"><p class="font-black text-blue-600 uppercase text-[11px] mb-3">📋 RENCANA TINDAK LANJUT (ACTION ITEMS):</p><div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm"><table class="w-full text-left border-collapse bg-white"><tr class="bg-blue-50 text-blue-800 text-[11px] uppercase"><th class="p-3 border-b border-r">Tugas</th><th class="p-3 border-b border-r">PIC</th><th class="p-3 border-b border-r">Deadline</th><th class="p-3 border-b">Prioritas</th></tr>' + data.notulensi_rapat.rencana_tindak_lanjut.map(t => '<tr class="text-[12px] border-b hover:bg-slate-50 transition"><td class="p-3 border-r font-medium text-slate-800">' + t.tugas + '</td><td class="p-3 border-r text-slate-600">' + t.pic + '</td><td class="p-3 border-r text-slate-600">' + t.deadline + '</td><td class="p-3 font-bold ' + (t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600') + '">' + t.prioritas + '</td></tr>').join('') + '</table></div></div>';
+                                // Build HTML report
+                                const tasks = data.notulensi_rapat.rencana_tindak_lanjut || [];
+                                let taskRows = tasks.map(t => `
+                                    <tr class="text-[12px] border-b hover:bg-slate-50">
+                                        <td class="p-3 border-r font-medium text-slate-800">${t.tugas}</td>
+                                        <td class="p-3 border-r text-slate-600">${t.pic}</td>
+                                        <td class="p-3 border-r text-slate-600">${t.deadline}</td>
+                                        <td class="p-3 font-bold ${t.prioritas && t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600'}">${t.prioritas || '-'}</td>
+                                    </tr>
+                                `).join('');
 
-                                let notulensiHtml = '<div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden mb-6"><div class="flex justify-between items-center mb-6"><h5 class="text-[15px] font-black text-slate-700 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5><button onclick="exportNotulensiTxt()" class="btn-export shadow-md">📝 Download TXT</button></div><div class="space-y-5 text-[13px] text-slate-700 leading-relaxed"><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">RINGKASAN EKSEKUTIF:</p><div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-inner"><ul class="list-disc ml-5 space-y-2 font-semibold text-slate-800">' + data.ringkasan_eksekutif.map(r => '<li>' + r + '</li>').join('') + '</ul></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">AGENDA / TOPIK:</p><p class="font-bold text-slate-800">' + (data.notulensi_rapat.agenda || '-') + '</p></div><div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p><p class="font-bold text-slate-800">' + (data.notulensi_rapat.peserta.join(', ') || '-') + '</p></div></div><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">JALANNYA DISKUSI:</p><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><ul class="list-disc ml-5 space-y-3">' + data.notulensi_rapat.jalannya_diskusi.map(d => '<li>' + d + '</li>').join('') + '</ul></div></div><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">KEPUTUSAN / KESIMPULAN UTAMA:</p><div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100"><ul class="list-disc ml-5 space-y-2 font-bold text-emerald-900">' + data.notulensi_rapat.keputusan.map(k => '<li>' + k + '</li>').join('') + '</ul></div></div>' + taskListHtml + '</div></div>';
+                                const ringkasanItems = (data.ringkasan_eksekutif || []).map(r => `<li>${r}</li>`).join('');
+                                const diskusiItems = (data.notulensi_rapat.jalannya_diskusi || []).map(d => `<li>${d}</li>`).join('');
+                                const keputusanItems = (data.notulensi_rapat.keputusan || []).map(k => `<li>${k}</li>`).join('');
+                                const pesertaList = (data.notulensi_rapat.peserta || []).join(', ') || '-';
 
-                                let rawMermaid = data.visual_mindmap.replace(/```mermaid/gi, '').replace(/```/g, '').trim();
-                                let rawMarkmap = data.markmap_code.replace(/```markdown/gi, '').replace(/```/g, '').trim();
+                                let reportHtml = `
+                                    <div class="fade-in space-y-6 mt-6 mb-10">
+                                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h5 class="text-sm font-bold text-slate-700 uppercase tracking-wide">📋 NOTULENSI RAPAT</h5>
+                                                <button onclick="exportNotulensiTxt()" class="btn-export">📝 Download TXT</button>
+                                            </div>
+                                            <div class="space-y-4 text-sm text-slate-700">
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">RINGKASAN EKSEKUTIF:</p>
+                                                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                                        <ul class="list-disc ml-5 space-y-1 font-semibold text-slate-800">${ringkasanItems}</ul>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                                                        <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">AGENDA:</p>
+                                                        <p class="font-bold text-slate-800">${data.notulensi_rapat.agenda || '-'}</p>
+                                                    </div>
+                                                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                                                        <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p>
+                                                        <p class="font-bold text-slate-800">${pesertaList}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">JALANNYA DISKUSI:</p>
+                                                    <div class="bg-white p-4 rounded-xl border border-slate-200">
+                                                        <ul class="list-disc ml-5 space-y-2">${diskusiItems}</ul>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">KEPUTUSAN UTAMA:</p>
+                                                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                                        <ul class="list-disc ml-5 space-y-1 font-bold text-emerald-900">${keputusanItems}</ul>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">📋 RENCANA TINDAK LANJUT:</p>
+                                                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                                                        <table class="w-full text-left border-collapse bg-white text-xs">
+                                                            <thead>
+                                                                <tr class="bg-blue-50 text-blue-800 uppercase">
+                                                                    <th class="p-3 border-b border-r">Tugas</th>
+                                                                    <th class="p-3 border-b border-r">PIC</th>
+                                                                    <th class="p-3 border-b border-r">Deadline</th>
+                                                                    <th class="p-3 border-b">Prioritas</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>${taskRows || '<tr><td colspan="4" class="p-3 text-center text-slate-400">Belum ada action item</td></tr>'}</tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Visualizations -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div class="p-4 bg-white rounded-2xl border border-slate-200">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <h5 class="text-[10px] font-bold text-emerald-600 uppercase">🌿 Markmap</h5>
+                                                    <button onclick="downloadMarkmapImage('markmap-area', 'Markmap', event)" class="btn-export">📸 PNG</button>
+                                                </div>
+                                                <div id="markmap-area" class="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden p-2" style="min-height:350px;">
+                                                    <svg id="markmap-svg" style="width:100%; height:350px;"></svg>
+                                                </div>
+                                            </div>
+                                            <div class="p-4 bg-white rounded-2xl border border-slate-200">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <h5 class="text-[10px] font-bold text-indigo-600 uppercase">🌊 Mermaid</h5>
+                                                    <button onclick="downloadMermaidImage('mermaid-area', 'Mermaid', event)" class="btn-export">📸 PNG</button>
+                                                </div>
+                                                <div id="mermaid-area" class="bg-slate-50 border border-slate-100 rounded-xl overflow-x-auto p-4">
+                                                    <div class="mermaid">${data.visual_mindmap || 'graph LR; A[No Data]'}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="p-4 bg-white rounded-2xl border border-slate-200">
+                                            <div class="flex justify-between items-center mb-3">
+                                                <h5 class="text-[10px] font-bold text-rose-600 uppercase">🕸️ Cytoscape</h5>
+                                                <button onclick="exportCyToPng()" class="btn-export">📸 PNG</button>
+                                            </div>
+                                            <div id="cy" class="cy-container"></div>
+                                        </div>
+                                    </div>
+                                `;
 
-                                let visualizationHtml = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Peta Konsep Rapat)</h5><button onclick="downloadMarkmapImage(\'markmap-capture-area\', \'Markmap\', event)" class="btn-export">📸 PNG</button></div><div id="markmap-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden markmap-svg-container relative p-2" style="min-height: 400px;"></div></div><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Alur)</h5><button onclick="downloadMermaidImage(\'mermaid-capture-area\', \'Mermaid\', event)" class="btn-export">📸 PNG</button></div><div id="mermaid-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto p-4 mermaid-container"><div class="mermaid">' + rawMermaid + '</div></div></div></div><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col mb-6"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Entitas)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG Full</button></div><div id="cy" class="cy-container"></div></div>';
+                                aiContent.innerHTML = reportHtml;
 
-                                reportDiv.innerHTML = notulensiHtml + visualizationHtml;
-                                aiContent.innerHTML = ""; aiContent.appendChild(reportDiv);
-
+                                // Render Markmap
                                 try {
-                                    if (!window.markmap) throw new Error("Library Markmap gagal dimuat.");
-                                    const { Transformer, Markmap } = window.markmap; const { root } = new Transformer().transform(rawMarkmap);
-                                    const svgContainer = document.getElementById('markmap-capture-area'); svgContainer.innerHTML = '<svg id="markmap-svg" style="width:100%; height:400px; min-height:400px;"></svg>';
-                                    Markmap.create(document.getElementById('markmap-svg'), null, root);
-                                } catch (e) { document.getElementById('markmap-capture-area').innerHTML = '<p class="text-red-500 font-bold p-4 text-xs">Error merender Markmap: ' + e.message + '</p>'; }
+                                    const markdownCode = data.markmap_code || '# Mindmap\\n## Topik Utama';
+                                    const { Transformer, Markmap } = window.markmap;
+                                    const { root } = new Transformer().transform(markdownCode);
+                                    const svgContainer = document.getElementById('markmap-svg');
+                                    if (svgContainer) {
+                                        Markmap.create('#markmap-svg', null, root);
+                                    }
+                                } catch(e) {
+                                    console.warn('Markmap error:', e);
+                                    document.getElementById('markmap-area').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Markmap</p>';
+                                }
 
-                                setTimeout(() => {
-                                    try { mermaid.run({ querySelector: '.mermaid' }); }
-                                    catch (e) { document.querySelector('.mermaid').innerHTML = '<p class="text-red-500 text-xs font-bold">⚠️ Error sintaks dari AI. Coba generate ulang.</p>'; }
-                                }, 500);
-
+                                // Render Mermaid
                                 setTimeout(() => {
                                     try {
-                                        const cyElements = []; const nodesSet = new Set();
-                                        data.notulensi_rapat.hubungan_topik.forEach(rel => {
-                                            if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
-                                            if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
+                                        mermaid.run({ querySelector: '.mermaid' });
+                                    } catch(e) {
+                                        document.querySelector('.mermaid').innerHTML = '<p class="text-red-500 text-xs">Error render Mermaid</p>';
+                                    }
+                                }, 300);
+
+                                // Render Cytoscape
+                                setTimeout(() => {
+                                    try {
+                                        const relaciones = data.notulensi_rapat.hubungan_topik || [];
+                                        const cyElements = [];
+                                        const nodesSet = new Set();
+                                        relaciones.forEach(rel => {
+                                            if (!nodesSet.has(rel.sumber)) {
+                                                nodesSet.add(rel.sumber);
+                                                cyElements.push({ data: { id: rel.sumber, label: rel.sumber } });
+                                            }
+                                            if (!nodesSet.has(rel.target)) {
+                                                nodesSet.add(rel.target);
+                                                cyElements.push({ data: { id: rel.target, label: rel.target } });
+                                            }
                                             cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
                                         });
+                                        
+                                        if (window.myCyInstance) {
+                                            window.myCyInstance.destroy();
+                                        }
+                                        
                                         window.myCyInstance = cytoscape({
-                                            container: document.getElementById('cy'), elements: cyElements,
-                                            style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }],
+                                            container: document.getElementById('cy'),
+                                            elements: cyElements.length ? cyElements : [{ data: { id: 'no-data', label: 'Tidak ada data' } }],
+                                            style: [
+                                                { selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } },
+                                                { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }
+                                            ],
                                             layout: { name: 'cose', padding: 20 }
                                         });
-                                    } catch (e) { document.getElementById('cy').innerHTML = '<p class="text-red-500 font-bold p-4 text-xs">Error merender Cytoscape: ' + e.message + '</p>'; }
-                                }, 600);
-                            } else if (resJson.error) { aiContent.innerHTML = '<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Error: ' + resJson.error.message + '</p>'; }
-                        } catch (err) { aiContent.innerHTML = '<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Koneksi Gagal: Cek API Key. Detail: ' + err.message + '</p>'; }
-                        finally { aiBtn.innerHTML = originalText; aiBtn.disabled = false; aiContent.scrollIntoView({ behavior: 'smooth' }); }
+                                    } catch(e) {
+                                        console.warn('Cytoscape error:', e);
+                                        document.getElementById('cy').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Cytoscape</p>';
+                                    }
+                                }, 500);
+
+                            } else {
+                                aiContent.innerHTML = `<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Error: ${resJson.error?.message || 'Unknown error'}</div>`;
+                            }
+                        } catch(err) {
+                            aiContent.innerHTML = `<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Koneksi Gagal: ${err.message}</div>`;
+                        } finally {
+                            aiBtn.innerHTML = originalText;
+                            aiBtn.disabled = false;
+                            aiContent.scrollIntoView({ behavior: 'smooth' });
+                        }
                     };
-                }
+
+                    // ======== GLOBAL EXPORT FUNCTIONS ========
+                    window.exportCyToPng = function() {
+                        if (!window.myCyInstance) { alert('Cytoscape belum siap!'); return; }
+                        const b64 = window.myCyInstance.png({ full: true, scale: 4, bg: 'white' });
+                        const a = document.createElement('a');
+                        a.href = b64;
+                        a.download = 'Cytoscape_Map_HighRes.png';
+                        a.click();
+                    };
+
+                    window.exportNotulensiTxt = function() {
+                        if (!window.lastAiData) { alert('Data Notulensi belum ada!'); return; }
+                        const data = window.lastAiData;
+                        let txt = 'NOTULENSI RAPAT\n========================\n\n';
+                        txt += 'RINGKASAN EKSEKUTIF:\n';
+                        (data.ringkasan_eksekutif || []).forEach(r => txt += '- ' + r + '\n');
+                        txt += '\nAgenda: ' + (data.notulensi_rapat.agenda || '-') + '\n';
+                        txt += 'Peserta: ' + (data.notulensi_rapat.peserta ? data.notulensi_rapat.peserta.join(', ') : '-') + '\n\n';
+                        txt += 'Jalannya Diskusi:\n';
+                        (data.notulensi_rapat.jalannya_diskusi || []).forEach(d => txt += '- ' + d + '\n');
+                        txt += '\nKeputusan Utama:\n';
+                        (data.notulensi_rapat.keputusan || []).forEach(k => txt += '- ' + k + '\n');
+                        txt += '\nRencana Tindak Lanjut:\n';
+                        (data.notulensi_rapat.rencana_tindak_lanjut || []).forEach(t => {
+                            txt += '- [' + (t.prioritas || 'Normal') + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\n';
+                        });
+                        const blob = new Blob([txt], { type: 'text/plain' });
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = 'Notulensi_Resmi.txt';
+                        a.click();
+                    };
+
+                    window.downloadMarkmapImage = function(wrapperId, title, event) {
+                        const container = document.getElementById(wrapperId);
+                        const svgEl = container.querySelector('svg');
+                        if (!svgEl) return;
+                        const btn = event.currentTarget;
+                        const origText = btn.innerHTML;
+                        btn.innerHTML = '⏳ Saving...';
+                        btn.disabled = true;
+                        
+                        try {
+                            const g = svgEl.querySelector('g');
+                            if (!g) throw new Error('No g element');
+                            const bbox = g.getBBox();
+                            const padding = 50;
+                            const width = Math.max(bbox.width, 300) + padding * 2;
+                            const height = Math.max(bbox.height, 300) + padding * 2;
+                            
+                            const originalViewBox = svgEl.getAttribute('viewBox');
+                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + width + ' ' + height);
+                            svgEl.style.width = width + 'px';
+                            svgEl.style.height = height + 'px';
+                            container.style.overflow = 'visible';
+                            
+                            setTimeout(() => {
+                                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+                                .then(canvas => {
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                    else svgEl.removeAttribute('viewBox');
+                                    svgEl.style.width = '';
+                                    svgEl.style.height = '';
+                                    container.style.overflow = '';
+                                    const a = document.createElement('a');
+                                    a.download = 'Markmap_' + title + '.png';
+                                    a.href = canvas.toDataURL('image/png', 1.0);
+                                    a.click();
+                                    btn.innerHTML = origText;
+                                    btn.disabled = false;
+                                }).catch(() => {
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                    else svgEl.removeAttribute('viewBox');
+                                    svgEl.style.width = '';
+                                    svgEl.style.height = '';
+                                    container.style.overflow = '';
+                                    btn.innerHTML = '❌ Failed';
+                                    setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+                                });
+                            }, 300);
+                        } catch(e) {
+                            btn.innerHTML = '❌ Failed';
+                            setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+                        }
+                    };
+
+                    window.downloadMermaidImage = function(wrapperId, title, event) {
+                        const container = document.getElementById(wrapperId);
+                        const btn = event.currentTarget;
+                        const origText = btn.innerHTML;
+                        btn.innerHTML = '⏳ Saving...';
+                        btn.disabled = true;
+                        const origOverflow = container.style.overflow;
+                        container.style.overflow = 'visible';
+                        setTimeout(() => {
+                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+                            .then(canvas => {
+                                container.style.overflow = origOverflow;
+                                const a = document.createElement('a');
+                                a.download = 'Mermaid_' + title + '.png';
+                                a.href = canvas.toDataURL('image/png', 1.0);
+                                a.click();
+                                btn.innerHTML = origText;
+                                btn.disabled = false;
+                            }).catch(() => {
+                                container.style.overflow = origOverflow;
+                                btn.innerHTML = '❌ Failed';
+                                setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+                            });
+                        }, 300);
+                    };
+
+                })();
             </script>
         </body>
         </html>
@@ -1511,7 +1966,7 @@ else:
                 
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
-                    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
@@ -1551,9 +2006,9 @@ else:
             <!DOCTYPE html>
             <html>
             <head>
-                <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             </head>
             <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">

@@ -7,6 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
 import time
+import re
 
 # Konfigurasi Halaman
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
@@ -188,10 +189,10 @@ def reset_user_kuota(uid, paket):
     return False
 
 def login_firebase(email, password):
-    return requests.post(f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
+    return requests.post(f"[https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=](https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=){st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
 
 def register_firebase(email, password):
-    return requests.post(f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
+    return requests.post(f"[https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=](https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=){st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
 
 def check_subscription(uid):
     doc_ref = db.collection("users").document(uid)
@@ -794,13 +795,13 @@ else:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+            <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+            <script src="[https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js](https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js)"></script>
+            <script src="[https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js](https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js)"></script>
+            <script src="[https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js)"></script>
+            <script src="[https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js)"></script>
+            <script src="[https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js](https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js)"></script>
+            <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js)"></script>
             <style>
                 * { box-sizing: border-box; }
                 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
@@ -973,7 +974,7 @@ else:
             <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
                 <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
                 <div id="audioContainer">
-                    <p style="color:#94a3b8; font-size:13px; text-align:center;">Rekaman akan muncul di sini setelah Stop</p>
+                    <p style="color:#94a3b8; font-size:13px; text-align:center;" id="audioPlaceholder">Rekaman akan muncul di sini setelah Stop</p>
                 </div>
             </div>
 
@@ -1209,9 +1210,13 @@ else:
                                 const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                                 const fileName = 'ScreenCapture_' + timestamp + '.' + ext;
                                 
-                                // Clear previous content
-                                audioContainer.innerHTML = '';
+                                // HAPUS PLACEHOLDER SAJA, JANGAN CLEAR SELURUH CONTAINER
+                                const placeholder = document.getElementById('audioPlaceholder');
+                                if (placeholder) {
+                                    placeholder.remove();
+                                }
                                 
+                                // TAMBAHKAN REKAMAN KE BAWAH (APPEND)
                                 const audioItem = document.createElement('div');
                                 audioItem.className = 'audio-item fade-in';
                                 audioItem.innerHTML = `
@@ -1222,11 +1227,17 @@ else:
                                 audioContainer.appendChild(audioItem);
                                 updateDebug('✅ Audio player ADDED to container');
                             } else {
-                                audioContainer.innerHTML = '<p style="color:#ef4444; text-align:center; padding:20px;">⚠️ Tidak ada data audio. Pastikan "Share tab audio" DICENTANG saat capture!</p>';
+                                // JIKA GAGAL, TAMBAHKAN PESAN ERROR TANPA MENGHAPUS YANG LAMA
+                                const errorItem = document.createElement('p');
+                                errorItem.style.color = '#ef4444';
+                                errorItem.style.textAlign = 'center';
+                                errorItem.style.padding = '10px';
+                                errorItem.innerText = '⚠️ Tidak ada data audio. Pastikan "Share tab audio" DICENTANG saat capture!';
+                                audioContainer.appendChild(errorItem);
                                 updateDebug('❌ NO audio chunks recorded!');
                             }
                             
-                            // Reset chunks
+                            // Reset chunks untuk capture selanjutnya
                             audioChunks = [];
                         };
                         
@@ -1238,7 +1249,7 @@ else:
                     // ======== START ========
                     startBtn.onclick = async function() {
                         try {
-                            // Reset state
+                            // Reset state transkrip
                             lastFinalText = "";
                             currentInterimDiv = null;
                             audioChunks = [];
@@ -1461,10 +1472,15 @@ else:
                         aiBtn.disabled = true;
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi...</p></div>';
 
-                        const prompt = `Anda adalah Ahli Pembuat Notulensi. Analisis transkrip berikut dan hasilkan JSON lengkap dengan ringkasan_eksekutif, notulensi_rapat (agenda, peserta, jalannya_diskusi, keputusan, rencana_tindak_lanjut, hubungan_topik), visual_mindmap (Mermaid graph LR), dan markmap_code.\n\nTranskrip: "${transcript}"`;
+                        // PERBAIKAN: Menambahkan instruksi ketat agar hanya output JSON murni
+                        const prompt = `Anda adalah Ahli Pembuat Notulensi. Analisis transkrip berikut dan hasilkan JSON lengkap dengan ringkasan_eksekutif, notulensi_rapat (agenda, peserta, jalannya_diskusi, keputusan, rencana_tindak_lanjut, hubungan_topik), visual_mindmap (Mermaid graph LR), dan markmap_code.
+
+                        PENTING: KELUARKAN HANYA PURE JSON TANPA TEKS PENGANTAR. JANGAN ADA BACKTICKS (\`\`\`) ATAU KATA-KATA LAIN.
+
+                        Transkrip: "${transcript}"`;
 
                         try {
-                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
+                            const response = await fetch("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", {
                                 method: "POST",
                                 headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
                                 body: JSON.stringify({
@@ -1474,8 +1490,16 @@ else:
                                 })
                             });
                             const resJson = await response.json();
+                            
                             if (resJson.choices) {
-                                const data = JSON.parse(resJson.choices[0].message.content);
+                                // PERBAIKAN: Cleaning raw output kalau-kalau model masih membandel memberikan markdown codeblock
+                                let rawText = resJson.choices[0].message.content.trim();
+                                if (rawText.startsWith('```json')) rawText = rawText.substring(7);
+                                else if (rawText.startsWith('```')) rawText = rawText.substring(3);
+                                if (rawText.endsWith('```')) rawText = rawText.substring(0, rawText.length - 3);
+                                rawText = rawText.trim();
+
+                                const data = JSON.parse(rawText);
                                 window.lastAiData = data;
                                 
                                 let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 

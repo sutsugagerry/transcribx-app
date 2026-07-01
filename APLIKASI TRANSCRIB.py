@@ -347,19 +347,14 @@ if not st.session_state["logged_in"]:
         const parentWindow = window.parent;
         const parentDoc = parentWindow.document;
         
-        // --- TAMBAHAN: BERSIHKAN CANVAS LAMA JIKA ADA ---
-        const oldCanvas = parentDoc.getElementById('node-bg-canvas');
-        if (oldCanvas) {
-            oldCanvas.remove();
-        }
-        // ------------------------------------------------
-        
         if (parentWindow.nodeAnimFrame) {
             cancelAnimationFrame(parentWindow.nodeAnimFrame);
         }
         
-        let canvas = parentDoc.createElement('canvas');
-        canvas.id = 'node-bg-canvas';
+        let canvas = parentDoc.getElementById('node-bg-canvas');
+        if (!canvas) {
+            canvas = parentDoc.createElement('canvas');
+            canvas.id = 'node-bg-canvas';
             Object.assign(canvas.style, {
                 position: 'fixed',
                 top: '0',
@@ -597,6 +592,7 @@ if not st.session_state["logged_in"]:
                 <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
             """, unsafe_allow_html=True)
             
+            
             email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
             pass_login = st.text_input("Password", type="password", placeholder="••••••••")
             st.write("")
@@ -636,6 +632,26 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA
 # =====================================================================
 else:
+    # TARUH KODE PENGHAPUS DI SINI!
+    components.html("""
+    <script>
+        const canvas = window.parent.document.getElementById('node-bg-canvas');
+        if (canvas) { canvas.remove(); }
+    </script>
+    """, height=0)
+
+    # Setelah itu baru lanjut ke baris st.markdown berikutnya
+    st.markdown("""
+    <style>
+    .stApp {
+        background: white;
+        animation: none;
+    }
+    [data-testid="stSidebar"] {
+        display: flex !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
    # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun (Warna Kuning Lucu), dan perbesar GERMIC
     st.markdown("""
     <style>
@@ -838,18 +854,8 @@ else:
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):
-            # Bersihkan semua state
-            for key in st.session_state.keys():
-                del st.session_state[key]
-            
-            # Tambahkan script kecil untuk menghapus canvas jika ada
-            st.components.v1.html("""
-                <script>
-                    const canvas = window.parent.document.getElementById('node-bg-canvas');
-                    if (canvas) { canvas.remove(); }
-                    window.parent.location.reload(); // Refresh total untuk membersihkan DOM
-                </script>
-            """, height=0)
+            st.session_state.clear()
+            st.session_state["logged_in"] = False
             st.rerun()
 
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")

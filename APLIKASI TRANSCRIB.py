@@ -1209,8 +1209,9 @@ else:
                                 const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                                 const fileName = 'ScreenCapture_' + timestamp + '.' + ext;
                                 
-                                // Clear previous content
-                                audioContainer.innerHTML = '';
+                                // === FIX BUG 2: HAPUS PLACEHOLDER SAJA JIKA ADA, LALU APPEND ===
+                                const placeholderMsg = audioContainer.querySelector('p');
+                                if (placeholderMsg) placeholderMsg.remove();
                                 
                                 const audioItem = document.createElement('div');
                                 audioItem.className = 'audio-item fade-in';
@@ -1222,7 +1223,10 @@ else:
                                 audioContainer.appendChild(audioItem);
                                 updateDebug('✅ Audio player ADDED to container');
                             } else {
-                                audioContainer.innerHTML = '<p style="color:#ef4444; text-align:center; padding:20px;">⚠️ Tidak ada data audio. Pastikan "Share tab audio" DICENTANG saat capture!</p>';
+                                const errorItem = document.createElement('div');
+                                errorItem.innerHTML = '<p style="color:#ef4444; text-align:center; padding:10px;">⚠️ Audio kosong pada sesi ini. Pastikan "Share tab audio" DICENTANG saat capture!</p>';
+                                audioContainer.appendChild(errorItem);
+                                setTimeout(() => errorItem.remove(), 5000); // hilangkan peringatan setelah 5 detik
                                 updateDebug('❌ NO audio chunks recorded!');
                             }
                             
@@ -1450,7 +1454,7 @@ else:
                         return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
                     }
 
-                    // ======== AI SUMMARY ========
+                    // ======== AI SUMMARY (FIXED BUG 1) ========
                     aiBtn.onclick = async function() {
                         const transcript = getTranscriptText();
                         const apiKey = apiKeyInput.value.trim();
@@ -1461,7 +1465,32 @@ else:
                         aiBtn.disabled = true;
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi...</p></div>';
 
-                        const prompt = `Anda adalah Ahli Pembuat Notulensi. Analisis transkrip berikut dan hasilkan JSON lengkap dengan ringkasan_eksekutif, notulensi_rapat (agenda, peserta, jalannya_diskusi, keputusan, rencana_tindak_lanjut, hubungan_topik), visual_mindmap (Mermaid graph LR), dan markmap_code.\n\nTranskrip: "${transcript}"`;
+                        const prompt = `Anda adalah Ahli Pembuat Notulensi. Analisis transkrip berikut dan hasilkan JSON.
+ATURAN PENTING: Keluarkan HANYA format JSON murni. Jangan tambahkan teks pengantar apapun.
+Transkrip: "${transcript}"`;
+
+                        const responseFormat = {
+                            "type": "json_schema",
+                            "json_schema": {
+                                "name": "meeting_summary", "strict": true,
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                        "notulensi_rapat": {
+                                            "type": "object",
+                                            "properties": {
+                                                "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
+                                                "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
+                                            }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
+                                        },
+                                        "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                    }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": false
+                                }
+                            }
+                        };
 
                         try {
                             const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
@@ -1470,12 +1499,22 @@ else:
                                 body: JSON.stringify({
                                     model: "gemini/gemini-2.5-flash",
                                     messages: [{ role: "user", content: prompt }],
-                                    temperature: 0.2
+                                    temperature: 0.2,
+                                    response_format: responseFormat
                                 })
                             });
+                            
                             const resJson = await response.json();
+                            
                             if (resJson.choices) {
-                                const data = JSON.parse(resJson.choices[0].message.content);
+                                let contentText = resJson.choices[0].message.content;
+                                
+                                // === FIX BUG 1: Bersihkan markdown jika LLM masih ngeyel ===
+                                if (contentText.startsWith("```")) {
+                                    contentText = contentText.replace(/^```(json)?\n?/, '').replace(/\n?```$/, '').trim();
+                                }
+                                
+                                const data = JSON.parse(contentText);
                                 window.lastAiData = data;
                                 
                                 let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
@@ -1543,7 +1582,7 @@ else:
                             else:
                                 with st.spinner("⏳ Sedang mentranskripsi audio..."):
                                     try:
-                                        url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                        url = "[https://litellm.koboi2026.biz.id/v1/audio/transcriptions](https://litellm.koboi2026.biz.id/v1/audio/transcriptions)"
                                         headers = {"Authorization": f"Bearer {llm_key}"}
                                         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                                         data = {"model": "whisper-1", "response_format": "json"}
@@ -1567,7 +1606,7 @@ else:
                         else:
                             with st.spinner("⏳ Sedang mentranskripsi audio..."):
                                 try:
-                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                    url = "[https://litellm.koboi2026.biz.id/v1/audio/transcriptions](https://litellm.koboi2026.biz.id/v1/audio/transcriptions)"
                                     headers = {"Authorization": f"Bearer {llm_key}"}
                                     files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                                     data = {"model": "whisper-1", "response_format": "json"}
@@ -1634,7 +1673,7 @@ else:
                                 }
 
                                 try:
-                                    res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                                    res = requests.post("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                                     if res.status_code == 200: 
                                         st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
                                         st.session_state["user_kuota_ai"] -= 1
@@ -1690,7 +1729,7 @@ else:
                             }
 
                             try:
-                                res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                                res = requests.post("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                                 if res.status_code == 200: 
                                     st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
                                     st.success(f"✅ AI Summary berhasil digenerate! (Admin Mode: Unlimited Access)")
@@ -1756,7 +1795,7 @@ else:
                 st.markdown("**Cytoscape.js**")
                 hubungan_json = json.dumps(data['notulensi_rapat']['hubungan_topik'])
                 cytoscape_html = f"""
-                <!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head>
+                <!DOCTYPE html><html><head><script src="[https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js](https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js)"></script></head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; font-family: sans-serif; position:relative;">
                     <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
                     <div id="cy" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff;"></div>
@@ -1782,8 +1821,8 @@ else:
                 
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
-                    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                    <script src="[https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js](https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js)"></script>
+                    <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js)"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
                     <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
@@ -1822,10 +1861,10 @@ else:
             <!DOCTYPE html>
             <html>
             <head>
-                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                <script src="[https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js](https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js)"></script>
+                <script src="[https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js)"></script>
+                <script src="[https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js)"></script>
+                <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js)"></script>
             </head>
             <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
                 <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button>

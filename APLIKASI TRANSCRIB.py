@@ -189,10 +189,10 @@ def reset_user_kuota(uid, paket):
     return False
 
 def login_firebase(email, password):
-    return requests.post(f"[https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=](https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=){st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
+    return requests.post(f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
 
 def register_firebase(email, password):
-    return requests.post(f"[https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=](https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=){st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
+    return requests.post(f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
 
 def check_subscription(uid):
     doc_ref = db.collection("users").document(uid)
@@ -795,13 +795,13 @@ else:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-            <script src="[https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js](https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js)"></script>
-            <script src="[https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js](https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js)"></script>
-            <script src="[https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js)"></script>
-            <script src="[https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js)"></script>
-            <script src="[https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js](https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js)"></script>
-            <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js)"></script>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
                 * { box-sizing: border-box; }
                 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
@@ -1472,34 +1472,63 @@ else:
                         aiBtn.disabled = true;
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi...</p></div>';
 
-                        // PERBAIKAN: Menambahkan instruksi ketat agar hanya output JSON murni
                         const prompt = `Anda adalah Ahli Pembuat Notulensi. Analisis transkrip berikut dan hasilkan JSON lengkap dengan ringkasan_eksekutif, notulensi_rapat (agenda, peserta, jalannya_diskusi, keputusan, rencana_tindak_lanjut, hubungan_topik), visual_mindmap (Mermaid graph LR), dan markmap_code.
-
-                        PENTING: KELUARKAN HANYA PURE JSON TANPA TEKS PENGANTAR. JANGAN ADA BACKTICKS (\`\`\`) ATAU KATA-KATA LAIN.
 
                         Transkrip: "${transcript}"`;
 
+                        // PERBAIKAN: Memaksa respons JSON Schema agar Gemini mengembalikan JSON rapi dan mencegah API error HTML
+                        const payload = {
+                            model: "gemini/gemini-2.5-flash", 
+                            messages: [{ role: "user", content: prompt }], 
+                            temperature: 0.2,
+                            response_format: {
+                                type: "json_schema",
+                                json_schema: {
+                                    name: "meeting_summary", strict: true,
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            ringkasan_eksekutif: { type: "array", items: { type: "string" } },
+                                            notulensi_rapat: {
+                                                type: "object",
+                                                properties: {
+                                                    agenda: { type: "string" }, peserta: { type: "array", items: { type: "string" } },
+                                                    jalannya_diskusi: { type: "array", items: { type: "string" } }, keputusan: { type: "array", items: { type: "string" } },
+                                                    rencana_tindak_lanjut: { type: "array", items: { type: "object", properties: { tugas: { type: "string" }, pic: { type: "string" }, deadline: { type: "string" }, prioritas: { type: "string" } }, required: ["tugas", "pic", "deadline", "prioritas"], additionalProperties: false } },
+                                                    hubungan_topik: { type: "array", items: { type: "object", properties: { sumber: { type: "string" }, target: { type: "string" }, relasi: { type: "string" } }, required: ["sumber", "target", "relasi"], additionalProperties: false } }
+                                                }, required: ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], additionalProperties: false
+                                            },
+                                            visual_mindmap: { type: "string" }, markmap_code: { type: "string" }
+                                        }, required: ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], additionalProperties: false
+                                    }
+                                }
+                            }
+                        };
+
                         try {
-                            const response = await fetch("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", {
+                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
                                 method: "POST",
                                 headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    model: "gemini/gemini-2.5-flash",
-                                    messages: [{ role: "user", content: prompt }],
-                                    temperature: 0.2
-                                })
+                                body: JSON.stringify(payload)
                             });
-                            const resJson = await response.json();
                             
-                            if (resJson.choices) {
-                                // PERBAIKAN: Cleaning raw output kalau-kalau model masih membandel memberikan markdown codeblock
-                                let rawText = resJson.choices[0].message.content.trim();
-                                if (rawText.startsWith('```json')) rawText = rawText.substring(7);
-                                else if (rawText.startsWith('```')) rawText = rawText.substring(3);
-                                if (rawText.endsWith('```')) rawText = rawText.substring(0, rawText.length - 3);
-                                rawText = rawText.trim();
+                            // PERBAIKAN: Baca respon sebagai teks dulu, jangan langsung .json() supaya tidak crash saat server melempar error HTML
+                            const textResponse = await response.text();
+                            
+                            let resJson;
+                            try {
+                                resJson = JSON.parse(textResponse);
+                            } catch (e) {
+                                // Jika tidak bisa diparse jadi JSON, berarti server LiteLLM mengembalikan Error HTML
+                                throw new Error("Server API tidak merespon dengan format JSON. (Kemungkinan server down atau Bad Gateway). Respons raw: " + textResponse.substring(0, 50) + "...");
+                            }
 
-                                const data = JSON.parse(rawText);
+                            if (!response.ok) {
+                                throw new Error(resJson.error?.message || "HTTP Error " + response.status);
+                            }
+
+                            if (resJson.choices) {
+                                const data = JSON.parse(resJson.choices[0].message.content);
                                 window.lastAiData = data;
                                 
                                 let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
@@ -1526,7 +1555,7 @@ else:
                                 aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Error: ' + (resJson.error?.message || 'Unknown') + '</div>';
                             }
                         } catch(err) {
-                            aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Koneksi Gagal: ' + err.message + '</div>';
+                            aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600" style="word-wrap: break-word;">Koneksi Gagal: ' + err.message + '</div>';
                         } finally {
                             aiBtn.innerHTML = '✨ Generate AI Summary';
                             aiBtn.disabled = false;

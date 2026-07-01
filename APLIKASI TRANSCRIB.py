@@ -234,7 +234,7 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN (UI DENGAN ANIMASI NODE BACKGROUND)
+# HALAMAN LOGIN (UI DENGAN ANIMASI NODE BACKGROUND & GERMIC)
 # =====================================================================
 if not st.session_state["logged_in"]:
     # 1. Injeksi CSS agar Streamlit transparan dan menampilkan canvas di belakangnya
@@ -249,7 +249,7 @@ if not st.session_state["logged_in"]:
     /* Styling form login tetap dipertahankan seperti aslinya, 
        sedikit penyesuaian transparansi agar background node lebih menyatu */
     div[data-testid="stForm"] {
-        background: rgba(255, 255, 255, 0.85); /* Sedikit lebih transparan */
+        background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(12px);
         padding: 40px 30px;
         border-radius: 24px;
@@ -269,6 +269,22 @@ if not st.session_state["logged_in"]:
         margin-bottom: 40px;
         text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
     }
+    
+    /* Animasi GERMIC khusus untuk halaman Login */
+    @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+    @keyframes signal-login { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    
+    .germic-login-wrapper {
+        width: 75px; 
+        height: 75px; 
+        animation: float-login 4s ease-in-out infinite;
+        margin-right: 15px;
+        filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.4));
+    }
+    .signal-wave-login { transform-origin: 50px 12px; animation: signal-login 2s infinite; }
+    .signal-wave-2-login { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal-login 2s infinite; }
+    .animate-pulse-login { animation: pulse-login 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -278,7 +294,6 @@ if not st.session_state["logged_in"]:
         const parentWindow = window.parent;
         const parentDoc = parentWindow.document;
         
-        // Cek dan hapus animasi lama jika Streamlit re-run untuk mencegah penumpukan frame
         if (parentWindow.nodeAnimFrame) {
             cancelAnimationFrame(parentWindow.nodeAnimFrame);
         }
@@ -293,8 +308,8 @@ if not st.session_state["logged_in"]:
                 left: '0',
                 width: '100vw',
                 height: '100vh',
-                zIndex: '-1', // Berada di paling belakang
-                background: 'radial-gradient(circle at center, #1e1b4b 0%, #020617 100%)' // Tema gelap futuristik
+                zIndex: '-1', 
+                background: 'radial-gradient(circle at center, #1e1b4b 0%, #020617 100%)' 
             });
             parentDoc.body.prepend(canvas);
         }
@@ -328,14 +343,14 @@ if not st.session_state["logged_in"]:
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#818cf8'; // Warna node biru/ungu terang
+                ctx.fillStyle = '#818cf8'; 
                 ctx.fill();
             }
         }
 
         function initNodes() {
             nodes = [];
-            const numNodes = Math.floor((w * h) / 10000); // Kepadatan node (semakin kecil pembagi = makin banyak node)
+            const numNodes = Math.floor((w * h) / 10000); 
             for (let i = 0; i < numNodes; i++) {
                 nodes.push(new Node());
             }
@@ -349,7 +364,6 @@ if not st.session_state["logged_in"]:
                 nodes[i].update();
                 nodes[i].draw();
                 
-                // Cek koneksi dengan node lain
                 for (let j = i + 1; j < nodes.length; j++) {
                     const dx = nodes[i].x - nodes[j].x;
                     const dy = nodes[i].y - nodes[j].y;
@@ -360,7 +374,7 @@ if not st.session_state["logged_in"]:
                         ctx.moveTo(nodes[i].x, nodes[i].y);
                         ctx.lineTo(nodes[j].x, nodes[j].y);
                         const opacity = 1 - (dist / maxDistance);
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${opacity * 0.6})`; // Garis koneksi
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${opacity * 0.6})`; 
                         ctx.lineWidth = 1;
                         ctx.stroke();
                     }
@@ -378,7 +392,28 @@ if not st.session_state["logged_in"]:
         st.write("")
         st.write("")
         st.write("")
-        st.markdown("<h1 class='login-title' style='text-align: center;'>✨ TranscribX</h1>", unsafe_allow_html=True)
+        
+        # Injeksi GERMIC bersebelahan dengan teks menggunakan Flexbox
+        title_html = """
+        <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 5px;'>
+            <div class="germic-login-wrapper">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
+                    <circle class="signal-wave-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                    <circle class="signal-wave-login signal-wave-2-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                    <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
+                    <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse-login"/>
+                    <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+                    <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
+                    <g><rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/></g>
+                </svg>
+            </div>
+            <h1 class='login-title' style='margin: 0;'>TranscribX</h1>
+        </div>
+        """
+        st.markdown(title_html, unsafe_allow_html=True)
         st.markdown("<p class='login-subtitle' style='text-align: center;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>", unsafe_allow_html=True)
         
         with st.form("login_form"):

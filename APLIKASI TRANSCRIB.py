@@ -225,102 +225,6 @@ def cek_reset_kuota_bulanan(uid, user_data):
     return False
 
 # =====================================================================
-# AREA SIDEBAR: HIASAN ROBOT & INFO AKUN
-# =====================================================================
-with st.sidebar:
-    st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
-
-    germic_html = """
-    <style>
-        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } }
-        @keyframes signal { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 250px; background-color: transparent; overflow: hidden; }
-        .germic-container { width: 180px; height: 180px; animation: float 4s ease-in-out infinite; position: relative; cursor: pointer; }
-        .signal-wave { transform-origin: 50px 12px; animation: signal 2s infinite; }
-        .signal-wave-2 { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal 2s infinite; }
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    </style>
-    <div id="germic-wrapper" class="germic-container">
-        <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
-            <circle class="signal-wave" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
-            <circle class="signal-wave signal-wave-2" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
-            <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
-            <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse"/>
-            <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
-            <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
-            <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
-            <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
-            <g id="germic-face"><rect id="eye-l" x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect id="eye-r" x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect id="mouth" x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/></g>
-        </svg>
-    </div>
-    <script>
-        const face = document.getElementById('germic-face');
-        function trackMouse(clientX, clientY, screenWidth) {
-            if (!face) return;
-            const robotX = screenWidth * 0.2; const robotY = 125;
-            const mouseX = clientX - robotX; const mouseY = clientY - robotY;
-            const limit = 8;
-            face.style.transform = `translate(${Math.max(Math.min(mouseX/50, limit), -limit)}px, ${Math.max(Math.min(mouseY/50, limit), -limit)}px)`;
-            face.style.transition = "transform 0.1s ease-out";
-        }
-        document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.innerWidth));
-        try { window.parent.document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.parent.innerWidth)); } catch (err) { }
-    </script>
-    """
-    components.html(germic_html, height=250)
-    st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
-    
-    if st.session_state.get("logged_in"):
-        user_email = st.session_state.get('user_email')
-        
-        # LOGIC UNTUK TAMPILAN CARD
-        if is_admin():
-            card_class = "profile-card admin"
-            paket_str = "👑 ADMIN (Unlimited)"
-            ai_str = "♾️ Unlimited"
-            up_str = "♾️ Unlimited"
-            hari_str = "Status: Permanen"
-        else:
-            paket = st.session_state.get('user_paket', 'NON-AKTIF')
-            sisa_hari = st.session_state.get('sisa_hari', 0)
-            
-            if paket == 'NON-AKTIF':
-                card_class = "profile-card user-inactive"
-                paket_str = "NON-AKTIF"
-                ai_str = "0x"
-                up_str = "0x"
-                hari_str = "Masa Aktif: Habis"
-            else:
-                ai_val = st.session_state.get('user_kuota_ai', 0)
-                up_val = st.session_state.get('user_kuota_upload', 0)
-                ai_str = f"{ai_val}x"
-                up_str = f"{up_val}x"
-                hari_str = f"⏳ Sisa: {sisa_hari} hari"
-                
-                if sisa_hari <= 3: card_class = "profile-card user-warning"
-                else: card_class = "profile-card user-active"
-
-        # RENDER HTML CARD
-        profile_html = f"""<div class="{card_class}">
-<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
-<div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
-<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-<div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
-<div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
-<div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
-</div>
-<div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
-{hari_str}
-</div>
-</div>"""
-        st.markdown(profile_html, unsafe_allow_html=True)
-        
-        if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
-            st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
-
-# =====================================================================
 # INISIALISASI SESSION STATE
 # =====================================================================
 if "logged_in" not in st.session_state: st.session_state["logged_in"] = False
@@ -442,6 +346,102 @@ else:
     }
     </style>
     """, unsafe_allow_html=True)
+
+    # =====================================================================
+    # AREA SIDEBAR: HIASAN ROBOT & INFO AKUN
+    # =====================================================================
+    with st.sidebar:
+        st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
+
+        germic_html = """
+        <style>
+            @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } }
+            @keyframes signal { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+            body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 250px; background-color: transparent; overflow: hidden; }
+            .germic-container { width: 180px; height: 180px; animation: float 4s ease-in-out infinite; position: relative; cursor: pointer; }
+            .signal-wave { transform-origin: 50px 12px; animation: signal 2s infinite; }
+            .signal-wave-2 { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal 2s infinite; }
+            .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+            @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        </style>
+        <div id="germic-wrapper" class="germic-container">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
+                <circle class="signal-wave" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                <circle class="signal-wave signal-wave-2" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
+                <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse"/>
+                <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+                <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
+                <g id="germic-face"><rect id="eye-l" x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect id="eye-r" x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect id="mouth" x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/></g>
+            </svg>
+        </div>
+        <script>
+            const face = document.getElementById('germic-face');
+            function trackMouse(clientX, clientY, screenWidth) {
+                if (!face) return;
+                const robotX = screenWidth * 0.2; const robotY = 125;
+                const mouseX = clientX - robotX; const mouseY = clientY - robotY;
+                const limit = 8;
+                face.style.transform = `translate(${Math.max(Math.min(mouseX/50, limit), -limit)}px, ${Math.max(Math.min(mouseY/50, limit), -limit)}px)`;
+                face.style.transition = "transform 0.1s ease-out";
+            }
+            document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.innerWidth));
+            try { window.parent.document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.parent.innerWidth)); } catch (err) { }
+        </script>
+        """
+        components.html(germic_html, height=250)
+        st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
+        
+        if st.session_state.get("logged_in"):
+            user_email = st.session_state.get('user_email')
+            
+            # LOGIC UNTUK TAMPILAN CARD
+            if is_admin():
+                card_class = "profile-card admin"
+                paket_str = "👑 ADMIN (Unlimited)"
+                ai_str = "♾️ Unlimited"
+                up_str = "♾️ Unlimited"
+                hari_str = "Status: Permanen"
+            else:
+                paket = st.session_state.get('user_paket', 'NON-AKTIF')
+                sisa_hari = st.session_state.get('sisa_hari', 0)
+                
+                if paket == 'NON-AKTIF':
+                    card_class = "profile-card user-inactive"
+                    paket_str = "NON-AKTIF"
+                    ai_str = "0x"
+                    up_str = "0x"
+                    hari_str = "Masa Aktif: Habis"
+                else:
+                    ai_val = st.session_state.get('user_kuota_ai', 0)
+                    up_val = st.session_state.get('user_kuota_upload', 0)
+                    ai_str = f"{ai_val}x"
+                    up_str = f"{up_val}x"
+                    hari_str = f"⏳ Sisa: {sisa_hari} hari"
+                    
+                    if sisa_hari <= 3: card_class = "profile-card user-warning"
+                    else: card_class = "profile-card user-active"
+
+            # RENDER HTML CARD
+            profile_html = f"""<div class="{card_class}">
+<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
+<div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
+<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+<div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+<div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
+<div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
+</div>
+<div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
+{hari_str}
+</div>
+</div>"""
+            st.markdown(profile_html, unsafe_allow_html=True)
+            
+            if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
+                st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
 
     colA, colB = st.columns([8, 1])
     with colB:
@@ -796,13 +796,13 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE - VERSI DIPERBAIKI
+    # TAB 1: LIVE CAPTURE - VERSI DIPERBAIKI (getUserMedia)
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Web Speech API + AI Summarizer")
         st.info("💡 **TIPS:** Pastikan izin mikrofon diberikan. Gunakan browser Chrome/Edge untuk hasil terbaik.")
         
-        # HTML yang sudah diperbaiki dengan Markmap yang benar
+        # HTML YANG SUDAH DIPERBAIKI
         html_code = """
         <!DOCTYPE html>
         <html>
@@ -950,7 +950,7 @@ else:
             <!-- TRANSCRIPT BOX -->
             <div id="transcriptBox" class="transcript-box">
                 <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
-                    🎤 Suara yang ditangkap akan muncul di sini...
+                    🎤 Klik "Start Capture" dan izinkan akses mikrofon...
                 </div>
             </div>
 
@@ -1025,13 +1025,11 @@ else:
                             if (event.error === 'not-allowed') {
                                 status.innerText = "❌ Izin mikrofon ditolak!";
                             } else if (event.error === 'no-speech') {
-                                // ignore
+                                // ignore - no speech detected
+                            } else if (event.error === 'aborted') {
+                                // normal abort
                             } else {
                                 status.innerText = "⚠️ Error: " + event.error;
-                            }
-                            // Auto-restart jika masih recording
-                            if (isRecording) {
-                                try { rec.start(); } catch(e) {}
                             }
                         };
 
@@ -1039,8 +1037,10 @@ else:
                             // Restart jika masih recording
                             if (isRecording) {
                                 try { 
-                                    setTimeout(() => { rec.start(); }, 100);
-                                } catch(e) {}
+                                    rec.start();
+                                } catch(e) {
+                                    console.log('Restart recognition error:', e);
+                                }
                             }
                         };
 
@@ -1085,7 +1085,7 @@ else:
                                     currentInterimDiv.className = 'line-interim';
                                     transcriptBox.appendChild(currentInterimDiv);
                                 }
-                                currentInterimDiv.textContent = interimTranscript;
+                                currentInterimDiv.textContent = '💬 ' + interimTranscript;
                                 transcriptBox.scrollTop = transcriptBox.scrollHeight;
                             }
                         };
@@ -1108,7 +1108,7 @@ else:
                     }
 
                     function drawVisualizer() {
-                        if (!analyser) return;
+                        if (!analyser || !isRecording) return;
                         const width = visualizer.width;
                         const height = visualizer.height;
                         canvasCtx.clearRect(0, 0, width, height);
@@ -1119,7 +1119,7 @@ else:
                         let x = 0;
                         
                         for (let i = 0; i < bufferLength; i++) {
-                            const barHeight = dataArray[i];
+                            const barHeight = dataArray[i] / 2;
                             const r = Math.min(barHeight + 100, 255);
                             const g = Math.min(barHeight / 2 + 50, 255);
                             const b = Math.min(barHeight + 150, 255);
@@ -1127,72 +1127,100 @@ else:
                             canvasCtx.shadowBlur = 10;
                             canvasCtx.shadowColor = '#3b82f6';
                             const y = (height / 2) - (barHeight / 2);
-                            canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 1));
+                            canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
                             x += barWidth + 1;
                         }
-                        drawVisual = requestAnimationFrame(drawVisualizer);
+                        if (isRecording) {
+                            drawVisual = requestAnimationFrame(drawVisualizer);
+                        }
                     }
 
-                    // ======== START ========
+                    // ======== START - GUNAKAN getUserMedia UNTUK MIKROFON ========
                     startBtn.onclick = async function() {
                         try {
                             // Reset
                             lastFinalText = "";
+                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Merekam... Bicara sekarang.</div>';
                             
-                            // Get display media with audio
-                            audioStream = await navigator.mediaDevices.getDisplayMedia({ 
-                                video: true, 
-                                audio: true 
+                            // GUNAKAN getUserMedia UNTUK MIKROFON (bukan getDisplayMedia)
+                            audioStream = await navigator.mediaDevices.getUserMedia({ 
+                                audio: {
+                                    echoCancellation: true,
+                                    noiseSuppression: true,
+                                    autoGainControl: true
+                                },
+                                video: false
                             });
                             
-                            // Setup recorder
+                            // Setup MediaRecorder untuk merekam audio
                             audioChunks = [];
-                            mediaRecorder = new MediaRecorder(audioStream);
+                            let mimeType = 'audio/webm';
+                            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                                mimeType = 'audio/mp4';
+                            }
+                            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                                mimeType = 'audio/ogg';
+                            }
+                            
+                            mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
+                            
                             mediaRecorder.ondataavailable = function(e) {
                                 if (e.data.size > 0) audioChunks.push(e.data);
                             };
+                            
                             mediaRecorder.onstop = function() {
-                                const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                                const audioUrl = URL.createObjectURL(blob);
-                                const fileName = 'Rekaman_TranscribX_' + Date.now() + '.webm';
-                                const audioItem = document.createElement('div');
-                                audioItem.className = 'audio-item';
-                                audioItem.innerHTML = `
-                                    <audio controls src="${audioUrl}"></audio>
-                                    <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:4px 12px; font-size:12px;">💾 Download</a>
-                                `;
-                                audioContainer.prepend(audioItem);
+                                if (audioChunks.length > 0) {
+                                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                                    const audioUrl = URL.createObjectURL(blob);
+                                    const ext = mediaRecorder.mimeType.split('/')[1].split(';')[0] || 'webm';
+                                    const fileName = 'Rekaman_TranscribX_' + Date.now() + '.' + ext;
+                                    const audioItem = document.createElement('div');
+                                    audioItem.className = 'audio-item';
+                                    audioItem.innerHTML = `
+                                        <audio controls src="${audioUrl}"></audio>
+                                        <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:4px 12px; font-size:12px;">💾 Download</a>
+                                        <small style="color:#94a3b8;">${ext.toUpperCase()}</small>
+                                    `;
+                                    audioContainer.prepend(audioItem);
+                                }
+                                audioChunks = [];
                             };
 
                             // Setup visualizer
                             setupVisualizer(audioStream);
                             
-                            // Start recording
-                            mediaRecorder.start();
+                            // Start MediaRecorder
+                            mediaRecorder.start(1000);
                             
-                            // Init and start speech recognition
+                            // Init dan start speech recognition
                             recognition = initSpeechRecognition();
                             if (recognition) {
                                 recognition.start();
                             } else {
-                                throw new Error('Speech recognition not available');
+                                throw new Error('Speech recognition tidak tersedia di browser ini');
                             }
                             
-                            // Start visualizer
+                            // Start visualizer animation
                             drawVisualizer();
                             
-                            // Update visualizer size
+                            // Resize visualizer
                             resizeVisualizer();
                             
                         } catch(err) {
                             console.error('Start error:', err);
-                            status.innerText = "❌ Gagal: " + err.message;
+                            let errorMsg = "❌ Gagal: ";
+                            if (err.name === 'NotAllowedError') {
+                                errorMsg += "Izin mikrofon ditolak. Klik ikon gembok/kamera di address bar dan izinkan akses mikrofon.";
+                            } else if (err.name === 'NotFoundError') {
+                                errorMsg += "Mikrofon tidak ditemukan. Pastikan mikrofon terpasang.";
+                            } else if (err.name === 'NotReadableError') {
+                                errorMsg += "Mikrofon sedang digunakan oleh aplikasi lain.";
+                            } else {
+                                errorMsg += err.message;
+                            }
+                            status.innerText = errorMsg;
                             startBtn.disabled = false;
                             stopBtn.disabled = true;
-                            if (audioStream) {
-                                audioStream.getTracks().forEach(t => t.stop());
-                                audioStream = null;
-                            }
                         }
                     };
 
@@ -1207,6 +1235,7 @@ else:
                         
                         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                             mediaRecorder.stop();
+                            mediaRecorder = null;
                         }
                         
                         if (audioStream) {
@@ -1231,6 +1260,18 @@ else:
                         startBtn.disabled = false;
                         stopBtn.disabled = true;
                         langSelect.disabled = false;
+                        
+                        if (currentInterimDiv) {
+                            currentInterimDiv.className = 'line-final';
+                            const now = new Date();
+                            const timeStr = '[' + 
+                                String(now.getHours()).padStart(2,'0') + ':' + 
+                                String(now.getMinutes()).padStart(2,'0') + ':' + 
+                                String(now.getSeconds()).padStart(2,'0') + ']';
+                            const text = currentInterimDiv.textContent.replace('💬 ', '');
+                            currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + text;
+                            currentInterimDiv = null;
+                        }
                     };
 
                     // ======== RESIZE VISUALIZER ========
@@ -1246,13 +1287,12 @@ else:
                     copyBtn.onclick = function() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
                         if (lines.length === 0) { alert('Belum ada teks untuk dicopy!'); return; }
-                        const text = Array.from(lines).map(line => line.innerText).join('\n');
+                        const text = Array.from(lines).map(line => line.innerText).join('\\n');
                         navigator.clipboard.writeText(text).then(() => {
                             const orig = copyBtn.innerText;
                             copyBtn.innerText = '✅ Copied!';
                             setTimeout(() => copyBtn.innerText = orig, 2000);
                         }).catch(() => {
-                            // Fallback
                             const ta = document.createElement('textarea');
                             ta.value = text;
                             document.body.appendChild(ta);
@@ -1269,7 +1309,7 @@ else:
                     downloadTxtBtn.onclick = function() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
                         if (lines.length === 0) { alert('Belum ada teks untuk disimpan!'); return; }
-                        const text = Array.from(lines).map(line => line.innerText).join('\n');
+                        const text = Array.from(lines).map(line => line.innerText).join('\\n');
                         const blob = new Blob([text], { type: 'text/plain' });
                         const a = document.createElement('a');
                         a.href = URL.createObjectURL(blob);
@@ -1282,17 +1322,18 @@ else:
                         if (!confirm('Yakin ingin menghapus semua teks?')) return;
                         transcriptBox.innerHTML = `
                             <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
-                                🎤 Suara yang ditangkap akan muncul di sini...
+                                🎤 Klik "Start Capture" dan izinkan akses mikrofon...
                             </div>
                         `;
                         lastFinalText = "";
+                        currentInterimDiv = null;
                         aiContent.innerHTML = "";
                     };
 
                     // ======== GET TRANSCRIPT TEXT ========
                     function getTranscriptText() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
-                        return Array.from(lines).map(line => line.innerText).join('\n');
+                        return Array.from(lines).map(line => line.innerText).join('\\n');
                     }
 
                     // ======== AI SUMMARY ========
@@ -1404,7 +1445,6 @@ else:
                                 const data = JSON.parse(resJson.choices[0].message.content);
                                 window.lastAiData = data;
                                 
-                                // Build HTML report
                                 const tasks = data.notulensi_rapat.rencana_tindak_lanjut || [];
                                 let taskRows = tasks.map(t => `
                                     <tr class="text-[12px] border-b hover:bg-slate-50">
@@ -1475,7 +1515,6 @@ else:
                                             </div>
                                         </div>
                                         
-                                        <!-- Visualizations -->
                                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                             <div class="p-4 bg-white rounded-2xl border border-slate-200">
                                                 <div class="flex justify-between items-center mb-3">
@@ -1594,18 +1633,18 @@ else:
                     window.exportNotulensiTxt = function() {
                         if (!window.lastAiData) { alert('Data Notulensi belum ada!'); return; }
                         const data = window.lastAiData;
-                        let txt = 'NOTULENSI RAPAT\n========================\n\n';
-                        txt += 'RINGKASAN EKSEKUTIF:\n';
-                        (data.ringkasan_eksekutif || []).forEach(r => txt += '- ' + r + '\n');
-                        txt += '\nAgenda: ' + (data.notulensi_rapat.agenda || '-') + '\n';
-                        txt += 'Peserta: ' + (data.notulensi_rapat.peserta ? data.notulensi_rapat.peserta.join(', ') : '-') + '\n\n';
-                        txt += 'Jalannya Diskusi:\n';
-                        (data.notulensi_rapat.jalannya_diskusi || []).forEach(d => txt += '- ' + d + '\n');
-                        txt += '\nKeputusan Utama:\n';
-                        (data.notulensi_rapat.keputusan || []).forEach(k => txt += '- ' + k + '\n');
-                        txt += '\nRencana Tindak Lanjut:\n';
+                        let txt = 'NOTULENSI RAPAT\\n========================\\n\\n';
+                        txt += 'RINGKASAN EKSEKUTIF:\\n';
+                        (data.ringkasan_eksekutif || []).forEach(r => txt += '- ' + r + '\\n');
+                        txt += '\\nAgenda: ' + (data.notulensi_rapat.agenda || '-') + '\\n';
+                        txt += 'Peserta: ' + (data.notulensi_rapat.peserta ? data.notulensi_rapat.peserta.join(', ') : '-') + '\\n\\n';
+                        txt += 'Jalannya Diskusi:\\n';
+                        (data.notulensi_rapat.jalannya_diskusi || []).forEach(d => txt += '- ' + d + '\\n');
+                        txt += '\\nKeputusan Utama:\\n';
+                        (data.notulensi_rapat.keputusan || []).forEach(k => txt += '- ' + k + '\\n');
+                        txt += '\\nRencana Tindak Lanjut:\\n';
                         (data.notulensi_rapat.rencana_tindak_lanjut || []).forEach(t => {
-                            txt += '- [' + (t.prioritas || 'Normal') + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\n';
+                            txt += '- [' + (t.prioritas || 'Normal') + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\\n';
                         });
                         const blob = new Blob([txt], { type: 'text/plain' });
                         const a = document.createElement('a');
@@ -2076,4 +2115,3 @@ else:
 
             with st.expander("Lihat Source Code Markdown"):
                 st.code(raw_markmap, language="markdown")
-

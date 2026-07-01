@@ -1967,7 +1967,7 @@ else:
                 if kuota_ai_sekarang <= 0:
                     st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
                 else:
-                    if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                         if not llm_key: 
                             st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                         else:

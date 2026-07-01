@@ -255,12 +255,11 @@ if not st.session_state["logged_in"]:
         -webkit-backdrop-filter: blur(16px) saturate(180%);
         padding: 40px 35px !important;
         border-radius: 24px !important;
-        margin-top: 100px !important; /* <--- TAMBAHKAN BARIS INI (Ubah angkanya sesuai keinginan) */
         box-shadow: 0 0 30px rgba(56, 189, 248, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(56, 189, 248, 0.3) !important; /* Glow border cyan tipis */
         transition: all 0.3s ease-in-out;
     }
-        div[data-testid="stForm"]:hover {
+    div[data-testid="stForm"]:hover {
         box-shadow: 0 0 50px rgba(56, 189, 248, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(56, 189, 248, 0.6) !important;
     }
@@ -348,14 +347,19 @@ if not st.session_state["logged_in"]:
         const parentWindow = window.parent;
         const parentDoc = parentWindow.document;
         
+        // --- TAMBAHAN: BERSIHKAN CANVAS LAMA JIKA ADA ---
+        const oldCanvas = parentDoc.getElementById('node-bg-canvas');
+        if (oldCanvas) {
+            oldCanvas.remove();
+        }
+        // ------------------------------------------------
+        
         if (parentWindow.nodeAnimFrame) {
             cancelAnimationFrame(parentWindow.nodeAnimFrame);
         }
         
-        let canvas = parentDoc.getElementById('node-bg-canvas');
-        if (!canvas) {
-            canvas = parentDoc.createElement('canvas');
-            canvas.id = 'node-bg-canvas';
+        let canvas = parentDoc.createElement('canvas');
+        canvas.id = 'node-bg-canvas';
             Object.assign(canvas.style, {
                 position: 'fixed',
                 top: '0',
@@ -834,8 +838,18 @@ else:
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):
-            st.session_state.clear()
-            st.session_state["logged_in"] = False
+            # Bersihkan semua state
+            for key in st.session_state.keys():
+                del st.session_state[key]
+            
+            # Tambahkan script kecil untuk menghapus canvas jika ada
+            st.components.v1.html("""
+                <script>
+                    const canvas = window.parent.document.getElementById('node-bg-canvas');
+                    if (canvas) { canvas.remove(); }
+                    window.parent.location.reload(); // Refresh total untuk membersihkan DOM
+                </script>
+            """, height=0)
             st.rerun()
 
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")

@@ -1958,7 +1958,7 @@ else:
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            model: "gemini/gemini-2.5-flash", 
+                            model: "openai/gpt-5-mini", 
                             messages: [{ role: "user", content: prompt }], 
                             temperature: 0.2,
                             response_format: {

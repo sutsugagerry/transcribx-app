@@ -1971,15 +1971,16 @@ else:
                         if not llm_key: 
                             st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                         else:
-                            with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
+                            with st.spinner("⏳ AI sedang memproses JSON Notulensi, Diarization & Visual..."):
                                 prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                                 ATURAN JSON NOTULENSI:
                                 - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                                - transkrip_dialog: Lakukan SPEAKER DIARIZATION. Ubah teks mentah menjadi array of strings berformat dialog. Tebak pergantian pembicara berdasarkan konteks percakapan (Contoh format: "Pembicara 1: Mari kita mulai rapat komite hari ini." / "Pembicara 2: Siap, untuk evaluasi pertama...").
                                 - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
                                 - keputusan: Array of strings. Kesimpulan utama.
                                 - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
                                 - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                                ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                                ATURAN MARKMAP: Gunakan kode murni markdown.
                                 ATURAN MERMAID: WAJIB format 'graph LR'.
                                 Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
@@ -1997,10 +1998,11 @@ else:
                                                         "type": "object",
                                                         "properties": {
                                                             "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                            "transkrip_dialog": { "type": "array", "items": { "type": "string" } },
                                                             "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
                                                             "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
                                                             "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
-                                                        }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
+                                                        }, "required": ["agenda", "peserta", "transkrip_dialog", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
                                                     },
                                                     "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
                                                 }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
@@ -2013,11 +2015,10 @@ else:
                                     res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                                     if res.status_code == 200: 
                                         st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                        # Hapus 4 baris di bawah ini jika ditaruh di dalam logika Admin
                                         st.session_state["user_kuota_ai"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({
-                                            "kuota_ai": st.session_state["user_kuota_ai"]
-                                        })
-                                        st.success(f"✅ AI Summary berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
+                                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+                                        st.success(f"✅ AI Summary & Diarization berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
                                     else: 
                                         st.error(f"Error AI: {res.text}")
                                 except Exception as e: 
@@ -2109,7 +2110,42 @@ else:
                 colA, colB = st.columns(2)
                 colA.markdown(f"**📌 AGENDA / TOPIK:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
                 colB.markdown(f"**👥 PESERTA:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
+                st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
                 
+                dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border: 1px solid #cbd5e1; margin-bottom:20px; max-height: 350px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);'>"
+                
+                # Membuat efek bubble chat sederhana bergantian warna
+                colors = ["#e0f2fe", "#fef3c7", "#dcfce3", "#f3e8ff", "#ffedd5"]
+                speaker_color_map = {}
+                color_index = 0
+                
+                for line in data['notulensi_rapat'].get('transkrip_dialog', []):
+                    # Mencoba memisahkan nama pembicara dan isi pesannya
+                    if ":" in line:
+                        speaker, text = line.split(":", 1)
+                        speaker = speaker.strip()
+                        text = text.strip()
+                        
+                        # Assign warna unik untuk tiap pembicara
+                        if speaker not in speaker_color_map:
+                            speaker_color_map[speaker] = colors[color_index % len(colors)]
+                            color_index += 1
+                            
+                        bg_color = speaker_color_map[speaker]
+                        
+                        dialog_html += f"""
+                        <div style='margin-bottom: 12px; display: flex; flex-direction: column;'>
+                            <span style='font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 4px; margin-left: 4px;'>{speaker}</span>
+                            <div style='background-color: {bg_color}; padding: 12px 16px; border-radius: 0px 15px 15px 15px; display: inline-block; max-width: 90%; color: #1e293b; font-size: 14px; border: 1px solid rgba(0,0,0,0.05);'>
+                                {text}
+                            </div>
+                        </div>
+                        """
+                    else:
+                        dialog_html += f"<div style='margin-bottom: 8px; color: #64748b; font-style: italic; font-size: 13px;'>{line}</div>"
+                        
+                dialog_html += "</div>"
+                st.markdown(dialog_html, unsafe_allow_html=True)
                 st.markdown("**🗣️ JALANNYA DISKUSI:**")
                 diskusi_html = "<div style='background-color:#ffffff; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'><ul style='margin:0; padding-left:20px; line-height: 1.6;'>"
                 for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:8px;'>{d}</li>"

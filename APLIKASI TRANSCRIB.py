@@ -332,7 +332,7 @@ if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] 
 # HALAMAN LOGIN (UI/UX DIPERBARUI)
 # =====================================================================
 if not st.session_state["logged_in"]:
-    # CSS Khusus Halaman Login yang Eye-Catching tanpa menghilangkan Sidebar
+    # CSS Khusus Halaman Login yang Eye-Catching
     st.markdown("""
     <style>
     /* Animated Gradient Background */
@@ -345,6 +345,11 @@ if not st.session_state["logged_in"]:
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
+    }
+    
+    /* Murni menyembunyikan Sidebar HANYA di halaman Login */
+    [data-testid="stSidebar"] {
+        display: none;
     }
     
     /* Glassmorphism Card untuk Form Login */
@@ -425,12 +430,15 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA
 # =====================================================================
 else:
-    # Mengembalikan warna background normal saat login berhasil
+    # Mengembalikan warna background putih & memanggil kembali si Robot Sidebar
     st.markdown("""
     <style>
     .stApp {
         background: white;
         animation: none;
+    }
+    [data-testid="stSidebar"] {
+        display: flex !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -788,7 +796,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE (HTML/JS)
+    # TAB 1: LIVE CAPTURE (HTML/JS) - UI MODERN & JAVASCRIPT ASLI
     # =====================================================================
     with tab1:
         st.markdown("Mesin **Web Speech API** + **AI LiteLLM Summary** untuk Notulensi Otomatis dengan UI Enterprise.")
@@ -806,29 +814,78 @@ else:
             <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
-                body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; }
-                .controls-wrapper { margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; padding: 15px; background: #f1f5f9; border-radius: 16px; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); }
-                .controls-line { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-                .visualizer-container { width: 100%; height: 80px; border-radius: 12px; overflow: hidden; background: #111827; position: relative; }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+                body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
+                
+                .controls-wrapper { 
+                    background: #ffffff; border-radius: 20px; padding: 24px; 
+                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
+                    border: 1px solid #e2e8f0; margin-bottom: 24px;
+                    display: flex; flex-direction: column; gap: 20px;
+                }
+                
+                .controls-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+                
+                .visualizer-container { 
+                    width: 100%; height: 80px; border-radius: 16px; overflow: hidden; 
+                    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
+                    position: relative; box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
+                }
                 #visualizer { width: 100%; height: 100%; display: block; }
-                .transcript-box { border: 2px solid #cbd5e1; padding: 20px; border-radius: 16px; height: 300px; overflow-y: auto; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; scroll-behavior: smooth; }
-                .btn-custom { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-                .btn-custom:hover { background: #2563eb; }
-                .btn-stop { background: #ef4444; } .btn-stop:hover { background: #dc2626; }
-                .btn-ai { background: #8b5cf6; } .btn-ai:hover { background: #7c3aed; }
-                .btn-custom:disabled { background: #94a3b8; cursor: not-allowed; }
-                .btn-secondary { background: #e2e8f0; color: #334155; } .btn-secondary:hover { background: #cbd5e1; }
-                select.btn-secondary, input.api-input { outline: none; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-family: inherit; }
+                
+                .transcript-box { 
+                    background: #f8fafc; border: 1px solid #cbd5e1; padding: 24px; 
+                    border-radius: 20px; height: 350px; overflow-y: auto; 
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 24px; 
+                }
+                
+                .line-final { 
+                    margin-bottom: 16px; padding: 16px; background: #ffffff; 
+                    border-radius: 12px; border-left: 5px solid #3b82f6; 
+                    font-size: 15px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                }
+                .line-interim { 
+                    margin-bottom: 16px; padding: 16px; background: rgba(255,255,255,0.5); 
+                    border-radius: 12px; border-left: 5px solid #94a3b8; 
+                    font-size: 15px; opacity: 0.6; font-style: italic; 
+                }
+                .timestamp { font-weight: 800; color: #3b82f6; margin-right: 12px; font-size: 13px; background: #eff6ff; padding: 4px 8px; border-radius: 6px;}
+                
+                .btn-custom { 
+                    font-family: inherit; color: white; padding: 12px 24px; border: none; 
+                    border-radius: 12px; cursor: pointer; font-weight: 700; 
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                    display: flex; align-items: center; gap: 8px; font-size: 14px; 
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                }
+                .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+                .btn-custom:active { transform: translateY(0); }
+                .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b;}
+                
+                #startBtn { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+                #stopBtn { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+                .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; width: 100%; justify-content: center;}
+                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none;} 
+                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+                
+                select.btn-secondary, input.api-input { 
+                    outline: none; border: 1px solid #cbd5e1; padding: 12px 16px; 
+                    border-radius: 12px; font-family: inherit; font-size: 14px;
+                }
+                input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
                 input.api-input { flex-grow: 1; min-width: 250px; }
-                .line-final { margin-bottom: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #3b82f6; font-size: 14px; line-height: 1.5; }
-                .line-interim { margin-bottom: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #cbd5e1; font-size: 14px; opacity: 0.7; font-style: italic; }
-                .timestamp { font-weight: bold; color: #64748b; margin-right: 8px; font-size: 12px; }
-                #audioContainer { display: flex; flex-direction: column; gap: 10px; }
-                .audio-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-                .fade-in { animation: fadeIn 0.5s ease-in-out; }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0; position: relative; }
-                .btn-export { cursor:pointer; background:#10b981; color:white; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:bold; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
+                
+                .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 14px; }
+                .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; }
+                
+                .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+                
+                #audioContainer { display: flex; flex-direction: column; gap: 12px; }
+                .audio-item { display: flex; align-items: center; gap: 15px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+                audio { height: 40px; flex-grow: 1; }
+                
+                .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; position: relative; }
+                .btn-export { cursor:pointer; background:#10b981; color:white; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:bold; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
                 .btn-export:hover { background:#059669; }
             </style>
             <script>
@@ -929,35 +986,50 @@ else:
         </head>
         <body>
             <div class="controls-wrapper">
-                <div class="controls-line">
-                    <select id="langSelect" class="btn-custom btn-secondary"><option value="id-ID">🇮🇩 ID (Indonesia)</option><option value="en-US">🇬🇧 EN (English)</option></select>
-                    <button id="startBtn" class="btn-custom">🚀 START CAPTURE</button>
-                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ STOP</button>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-                        <div id="indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1;"></div>
-                        <span id="status" style="font-weight: bold; font-size: 14px; color: #64748b;">Standby...</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select id="langSelect" class="btn-custom btn-secondary">
+                            <option value="id-ID">🇮🇩 ID (Indonesia)</option>
+                            <option value="en-US">🇬🇧 EN (English)</option>
+                        </select>
+                        <button id="startBtn" class="btn-custom">🚀 START CAPTURE</button>
+                        <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ STOP</button>
+                    </div>
+                    <div class="status-badge">
+                        <div id="indicator" class="indicator-dot"></div>
+                        <span id="status" style="color: #64748b;">Standby...</span>
                     </div>
                 </div>
+                
                 <div class="visualizer-container"><canvas id="visualizer"></canvas></div>
-                <div class="controls-line" style="background: #e2e8f0; padding: 10px; border-radius: 10px;">
-                    <span style="font-size: 14px; font-weight: bold;">🔑 LiteLLM API Key:</span>
-                    <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-...">
+                
+                <div class="ai-section">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span style="font-size: 14px; font-weight: 800; color: #475569;">🔑 LiteLLM API Key:</span>
+                        <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-...">
+                    </div>
                     <button id="aiBtn" class="btn-custom btn-ai">✨ Generate AI Summary & Mindmap</button>
                 </div>
-                <div class="controls-line" style="justify-content: flex-end;">
-                    <button id="copyBtn" class="btn-custom btn-secondary">📋 Copy Text</button>
-                    <button id="clearBtn" class="btn-custom btn-secondary">🗑️ Clear</button>
-                    <button id="downloadTxtBtn" class="btn-custom" style="background: #10b981;">📝 Save TXT</button>
-                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 12px;">
+                <button id="copyBtn" class="btn-custom btn-secondary">📋 Copy Text</button>
+                <button id="clearBtn" class="btn-custom btn-secondary">🗑️ Clear</button>
+                <button id="downloadTxtBtn" class="btn-custom" style="background: #10b981;">📝 Save TXT</button>
             </div>
 
             <div id="transcriptBox" class="transcript-box">
-                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px;">Suara yang ditangkap akan muncul di sini...</div>
+                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 120px; font-weight: 600;">
+                    Suara yang ditangkap akan muncul di sini...
+                </div>
             </div>
 
             <div id="aiContent" class="w-full"></div>
-            <h3 style="margin-bottom: 10px; font-size: 16px; margin-top: 20px;">🎧 Arsip Rekaman Suara</h3>
-            <div id="audioContainer"></div>
+            
+            <div style="margin-top: 30px; background: #ffffff; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #1e293b;">🎧 Arsip Rekaman Suara</h3>
+                <div id="audioContainer"></div>
+            </div>
 
             <script>
                 mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' } });
@@ -1128,9 +1200,6 @@ else:
                                 let notulensiHtml = '<div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden mb-6"><div class="flex justify-between items-center mb-6"><h5 class="text-[15px] font-black text-slate-700 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5><button onclick="exportNotulensiTxt()" class="btn-export shadow-md">📝 Download TXT</button></div><div class="space-y-5 text-[13px] text-slate-700 leading-relaxed"><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">RINGKASAN EKSEKUTIF:</p><div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-inner"><ul class="list-disc ml-5 space-y-2 font-semibold text-slate-800">' + data.ringkasan_eksekutif.map(r => '<li>' + r + '</li>').join('') + '</ul></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">AGENDA / TOPIK:</p><p class="font-bold text-slate-800">' + (data.notulensi_rapat.agenda || '-') + '</p></div><div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p><p class="font-bold text-slate-800">' + (data.notulensi_rapat.peserta.join(', ') || '-') + '</p></div></div><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">JALANNYA DISKUSI:</p><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><ul class="list-disc ml-5 space-y-3">' + data.notulensi_rapat.jalannya_diskusi.map(d => '<li>' + d + '</li>').join('') + '</ul></div></div><div><p class="font-black text-blue-600 uppercase text-[11px] mb-2">KEPUTUSAN / KESIMPULAN UTAMA:</p><div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100"><ul class="list-disc ml-5 space-y-2 font-bold text-emerald-900">' + data.notulensi_rapat.keputusan.map(k => '<li>' + k + '</li>').join('') + '</ul></div></div>' + taskListHtml + '</div></div>';
 
                                 let rawMermaid = data.visual_mindmap.replace(/```mermaid/gi, '').replace(/```/g, '').trim();
-                                if (!rawMermaid.toLowerCase().includes('graph') && !rawMermaid.toLowerCase().includes('mindmap')) {
-                                    rawMermaid = "graph LR\\n" + rawMermaid;
-                                }
                                 let rawMarkmap = data.markmap_code.replace(/```markdown/gi, '').replace(/```/g, '').trim();
 
                                 let visualizationHtml = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Peta Konsep Rapat)</h5><button onclick="downloadMarkmapImage(\'markmap-capture-area\', \'Markmap\', event)" class="btn-export">📸 PNG</button></div><div id="markmap-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden markmap-svg-container relative p-2" style="min-height: 400px;"></div></div><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Alur)</h5><button onclick="downloadMermaidImage(\'mermaid-capture-area\', \'Mermaid\', event)" class="btn-export">📸 PNG</button></div><div id="mermaid-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto p-4 mermaid-container"><div class="mermaid">' + rawMermaid + '</div></div></div></div><div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col mb-6"><div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Entitas)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG Full</button></div><div id="cy" class="cy-container"></div></div>';

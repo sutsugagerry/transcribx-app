@@ -325,10 +325,18 @@ if not st.session_state["logged_in"]:
         let sparks = [];
         let time = 0;
         let maxLayer = 6;
+        
+        // Kordinat Core
+        let coreX, coreY;
 
         function resize() {
             w = canvas.width = parentWindow.innerWidth;
             h = canvas.height = parentWindow.innerHeight;
+            
+            // Geser core ke atas (25% dari tinggi layar) agar pas di belakang robot GERMIC
+            coreX = w / 2;
+            coreY = h * 0.25; 
+            
             initNetwork();
         }
 
@@ -338,24 +346,24 @@ if not st.session_state["logged_in"]:
             edges = [];
             sparks = [];
 
-            // Titik 0: Core Jantung di tengah layar
-            points.push({ x: w/2, y: h/2, layer: 0 });
+            // Titik 0: Core Jantung
+            points.push({ x: coreX, y: coreY, layer: 0 });
 
-            // Membuat titik-titik yang menyebar ke luar (layaknya jaring laba-laba/kabel)
+            // Membuat titik-titik yang menyebar ke luar
             for(let l = 1; l <= maxLayer; l++) {
                 let radius = l * (Math.max(w, h) / 1.8) / maxLayer;
-                let count = l * 12; // Semakin ke luar, semakin banyak titiknya
+                let count = l * 12; 
                 for(let i = 0; i < count; i++) {
                     let angle = (i / count) * Math.PI * 2 + (Math.random() * 0.4);
                     points.push({
-                        x: w/2 + Math.cos(angle) * (radius + (Math.random() * 60 - 30)),
-                        y: h/2 + Math.sin(angle) * (radius + (Math.random() * 60 - 30)),
+                        x: coreX + Math.cos(angle) * (radius + (Math.random() * 60 - 30)),
+                        y: coreY + Math.sin(angle) * (radius + (Math.random() * 60 - 30)),
                         layer: l
                     });
                 }
             }
 
-            // Menyambungkan setiap titik ke titik terdekat di layer sebelumnya (mengarah ke tengah)
+            // Menyambungkan setiap titik ke titik terdekat di layer sebelumnya
             for(let i = 1; i < points.length; i++) {
                 let p = points[i];
                 let targets = points.filter(t => t.layer === p.layer - 1);
@@ -363,7 +371,7 @@ if not st.session_state["logged_in"]:
                     let closest = targets.reduce((prev, curr) => {
                         return (Math.hypot(p.x - curr.x, p.y - curr.y) < Math.hypot(p.x - prev.x, p.y - prev.y)) ? curr : prev;
                     });
-                    edges.push({ from: p, to: closest }); // Jalur dari luar (from) ke dalam (to)
+                    edges.push({ from: p, to: closest }); 
                 }
             }
         }
@@ -374,25 +382,23 @@ if not st.session_state["logged_in"]:
                 this.currentNode = startNode;
                 this.findNextEdge();
                 this.progress = 0;
-                this.speed = 0.01 + Math.random() * 0.015; // Kecepatan lari listrik
+                this.speed = 0.01 + Math.random() * 0.015;
             }
             findNextEdge() {
-                // Cari jalur yang mengarah ke dalam dari node saat ini
                 let nextEdges = edges.filter(e => e.from === this.currentNode);
                 if (nextEdges.length > 0) {
-                    // Pilih jalur (biasanya cuma 1 karena struktur pohon)
                     this.edge = nextEdges[Math.floor(Math.random() * nextEdges.length)];
                 } else {
-                    this.edge = null; // Sudah sampai di core
+                    this.edge = null;
                 }
             }
             update() {
-                if (!this.edge) return true; // Hapus jika sudah di tengah
+                if (!this.edge) return true; 
                 this.progress += this.speed;
                 if (this.progress >= 1) {
-                    this.currentNode = this.edge.to; // Pindah ke titik selanjutnya
+                    this.currentNode = this.edge.to; 
                     this.progress = 0;
-                    this.findNextEdge(); // Lanjut cari jalan ke dalam
+                    this.findNextEdge(); 
                     if (!this.edge) return true;
                 }
                 return false;
@@ -404,9 +410,9 @@ if not st.session_state["logged_in"]:
                 
                 ctx.beginPath();
                 ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#38bdf8'; // Warna biru elektrik
+                ctx.fillStyle = '#38bdf8'; 
                 ctx.shadowBlur = 15;
-                ctx.shadowColor = '#0ea5e9'; // Efek nyala listrik (glow)
+                ctx.shadowColor = '#0ea5e9'; 
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -426,7 +432,7 @@ if not st.session_state["logged_in"]:
                 ctx.beginPath();
                 ctx.moveTo(e.from.x, e.from.y);
                 ctx.lineTo(e.to.x, e.to.y);
-                ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)'; // Warna indigo redup
+                ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)'; 
                 ctx.stroke();
             });
 
@@ -443,7 +449,7 @@ if not st.session_state["logged_in"]:
             for (let i = sparks.length - 1; i >= 0; i--) {
                 let s = sparks[i];
                 if (s.update()) {
-                    sparks.splice(i, 1); // Hapus jika sudah diserap core
+                    sparks.splice(i, 1);
                 } else {
                     s.draw();
                 }
@@ -452,19 +458,19 @@ if not st.session_state["logged_in"]:
             // 4. Gambar Core (Jantung yang Berdetak / Menyala)
             let pulse = Math.sin(time) * 8; 
             
-            // Cahaya luar jantung (Glow)
+            // Cahaya luar jantung (Glow) berpusat di coreX, coreY
             ctx.beginPath();
-            ctx.arc(w/2, h/2, 35 + pulse, 0, Math.PI * 2);
-            let grad = ctx.createRadialGradient(w/2, h/2, 5, w/2, h/2, 45 + pulse);
-            grad.addColorStop(0, '#fcd34d'); // Kuning cerah di tengah
-            grad.addColorStop(0.4, '#f59e0b'); // Orange
-            grad.addColorStop(1, 'rgba(239, 68, 68, 0)'); // Merah memudar di ujung
+            ctx.arc(coreX, coreY, 35 + pulse, 0, Math.PI * 2);
+            let grad = ctx.createRadialGradient(coreX, coreY, 5, coreX, coreY, 45 + pulse);
+            grad.addColorStop(0, '#fcd34d');
+            grad.addColorStop(0.4, '#f59e0b');
+            grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
             ctx.fillStyle = grad;
             ctx.fill();
             
-            // Inti padat jantung
+            // Inti padat jantung berpusat di coreX, coreY
             ctx.beginPath();
-            ctx.arc(w/2, h/2, 12 + (pulse/3), 0, Math.PI * 2);
+            ctx.arc(coreX, coreY, 12 + (pulse/3), 0, Math.PI * 2);
             ctx.fillStyle = '#fffbeb';
             ctx.shadowBlur = 20;
             ctx.shadowColor = '#f59e0b';

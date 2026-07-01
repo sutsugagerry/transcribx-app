@@ -1,58 +1,3 @@
-Error dari API LiteLLM: <!DOCTYPE html>
-
-<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]--> <!--[if IE 7]> <html class="no-js ie7 oldie" lang="en-US"> <![endif]--> <!--[if IE 8]> <html class="no-js ie8 oldie" lang="en-US"> <![endif]--> <!--[if gt IE 8]><!--> <html class="no-js" lang="en-US"> <!--<![endif]--> <head> <title>koboi2026.biz.id | 502: Bad gateway</title> <meta charset="UTF-8" /> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> <meta http-equiv="X-UA-Compatible" content="IE=Edge" /> <meta name="robots" content="noindex, nofollow" /> <meta name="viewport" content="width=device-width,initial-scale=1" /> <link rel="stylesheet" id="cf_styles-css" href="/cdn-cgi/styles/main.css" /> </head> <body> <div id="cf-wrapper"> <div id="cf-error-details" class="p-0"> <header class="mx-auto pt-10 lg:pt-6 lg:px-8 w-240 lg:w-full mb-8"> <h1 class="inline-block sm:block sm:mb-2 font-light text-60 lg:text-4xl text-black-dark leading-tight mr-2"> <span class="inline-block">Bad gateway</span> <span class="code-label">Error code 502</span> </h1> <div> Visit <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_502&utm_campaign=litellm.koboi2026.biz.id" target="_blank" rel="noopener noreferrer">cloudflare.com</a> for more information. </div> <div class="mt-3">2026-07-01 01:26:21 UTC</div> </header> <div class="my-8 bg-gradient-gray"> <div class="w-240 lg:w-full mx-auto"> <div class="clearfix md:px-8"> <div id="cf-browser-status" class=" relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center"> <div class="relative mb-10 md:m-0">
-<span class="cf-icon-browser block md:hidden h-20 bg-center bg-no-repeat"></span>
-<span class="cf-icon-ok w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
-</div> <span class="md:block w-full truncate">You</span> <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
-Browser
-</h3>
-<span class="leading-1.3 text-2xl text-green-success">Working</span>
-
-</div> <div id="cf-cloudflare-status" class=" relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center"> <div class="relative mb-10 md:m-0"> <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_502&#38;utm_campaign=litellm.koboi2026.biz.id" target="_blank" rel="noopener noreferrer"> <span class="cf-icon-cloud block md:hidden h-20 bg-center bg-no-repeat"></span> <span class="cf-icon-ok w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span> </a> </div> <span class="md:block w-full truncate">Seattle</span> <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3"> <a href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_502&utm_campaign=litellm.koboi2026.biz.id" target="_blank" rel="noopener noreferrer"> Cloudflare </a> </h3>
-<span class="leading-1.3 text-2xl text-green-success">Working</span>
-
-</div> <div id="cf-host-status" class="cf-error-source relative w-1/3 md:w-full py-15 md:p-0 md:py-8 md:text-left md:border-solid md:border-0 md:border-b md:border-gray-400 overflow-hidden float-left md:float-none text-center"> <div class="relative mb-10 md:m-0">
-<span class="cf-icon-server block md:hidden h-20 bg-center bg-no-repeat"></span>
-<span class="cf-icon-error w-12 h-12 absolute left-1/2 md:left-auto md:right-0 md:top-0 -ml-6 -bottom-4"></span>
-</div> <span class="md:block w-full truncate">litellm.koboi2026.biz.id</span> <h3 class="md:inline-block mt-3 md:mt-0 text-2xl text-gray-600 font-light leading-1.3">
-Host
-</h3>
-<span class="leading-1.3 text-2xl text-red-error">Error</span>
-
-</div> </div> </div> </div>
-    <div class="w-240 lg:w-full mx-auto mb-8 lg:px-8">
-        <div class="clearfix">
-            <div class="w-1/2 md:w-full float-left pr-6 md:pb-10 md:pr-0 leading-relaxed">
-                <h2 class="text-3xl font-normal leading-1.3 mb-4">What happened?</h2>
-                <p>The web server reported a bad gateway error.</p>
-            </div>
-            <div class="w-1/2 md:w-full float-left leading-relaxed">
-                <h2 class="text-3xl font-normal leading-1.3 mb-4">What can I do?</h2>
-                <p class="mb-6">Please try again in a few minutes.</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300">
-<p class="text-13">
-  <span class="cf-footer-item sm:block sm:mb-1">Cloudflare Ray ID: <strong class="font-semibold">a1419f3c3bfb0948</strong></span>
-  <span class="cf-footer-separator sm:hidden">&bull;</span>
-  <span id="cf-footer-item-ip" class="cf-footer-item hidden sm:block sm:mb-1">
-    Your IP:
-    <button type="button" id="cf-footer-ip-reveal" class="cf-footer-ip-reveal-btn">Click to reveal</button>
-    <span class="hidden" id="cf-footer-ip">35.203.151.101</span>
-    <span class="cf-footer-separator sm:hidden">&bull;</span>
-  </span>
-  <span class="cf-footer-item sm:block sm:mb-1"><span>Performance &amp; security by</span> <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing?utm_source=errorcode_502&#38;utm_campaign=litellm.koboi2026.biz.id" id="brand_link" target="_blank">Cloudflare</a></span>
-
-</p>
-<script>(function(){function d(){var b=a.getElementById("cf-footer-item-ip"),c=a.getElementById("cf-footer-ip-reveal");b&&"classList"in b&&(b.classList.remove("hidden"),c.addEventListener("click",function(){c.classList.add("hidden");a.getElementById("cf-footer-ip").classList.remove("hidden")}))}var a=document;document.addEventListener&&a.addEventListener("DOMContentLoaded",d)})();</script>
-</div><!-- /.error-footer -->
-</div>
-</div> </body> </html>
-
-ini kenapa saat mau buat summary kamu contoh ini deh yang sudh bener dalam mengimtegrasikan ainya 
-
 import streamlit as st
 import streamlit.components.v1 as components
 import requests
@@ -60,155 +5,286 @@ import json
 import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, firestore
+from datetime import datetime, timedelta
+import time
 
-# Konfigurasi Halaman (Hanya boleh dipanggil sekali di paling atas)
+# Konfigurasi Halaman
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
 
 # =====================================================================
-# CSS UNTUK MENYEMBUNYIKAN TOOLBAR STREAMLIT (Kanan Atas)
+# CSS CUSTOM UNTUK ANIMASI, CARD, DAN UI ENTERPRISE
 # =====================================================================
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            header {visibility: hidden;}
-            footer {visibility: hidden;}
-            /* Menyembunyikan ikon GitHub/Deploy di versi Streamlit terbaru */
-            .stApp > header {
-                background-color: transparent;
-            }
-            .st-emotion-cache-1vt4ygl {
-                display: none;
-            }
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+custom_css = """
+<style>
+/* Menyembunyikan elemen bawaan Streamlit */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden; background-color: transparent;}
+footer {visibility: hidden;}
+.st-emotion-cache-1vt4ygl {display: none;}
+
+/* Metric Card Styling */
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+.metric-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 6px; height: 100%;
+}
+.metric-total::before { background-color: #8b5cf6; }
+.metric-aktif::before { background-color: #10b981; }
+.metric-nonaktif::before { background-color: #ef4444; }
+.metric-admin::before { background-color: #f59e0b; }
+
+/* Pulse Animation for Sidebar Profile */
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+@keyframes pulse-border-admin {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+.profile-card {
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.profile-card.admin {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    animation: pulse-border-admin 2.5s infinite;
+}
+.profile-card.user-active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    animation: pulse-border 2.5s infinite;
+}
+.profile-card.user-warning {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+}
+.profile-card.user-inactive {
+    background: linear-gradient(135deg, #64748b 0%, #334155 100%);
+}
+
+.stButton>button {
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    font-weight: bold !important;
+}
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px 8px 0px 0px;
+    padding: 10px 20px;
+    background-color: #f1f5f9;
+}
+.stTabs [aria-selected="true"] {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
 
 # =====================================================================
-# INISIALISASI FIREBASE ADMIN (Dijalankan sekali)
+# INISIALISASI FIREBASE ADMIN
 # =====================================================================
 if not firebase_admin._apps:
-    # Mengambil kredensial dari st.secrets (secrets.toml)
     cred = credentials.Certificate(dict(st.secrets["firebase_admin"]))
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
 # =====================================================================
-# FUNGSI FIREBASE (REST API & FIRESTORE)
+# DATA PAKET LANGGANAN
 # =====================================================================
+PAKET_LANGGANAN = {
+    "BASIC": {"ai_limit": 5, "upload_limit": 1, "durasi_hari": 30},
+    "EXECUTIVE": {"ai_limit": 10, "upload_limit": 3, "durasi_hari": 30},
+    "MASTER": {"ai_limit": 30, "upload_limit": 10, "durasi_hari": 30},
+    "NON-AKTIF": {"ai_limit": 0, "upload_limit": 0, "durasi_hari": 0}
+}
+
+ADMIN_EMAILS_CONFIG = st.secrets.get("ADMIN_EMAILS", [])
+if not ADMIN_EMAILS_CONFIG:
+    single_admin = st.secrets.get("ADMIN_EMAIL", "")
+    ADMIN_EMAILS_CONFIG = [single_admin] if single_admin else ["sutsuga.gery@gmail.com"]
+
+def is_admin():
+    return st.session_state.get("user_email") in ADMIN_EMAILS_CONFIG
+
+def hitung_sisa_hari(tanggal_berakhir_str):
+    if not tanggal_berakhir_str: return 0
+    try:
+        tanggal_berakhir = datetime.fromisoformat(tanggal_berakhir_str) if isinstance(tanggal_berakhir_str, str) else tanggal_berakhir_str.replace(tzinfo=None)
+        selisih = tanggal_berakhir - datetime.now()
+        return selisih.days if selisih.days > 0 else 0
+    except: return 0
+
+def cek_dan_update_status_kadaluarsa(uid, user_data):
+    if not user_data or user_data.get("status_subscription", "non-aktif") == "non-aktif" or user_data.get("email") in ADMIN_EMAILS_CONFIG:
+        return False
+    
+    if hitung_sisa_hari(user_data.get("tanggal_berakhir")) <= 0:
+        db.collection("users").document(uid).update({
+            "status_subscription": "non-aktif", "paket": "NON-AKTIF",
+            "kuota_ai": 0, "kuota_upload": 0, "tanggal_kadaluarsa": datetime.now().isoformat()
+        })
+        return True
+    return False
+
+def get_user_login_history(uid):
+    try:
+        return [h.to_dict() for h in db.collection("users").document(uid).collection("login_history").order_by("timestamp", direction=firestore.Query.DESCENDING).limit(10).stream()]
+    except: return []
+
+def record_login(uid, email):
+    try:
+        db.collection("users").document(uid).collection("login_history").add({"timestamp": datetime.now().isoformat(), "email": email, "platform": "Streamlit Cloud"})
+        db.collection("users").document(uid).update({"last_login": datetime.now().isoformat(), "login_count": firestore.Increment(1)})
+    except: pass
+
+def delete_user(uid, email):
+    try:
+        docs = db.collection("users").document(uid).collection("login_history").stream()
+        for doc in docs: doc.reference.delete()
+        db.collection("users").document(uid).delete()
+        return True, f"User {email} berhasil dihapus."
+    except Exception as e: return False, f"Gagal menghapus user: {str(e)}"
+
+def get_active_users_count():
+    try: return len(list(db.collection("users").where("last_login", ">=", (datetime.now() - timedelta(hours=1)).isoformat()).stream()))
+    except: return 0
+
+def reset_user_kuota(uid, paket):
+    if paket in PAKET_LANGGANAN and paket != "NON-AKTIF":
+        db.collection("users").document(uid).update({
+            "kuota_ai": PAKET_LANGGANAN[paket]["ai_limit"], "kuota_upload": PAKET_LANGGANAN[paket]["upload_limit"], "reset_kuota_terakhir": datetime.now().isoformat()
+        })
+        return True
+    return False
+
 def login_firebase(email, password):
-    api_key = st.secrets["FIREBASE_WEB_API_KEY"]
-    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
-    data = {"email": email, "password": password, "returnSecureToken": True}
-    return requests.post(url, json=data).json()
+    return requests.post(f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
 
 def register_firebase(email, password):
-    api_key = st.secrets["FIREBASE_WEB_API_KEY"]
-    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={api_key}"
-    data = {"email": email, "password": password, "returnSecureToken": True}
-    return requests.post(url, json=data).json()
+    return requests.post(f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={st.secrets['FIREBASE_WEB_API_KEY']}", json={"email": email, "password": password, "returnSecureToken": True}).json()
 
 def check_subscription(uid):
     doc_ref = db.collection("users").document(uid)
     doc = doc_ref.get()
     if doc.exists:
-        return doc.to_dict().get("status_subscription", "non-aktif")
-    return "non-aktif"
+        data = doc.to_dict()
+        cek_dan_update_status_kadaluarsa(uid, data)
+        data = doc_ref.get().to_dict()
+        if "paket" not in data and data.get("status_subscription") == "aktif":
+            data.update({"paket": "BASIC", "kuota_ai": PAKET_LANGGANAN["BASIC"]["ai_limit"], "kuota_upload": PAKET_LANGGANAN["BASIC"]["upload_limit"], "tanggal_berakhir": (datetime.now() + timedelta(days=30)).isoformat()})
+            doc_ref.update({"paket": data["paket"], "kuota_ai": data["kuota_ai"], "kuota_upload": data["kuota_upload"], "tanggal_berakhir": data["tanggal_berakhir"]})
+        return data
+    return {"status_subscription": "non-aktif", "paket": "NON-AKTIF"}
 
-# =====================================================================
-# AREA SIDEBAR: HIASAN ROBOT GERMIC (DENGAN EFEK MELAYANG)
-# =====================================================================
-with st.sidebar:
-    st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
-
-    germic_html = """
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(2deg); }
-        }
-        @keyframes signal {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        body {
-            margin: 0; padding: 0; display: flex; justify-content: center;
-            align-items: center; height: 250px; background-color: transparent; overflow: hidden;
-        }
-        .germic-container {
-            width: 180px; height: 180px; animation: float 4s ease-in-out infinite;
-            position: relative; cursor: pointer;
-        }
-        .signal-wave { transform-origin: 50px 12px; animation: signal 2s infinite; }
-        .signal-wave-2 { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal 2s infinite; }
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    </style>
-    <div id="germic-wrapper" class="germic-container">
-        <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
-            <circle class="signal-wave" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
-            <circle class="signal-wave signal-wave-2" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
-            <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
-            <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse"/>
-            <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
-            <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
-            <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
-            <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
-            <g id="germic-face">
-                <rect id="eye-l" x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
-                <rect id="eye-r" x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
-                <rect id="mouth" x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/>
-            </g>
-        </svg>
-    </div>
-    <script>
-        const face = document.getElementById('germic-face');
-        function trackMouse(clientX, clientY, screenWidth) {
-            if (!face) return;
-            const robotX = screenWidth * 0.2; const robotY = 125;
-            const mouseX = clientX - robotX; const mouseY = clientY - robotY;
-            const limit = 8;
-            const moveX = Math.max(Math.min(mouseX / 50, limit), -limit);
-            const moveY = Math.max(Math.min(mouseY / 50, limit), -limit);
-            face.style.transform = `translate(${moveX}px, ${moveY}px)`;
-            face.style.transition = "transform 0.1s ease-out";
-        }
-        document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.innerWidth));
-        try { window.parent.document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.parent.innerWidth)); } catch (err) { }
-    </script>
-    """
-    components.html(germic_html, height=250)
-    st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold;'>GERMIC System Online</p>", unsafe_allow_html=True)
-    st.markdown("---")
+def cek_reset_kuota_bulanan(uid, user_data):
+    if not user_data or user_data.get("status_subscription") != "aktif" or user_data.get("email") in ADMIN_EMAILS_CONFIG or user_data.get("paket", "BASIC") not in PAKET_LANGGANAN: return False
+    
+    sekarang, perlu_reset = datetime.now(), False
+    if rkt := user_data.get("reset_kuota_terakhir"):
+        try: perlu_reset = (sekarang - (datetime.fromisoformat(rkt) if isinstance(rkt, str) else rkt.replace(tzinfo=None))).days >= 30
+        except: perlu_reset = True
+    elif tm := user_data.get("tanggal_mulai"):
+        try: perlu_reset = (sekarang - (datetime.fromisoformat(tm) if isinstance(tm, str) else tm.replace(tzinfo=None))).days >= 30
+        except: perlu_reset = True
+    else: perlu_reset = True
+    
+    if perlu_reset:
+        reset_user_kuota(uid, user_data["paket"])
+        st.session_state["user_kuota_ai"], st.session_state["user_kuota_upload"] = PAKET_LANGGANAN[user_data["paket"]]["ai_limit"], PAKET_LANGGANAN[user_data["paket"]]["upload_limit"]
+        return True
+    return False
 
 # =====================================================================
 # INISIALISASI SESSION STATE
 # =====================================================================
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
-if "offline_transcript" not in st.session_state:
-    st.session_state["offline_transcript"] = ""
-if "offline_summary" not in st.session_state:
-    st.session_state["offline_summary"] = None
+if "logged_in" not in st.session_state: st.session_state["logged_in"] = False
+if "offline_transcript" not in st.session_state: st.session_state["offline_transcript"] = ""
+if "offline_summary" not in st.session_state: st.session_state["offline_summary"] = None
+if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN & REGISTER FIREBASE
+# HALAMAN LOGIN
 # =====================================================================
 if not st.session_state["logged_in"]:
-    col1, col2, col3 = st.columns([1, 2, 1])
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(-45deg, #4f46e5, #3b82f6, #06b6d4, #10b981);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    [data-testid="stSidebar"] { display: none; }
+    div[data-testid="stForm"] {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 40px 30px;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .login-title {
+        color: white;
+        font-weight: 900;
+        font-size: 3rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        margin-bottom: 0px;
+    }
+    .login-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.write("")
         st.write("")
-        st.markdown("<h2 style='text-align: center;'>🔒 Portal TranscribX Enterprise</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b;'>Gunakan kredensial Anda untuk mengakses sistem Notulensi AI.</p>", unsafe_allow_html=True)
+        st.write("")
+        st.markdown("<h1 class='login-title' style='text-align: center;'>✨ TranscribX</h1>", unsafe_allow_html=True)
+        st.markdown("<p class='login-subtitle' style='text-align: center;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>", unsafe_allow_html=True)
         
-        # Form Login Tunggal
         with st.form("login_form"):
-            email_login = st.text_input("Email", placeholder="Ketik email Anda di sini...")
-            pass_login = st.text_input("Password", type="password", placeholder="Ketik password Anda...")
-            btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True)
+            st.markdown("<h3 style='text-align: center; color: #1e293b; margin-bottom: 25px;'>Secure Login</h3>", unsafe_allow_html=True)
+            email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
+            pass_login = st.text_input("Password", type="password", placeholder="••••••••")
+            st.write("")
+            btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True, type="primary")
             
             if btn_login:
                 if email_login and pass_login:
@@ -216,26 +292,141 @@ if not st.session_state["logged_in"]:
                         user_data = login_firebase(email_login, pass_login)
                         if "idToken" in user_data:
                             uid = user_data["localId"]
-                            sub_status = check_subscription(uid)
+                            record_login(uid, email_login)
                             
-                            if sub_status == "aktif":
-                                st.session_state["logged_in"] = True
-                                st.session_state["user_email"] = email_login
-                                st.session_state["user_uid"] = uid
+                            if email_login in ADMIN_EMAILS_CONFIG:
+                                st.session_state.update({"logged_in": True, "user_email": email_login, "user_uid": uid, "user_paket": "ADMIN", "user_kuota_ai": 999999, "user_kuota_upload": 999999, "sisa_hari": 999999})
+                                st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
+                                st.rerun()
+                            
+                            user_db_info = check_subscription(uid)
+                            if user_db_info.get("status_subscription", "non-aktif") == "aktif":
+                                cek_reset_kuota_bulanan(uid, user_db_info)
+                                st.session_state.update({
+                                    "logged_in": True, "user_email": email_login, "user_uid": uid, 
+                                    "user_paket": user_db_info.get("paket", "BASIC"), "user_kuota_ai": user_db_info.get("kuota_ai", 0), 
+                                    "user_kuota_upload": user_db_info.get("kuota_upload", 0), "sisa_hari": hitung_sisa_hari(user_db_info.get("tanggal_berakhir")), 
+                                    "tanggal_berakhir": user_db_info.get("tanggal_berakhir", "")
+                                })
                                 st.success("Login berhasil! Memuat sistem...")
                                 st.rerun()
                             else:
-                                st.error("⚠️ Akun Anda belum berlangganan atau masa aktif habis. Hubungi Admin.")
+                                st.error(f"⚠️ Akun Anda sudah tidak aktif. Hubungi Admin untuk perpanjangan.")
                         else:
-                            err_msg = user_data.get("error", {}).get("message", "Login gagal")
-                            st.error(f"⚠️ {err_msg}")
+                            st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
                 else:
                     st.warning("Silakan masukkan email dan password.")
 
 # =====================================================================
-# APLIKASI UTAMA (Setelah Login)
+# APLIKASI UTAMA
 # =====================================================================
 else:
+    st.markdown("""
+    <style>
+    .stApp {
+        background: white;
+        animation: none;
+    }
+    [data-testid="stSidebar"] {
+        display: flex !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # =====================================================================
+    # AREA SIDEBAR
+    # =====================================================================
+    with st.sidebar:
+        st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
+
+        germic_html = """
+        <style>
+            @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } }
+            @keyframes signal { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+            body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 250px; background-color: transparent; overflow: hidden; }
+            .germic-container { width: 180px; height: 180px; animation: float 4s ease-in-out infinite; position: relative; cursor: pointer; }
+            .signal-wave { transform-origin: 50px 12px; animation: signal 2s infinite; }
+            .signal-wave-2 { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal 2s infinite; }
+            .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+            @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        </style>
+        <div id="germic-wrapper" class="germic-container">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
+                <circle class="signal-wave" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                <circle class="signal-wave signal-wave-2" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
+                <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse"/>
+                <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+                <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
+                <g id="germic-face"><rect id="eye-l" x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect id="eye-r" x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect id="mouth" x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/></g>
+            </svg>
+        </div>
+        <script>
+            const face = document.getElementById('germic-face');
+            function trackMouse(clientX, clientY, screenWidth) {
+                if (!face) return;
+                const robotX = screenWidth * 0.2; const robotY = 125;
+                const mouseX = clientX - robotX; const mouseY = clientY - robotY;
+                const limit = 8;
+                face.style.transform = `translate(${Math.max(Math.min(mouseX/50, limit), -limit)}px, ${Math.max(Math.min(mouseY/50, limit), -limit)}px)`;
+                face.style.transition = "transform 0.1s ease-out";
+            }
+            document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.innerWidth));
+            try { window.parent.document.addEventListener('mousemove', (e) => trackMouse(e.clientX, e.clientY, window.parent.innerWidth)); } catch (err) { }
+        </script>
+        """
+        components.html(germic_html, height=250)
+        st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
+        
+        if st.session_state.get("logged_in"):
+            user_email = st.session_state.get('user_email')
+            
+            if is_admin():
+                card_class = "profile-card admin"
+                paket_str = "👑 ADMIN (Unlimited)"
+                ai_str = "♾️ Unlimited"
+                up_str = "♾️ Unlimited"
+                hari_str = "Status: Permanen"
+            else:
+                paket = st.session_state.get('user_paket', 'NON-AKTIF')
+                sisa_hari = st.session_state.get('sisa_hari', 0)
+                
+                if paket == 'NON-AKTIF':
+                    card_class = "profile-card user-inactive"
+                    paket_str = "NON-AKTIF"
+                    ai_str = "0x"
+                    up_str = "0x"
+                    hari_str = "Masa Aktif: Habis"
+                else:
+                    ai_val = st.session_state.get('user_kuota_ai', 0)
+                    up_val = st.session_state.get('user_kuota_upload', 0)
+                    ai_str = f"{ai_val}x"
+                    up_str = f"{up_val}x"
+                    hari_str = f"⏳ Sisa: {sisa_hari} hari"
+                    
+                    if sisa_hari <= 3: card_class = "profile-card user-warning"
+                    else: card_class = "profile-card user-active"
+
+            profile_html = f"""<div class="{card_class}">
+<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
+<div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
+<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+<div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+<div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
+<div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
+</div>
+<div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
+{hari_str}
+</div>
+</div>"""
+            st.markdown(profile_html, unsafe_allow_html=True)
+            
+            if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
+                st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
+
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):
@@ -244,442 +435,967 @@ else:
             st.rerun()
 
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")
-    
-    # ---------------------------------------------------------
-    # KONFIGURASI EMAIL ADMIN (Ubah dengan email Anda sendiri!)
-    # ---------------------------------------------------------
-    ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", "admin@domain.com") # Pastikan menyesuaikan dengan konfigurasi Anda
 
-    # Logika Penampilan Tab (Jika Admin, muncul tab Admin Panel)
-    if st.session_state.get("user_email") == ADMIN_EMAIL:
-        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
-        tab_admin = tabs[0]
-        tab1 = tabs[1]
-        tab2 = tabs[2]
+    if is_admin():
+        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tab_admin, tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3]
         
-        # --- TAB ADMIN PANEL ---
+        # =====================================================================
+        # TAB ADMIN PANEL 
+        # =====================================================================
         with tab_admin:
-            st.markdown("### 👑 Dashboard Admin: Registrasi Akun Klien")
-            st.info("Form ini hanya bisa dilihat oleh Anda. Gunakan form ini untuk mendaftarkan akun baru bagi klien.")
+            st.markdown("### 👑 Dashboard Admin: Enterprise Control Center")
             
-            with st.form("admin_register_form", clear_on_submit=True):
-                col_reg1, col_reg2 = st.columns(2)
-                with col_reg1:
-                    email_reg = st.text_input("Email Klien Baru", placeholder="email@klien.com")
-                with col_reg2:
-                    pass_reg = st.text_input("Password Klien", type="password", help="Minimal 6 karakter")
-                
-                status_reg = st.selectbox("Status Langganan Awal", ["aktif", "non-aktif"])
-                btn_reg = st.form_submit_button("📝 Daftarkan Klien", type="primary")
-                
-                if btn_reg:
-                    if email_reg and len(pass_reg) >= 6:
-                        with st.spinner("Mendaftarkan akun..."):
-                            new_user = register_firebase(email_reg, pass_reg)
-                            if "idToken" in new_user:
-                                uid = new_user["localId"]
-                                # Simpan data user ke database beserta status langganannya
-                                db.collection("users").document(uid).set({
-                                    "email": email_reg,
-                                    "status_subscription": status_reg
-                                })
-                                st.success(f"✅ Akun {email_reg} berhasil dibuat dengan status: {status_reg}!")
-                                st.rerun()
-                            else:
-                                err = new_user.get('error', {}).get('message', 'Gagal mendaftar')
-                                st.error(f"⚠️ Gagal mendaftar: {err}")
-                    else:
-                        st.warning("Pastikan email terisi dan password minimal 6 karakter.")
-
-            # ---------------------------------------------------------
-            # FITUR BARU: DAFTAR USER TERDAFTAR
-            # ---------------------------------------------------------
-            st.markdown("---")
-            st.markdown("### 📋 Daftar Klien Terdaftar")
-            
-            with st.spinner("Memuat data klien..."):
+            with st.spinner("Memuat metrik & menyegarkan data klien..."):
                 users_ref = db.collection("users").stream()
                 users_list = []
                 
                 for doc in users_ref:
                     user_info = doc.to_dict()
+                    email_user = user_info.get("email", "-")
+                    cek_dan_update_status_kadaluarsa(doc.id, user_info)
+                    
+                    doc_refresh = db.collection("users").document(doc.id).get()
+                    user_info = doc_refresh.to_dict()
+                    
+                    if email_user in ADMIN_EMAILS_CONFIG:
+                        status_user, paket_user, sisa_ai, sisa_up, sisa_hari_display = "admin", "ADMIN", "∞", "∞", "∞"
+                        last_login, login_count = user_info.get("last_login", "Tidak diketahui"), user_info.get("login_count", 0)
+                    else:
+                        status_user = user_info.get("status_subscription", "non-aktif")
+                        paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
+                        sisa_ai, sisa_up = user_info.get("kuota_ai", 0), user_info.get("kuota_upload", 0)
+                        last_login, login_count = user_info.get("last_login", "Belum pernah login"), user_info.get("login_count", 0)
+                        
+                        tanggal_berakhir = user_info.get("tanggal_berakhir")
+                        if status_user == "aktif" and tanggal_berakhir:
+                            sisa_hari = hitung_sisa_hari(tanggal_berakhir)
+                            sisa_hari_display = "Kadaluarsa" if sisa_hari <= 0 else (f"⚠️ {sisa_hari} hari" if sisa_hari <= 3 else f"{sisa_hari} hari")
+                            if sisa_hari <= 0: status_user = "non-aktif ⚠️"
+                        else: sisa_hari_display = "Kadaluarsa"
+                    
+                    last_login_display = last_login[:19] if isinstance(last_login, str) and len(last_login) > 19 and last_login not in ["Belum pernah login", "Tidak diketahui"] else last_login
+
                     users_list.append({
-                        "UID / ID Dokumen": doc.id,
-                        "Email Klien": user_info.get("email", "-"),
-                        "Status Langganan": user_info.get("status_subscription", "non-aktif")
+                        "Email": email_user, "Status": status_user.split()[0], "Paket": paket_user, "Sisa AI": sisa_ai, "Sisa Upload": sisa_up,
+                        "Sisa Hari": sisa_hari_display, "Last Login": last_login_display, "Login Count": login_count, "UID": doc.id, "UID_Short": doc.id[:8] + "..."
                     })
+
+            total_users = len(users_list)
+            total_aktif = sum(1 for u in users_list if u['Status'] == 'aktif')
+            total_nonaktif = sum(1 for u in users_list if 'non-aktif' in u['Status'])
+            total_admin = sum(1 for u in users_list if u['Status'] == 'admin')
+            active_now = get_active_users_count()
+
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            
+            def build_metric_card(title, value, subtext, icon, type_class):
+                return f"""
+                <div class="metric-card metric-{type_class}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase;">{title}</p>
+                            <h2 style="margin: 5px 0 0 0; color: #0f172a; font-size: 28px; line-height: 1;">{value}</h2>
+                            <p style="margin: 8px 0 0 0; color: #10b981; font-size: 11px; font-weight: 600; background: #d1fae5; display: inline-block; padding: 2px 8px; border-radius: 10px;">{subtext}</p>
+                        </div>
+                        <div style="font-size: 28px; opacity: 0.9;">{icon}</div>
+                    </div>
+                </div>
+                """
+            
+            with col_m1: st.markdown(build_metric_card("Total Users", total_users, f"↑ {active_now} online", "👥", "total"), unsafe_allow_html=True)
+            with col_m2: st.markdown(build_metric_card("Klien Aktif", total_aktif, "Paket Berjalan", "✅", "aktif"), unsafe_allow_html=True)
+            with col_m3: st.markdown(build_metric_card("Non-Aktif", total_nonaktif, "Perlu Follow-up", "❌", "nonaktif"), unsafe_allow_html=True)
+            with col_m4: st.markdown(build_metric_card("Admin", total_admin, "Superuser", "👑", "admin"), unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            with st.expander("➕ Registrasi Akun Klien Baru", expanded=False):
+                with st.form("admin_register_form", clear_on_submit=True):
+                    col_reg1, col_reg2, col_reg3 = st.columns(3)
+                    with col_reg1: email_reg = st.text_input("Email Klien Baru", placeholder="email@klien.com")
+                    with col_reg2: pass_reg = st.text_input("Password Klien", type="password", help="Minimal 6 karakter")
+                    with col_reg3: paket_reg = st.selectbox("Pilih Paket Awal", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
+                    btn_reg = st.form_submit_button("Daftarkan Klien", type="primary", use_container_width=True)
+                    
+                    if btn_reg:
+                        if email_reg and len(pass_reg) >= 6:
+                            if email_reg in ADMIN_EMAILS_CONFIG: st.error("⚠️ Email ini terdaftar sebagai Admin.")
+                            else:
+                                with st.spinner("Mendaftarkan..."):
+                                    new_user = register_firebase(email_reg, pass_reg)
+                                    if "idToken" in new_user:
+                                        uid, sekarang = new_user["localId"], datetime.now()
+                                        tanggal_berakhir = sekarang + timedelta(days=30)
+                                        status_reg = "aktif" if paket_reg != "NON-AKTIF" else "non-aktif"
+                                        kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"] if paket_reg != "NON-AKTIF" else 0
+                                        kuota_upload = PAKET_LANGGANAN[paket_reg]["upload_limit"] if paket_reg != "NON-AKTIF" else 0
+                                        db.collection("users").document(uid).set({
+                                            "email": email_reg, "status_subscription": status_reg, "paket": paket_reg,
+                                            "kuota_ai": kuota_ai, "kuota_upload": kuota_upload, "tanggal_mulai": sekarang.isoformat(),
+                                            "tanggal_berakhir": tanggal_berakhir.isoformat(), "reset_kuota_terakhir": sekarang.isoformat(),
+                                            "last_login": "Belum pernah login", "login_count": 0
+                                        })
+                                        st.success(f"✅ Akun {email_reg} berhasil dibuat!")
+                                        st.rerun()
+                                    else: st.error(f"⚠️ Gagal mendaftar: {new_user.get('error', {}).get('message', 'Gagal')}")
+                        else: st.warning("Pastikan email terisi dan password minimal 6 karakter.")
+
+            st.markdown("#### 📊 Analitik Distribusi")
+            col_chart1, col_chart2 = st.columns(2)
+            with col_chart1:
+                st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px;'><b>Distribusi Status Pengguna</b></p>", unsafe_allow_html=True)
+                status_counts = pd.DataFrame([u['Status'] for u in users_list], columns=['Status']).value_counts().reset_index(name='Jumlah')
+                st.bar_chart(status_counts, x="Status", y="Jumlah", color="#3b82f6")
+            with col_chart2:
+                st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px;'><b>Distribusi Paket Langganan</b></p>", unsafe_allow_html=True)
+                paket_list = [u['Paket'] for u in users_list if u['Paket'] != 'ADMIN']
+                if paket_list:
+                    paket_counts = pd.DataFrame(paket_list, columns=['Paket']).value_counts().reset_index(name='Jumlah')
+                    st.bar_chart(paket_counts, x="Paket", y="Jumlah", color="#10b981")
+                else: st.info("Belum ada data paket klien.")
+
+            st.markdown("---")
+            
+            st.markdown("### 📋 Tabel Manajemen Klien")
+            col_search1, col_search2, col_search3 = st.columns([3, 2, 2])
+            with col_search1: search_query = st.text_input("🔍 Cari email atau paket...", placeholder="Ketik untuk filter...")
+            with col_search2: filter_status = st.selectbox("📊 Filter Status", ["Semua", "Aktif", "Non-Aktif", "Admin"])
+            with col_search3: filter_paket = st.selectbox("📦 Filter Paket", ["Semua", "BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
+            
+            filtered_users = users_list.copy()
+            if search_query: filtered_users = [u for u in filtered_users if search_query.lower() in u['Email'].lower() or search_query.lower() in u['Paket'].lower()]
+            if filter_status != "Semua": filtered_users = [u for u in filtered_users if filter_status.lower() in str(u['Status']).lower()]
+            if filter_paket != "Semua": filtered_users = [u for u in filtered_users if u['Paket'] == filter_paket]
+
+            if filtered_users:
+                df_display = pd.DataFrame([{ "📧 Email": u['Email'], "📊 Status": u['Status'].upper(), "📦 Paket": u['Paket'], "💎 AI": u['Sisa AI'], "📤 Upload": u['Sisa Upload'], "⏳ Sisa Hari": u['Sisa Hari'], "🕒 Last Login": u['Last Login'], "🔑 ID": u['UID_Short'] } for u in filtered_users])
+                def color_status(val):
+                    if val == "ADMIN": return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                    elif val == "AKTIF": return 'background-color: #d1fae5; color: #065f46; font-weight: bold'
+                    elif "NON-AKTIF" in str(val): return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                    return ''
+                def color_sisa_hari(val):
+                    if val == "∞": return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                    elif "Kadaluarsa" in str(val): return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                    elif "⚠️" in str(val): return 'background-color: #fef3c7; color: #92400e; font-weight: bold'
+                    elif "hari" in str(val):
+                        try:
+                            if int(''.join(filter(str.isdigit, str(val)))) > 7: return 'background-color: #d1fae5; color: #065f46'
+                        except: pass
+                    return ''
                 
-                if users_list:
-                    df_users = pd.DataFrame(users_list)
-                    st.dataframe(
-                        df_users, 
-                        use_container_width=True, 
-                        hide_index=True 
-                    )
-                else:
-                    st.info("Belum ada klien yang terdaftar di sistem.")
+                try: styled_df = df_display.style.map(color_status, subset=['📊 Status']).map(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                except: styled_df = df_display.style.applymap(color_status, subset=['📊 Status']).applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                st.dataframe(styled_df, use_container_width=True, hide_index=True, height=350)
+            else: st.info("🔍 Tidak ada user yang sesuai dengan filter.")
+
+            st.markdown("---")
+            
+            st.markdown("### 🛠️ Action Center (Kelola & Edit Klien)")
+            
+            user_options = [u['Email'] for u in filtered_users if u['Status'] != 'admin']
+            if user_options:
+                with st.container(border=True):
+                    selected_email = st.selectbox("🎯 Pilih Akun Klien yang Ingin Dikelola:", user_options, key="action_center_select")
+                    selected_user = next((u for u in filtered_users if u['Email'] == selected_email), None)
+                    
+                    if selected_user:
+                        st.markdown(f"""
+                        <div style='background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 5px solid #3b82f6; margin-bottom: 20px;'>
+                            <h4 style='margin: 0; color: #1e293b;'>Pengaturan: <b>{selected_user['Email']}</b></h4>
+                            <div style='display: flex; gap: 20px; margin-top: 10px; font-size: 14px; color: #475569;'>
+                                <span>📦 Paket: <b>{selected_user['Paket']}</b></span>
+                                <span>💎 AI: <b>{selected_user['Sisa AI']}</b></span>
+                                <span>📤 Upload: <b>{selected_user['Sisa Upload']}</b></span>
+                                <span>⏳ Masa Aktif: <b>{selected_user['Sisa Hari']}</b></span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        tab_edit, tab_extend, tab_history, tab_danger = st.tabs(["✏️ Ubah Paket", "📅 Perpanjang Masa Aktif", "🔍 Riwayat & Reset", "❌ Hapus Akun"])
+                        
+                        with tab_edit:
+                            st.caption("Mengubah paket akan mengatur ulang kuota sesuai paket baru dan mereset masa aktif menjadi 30 hari dari sekarang.")
+                            with st.form("form_edit_paket"):
+                                col_e1, col_e2 = st.columns([3, 1])
+                                with col_e1:
+                                    new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"], 
+                                                             index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0, label_visibility="collapsed")
+                                with col_e2:
+                                    btn_update_paket = st.form_submit_button("💾 Simpan", type="primary", use_container_width=True)
+                                
+                                if btn_update_paket:
+                                    uid, sekarang = selected_user['UID'], datetime.now()
+                                    if new_paket != "NON-AKTIF":
+                                        db.collection("users").document(uid).update({
+                                            "status_subscription": "aktif", "paket": new_paket, "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
+                                            "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"], "tanggal_mulai": sekarang.isoformat(),
+                                            "tanggal_berakhir": (sekarang + timedelta(days=30)).isoformat(), "reset_kuota_terakhir": sekarang.isoformat()
+                                        })
+                                    else:
+                                        db.collection("users").document(uid).update({
+                                            "status_subscription": "non-aktif", "paket": "NON-AKTIF", "kuota_ai": 0, "kuota_upload": 0, "tanggal_berakhir": sekarang.isoformat()
+                                        })
+                                    st.success(f"✅ Paket untuk {selected_email} diubah ke {new_paket}.")
+                                    time.sleep(1)
+                                    st.rerun()
+                        
+                        with tab_extend:
+                            st.caption("Menambah masa aktif hari tanpa mengubah/mereset sisa kuota saat ini.")
+                            with st.form("form_extend_hari"):
+                                col_x1, col_x2 = st.columns([3, 1])
+                                with col_x1:
+                                    hari_tambahan = st.number_input("Tambah Masa Aktif (Hari)", min_value=1, max_value=365, value=30, label_visibility="collapsed")
+                                with col_x2:
+                                    btn_extend = st.form_submit_button("⏳ Tambah Hari", type="primary", use_container_width=True)
+                                
+                                if btn_extend:
+                                    uid = selected_user['UID']
+                                    user_doc = db.collection("users").document(uid).get().to_dict()
+                                    sekarang, tgl_lama = datetime.now(), user_doc.get("tanggal_berakhir")
+                                    if tgl_lama:
+                                        try:
+                                            t_akhir = datetime.fromisoformat(tgl_lama) if isinstance(tgl_lama, str) else tgl_lama.replace(tzinfo=None)
+                                            t_baru = max(t_akhir, sekarang) + timedelta(days=hari_tambahan)
+                                        except: t_baru = sekarang + timedelta(days=hari_tambahan)
+                                    else: t_baru = sekarang + timedelta(days=hari_tambahan)
+                                        
+                                    db.collection("users").document(uid).update({"status_subscription": "aktif", "tanggal_berakhir": t_baru.isoformat()})
+                                    st.success(f"✅ Masa aktif {selected_email} ditambah {hari_tambahan} hari!")
+                                    time.sleep(1)
+                                    st.rerun()
+                                    
+                        with tab_history:
+                            col_h1, col_h2 = st.columns([1, 1.5], gap="large")
+                            with col_h1:
+                                st.markdown("<h5 style='color:#334155; margin-bottom:10px;'>🔄 Reset Kuota Manual</h5>", unsafe_allow_html=True)
+                                st.caption("Kembalikan kuota AI dan Upload ke kondisi penuh sesuai paket saat ini.")
+                                if st.button("🔄 Reset Kuota Sekarang", use_container_width=True):
+                                    if selected_user['Paket'] in PAKET_LANGGANAN:
+                                        reset_user_kuota(selected_user['UID'], selected_user['Paket'])
+                                        st.success("✅ Kuota berhasil direset!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else: st.error("Paket tidak valid untuk direset.")
+                                
+                                st.markdown("<br>", unsafe_allow_html=True)
+                                st.markdown("<h5 style='color:#334155; margin-bottom:10px;'>▶️ Status Akses</h5>", unsafe_allow_html=True)
+                                if selected_user['Status'] == 'non-aktif' and selected_user['Paket'] != 'NON-AKTIF':
+                                    st.caption("Akun ini memiliki paket tapi statusnya non-aktif.")
+                                    if st.button("Aktifkan Kembali Akses", type="primary", use_container_width=True):
+                                        sekarang = datetime.now()
+                                        db.collection("users").document(selected_user['UID']).update({"status_subscription": "aktif", "tanggal_berakhir": (sekarang + timedelta(days=30)).isoformat(), "tanggal_mulai": sekarang.isoformat()})
+                                        st.success("✅ Akun diaktifkan kembali!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                else:
+                                    st.info("Akun sedang berjalan normal (Aktif).")
+
+                            with col_h2:
+                                st.markdown("<h5 style='color:#334155; margin-bottom:10px;'>📜 Riwayat Login</h5>", unsafe_allow_html=True)
+                                if st.button("Tampilkan Riwayat", use_container_width=True):
+                                    history = get_user_login_history(selected_user['UID'])
+                                    if history:
+                                        st.dataframe(pd.DataFrame([{"Waktu": h.get('timestamp', '')[:19], "Platform": h.get('platform', '-')} for h in history[:10]]), use_container_width=True, hide_index=True)
+                                    else: st.info("Belum ada riwayat login.")
+                        
+                        with tab_danger:
+                            st.markdown("<h5 style='color:#ef4444; margin-bottom:10px;'>❌ Hapus Akun Klien Permanen</h5>", unsafe_allow_html=True)
+                            st.warning("Tindakan ini tidak dapat dibatalkan. Semua data terkait akun ini akan hilang dari database.")
+                            if st.button("Hapus Permanen User Ini", type="secondary", use_container_width=True):
+                                if st.session_state.get('confirm_delete') != selected_user['UID']:
+                                    st.session_state['confirm_delete'] = selected_user['UID']
+                                    st.error(f"⚠️ KLIK SEKALI LAGI UNTUK KONFIRMASI MENGHAPUS **{selected_user['Email']}**!")
+                                else:
+                                    success, msg = delete_user(selected_user['UID'], selected_user['Email'])
+                                    if success:
+                                        st.success(msg)
+                                        st.session_state.pop('confirm_delete', None)
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else: st.error(msg)
+            else: st.info("Tidak ada klien yang terdaftar atau sesuai filter untuk dikelola.")
 
     else:
-        # Jika bukan Admin (Klien Biasa), hanya melihat 2 tab utama
-        tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)"])
-        tab1 = tabs[0]
-        tab2 = tabs[1]
-    
+        tabs = st.tabs(["🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2]
+
     # =====================================================================
-    # TAB 1: LIVE CAPTURE (HTML/JS)
+    # TAB INFO PAKET LANGGANAN
+    # =====================================================================
+    with tab_paket:
+        st.markdown("### 📊 Pilihan Paket Langganan TranscribX")
+        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai. Hubungi admin untuk upgrade.")
+        st.write("")
+        
+        col_p1, col_p2, col_p3 = st.columns(3)
+        with col_p1:
+            st.markdown("""
+            <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
+                <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin.</p>
+                <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>5x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_p2:
+            st.markdown("""
+            <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative; transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
+                <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
+                <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, atau profesional.</p>
+                <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>3x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_p3:
+            st.markdown("""
+            <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
+                <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass atau institusi.</p>
+                <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>30x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>10x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>🌟 <b>Prioritas Support</b> via WhatsApp</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # =====================================================================
+    # TAB 1: LIVE CAPTURE - SCREEN CAPTURE DENGAN getDisplayMedia
     # =====================================================================
     with tab1:
-        st.markdown("Mesin **Web Speech API** + **AI LiteLLM Summary** untuk Notulensi Otomatis dengan UI Enterprise.")
-        st.info("💡 **TIPS ZOOM:** Agar web ini bisa mendengar Zoom, pastikan mikrofon browser menggunakan **Stereo Mix** atau **VB-Cable**.")
-
+        st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
+        st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share audio'** → Klik Share. Gunakan Chrome/Edge untuk hasil terbaik.")
+        st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share audio'**!")
+        
+        # HTML DENGAN getDisplayMedia UNTUK SCREEN CAPTURE
         html_code = """
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
-                body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; }
-                .controls-wrapper { margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; padding: 15px; background: #f1f5f9; border-radius: 16px; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); }
-                .controls-line { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-                .visualizer-container { width: 100%; height: 80px; border-radius: 12px; overflow: hidden; background: #111827; position: relative; }
+                * { box-sizing: border-box; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
+                
+                .controls-wrapper { 
+                    background: #ffffff; border-radius: 20px; padding: 24px; 
+                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
+                    border: 1px solid #e2e8f0; margin-bottom: 24px;
+                    display: flex; flex-direction: column; gap: 16px;
+                }
+                
+                .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+                
+                .visualizer-container { 
+                    width: 100%; height: 80px; border-radius: 16px; overflow: hidden; 
+                    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
+                    position: relative; box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
+                }
                 #visualizer { width: 100%; height: 100%; display: block; }
-                .transcript-box { border: 2px solid #cbd5e1; padding: 20px; border-radius: 16px; height: 300px; overflow-y: auto; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; scroll-behavior: smooth; }
-                .btn-custom { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-                .btn-custom:hover { background: #2563eb; }
-                .btn-stop { background: #ef4444; } .btn-stop:hover { background: #dc2626; }
-                .btn-ai { background: #8b5cf6; } .btn-ai:hover { background: #7c3aed; }
-                .btn-custom:disabled { background: #94a3b8; cursor: not-allowed; }
-                .btn-secondary { background: #e2e8f0; color: #334155; } .btn-secondary:hover { background: #cbd5e1; }
-                select.btn-secondary, input.api-input { outline: none; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-family: inherit; }
-                input.api-input { flex-grow: 1; min-width: 250px; }
-                .line-final { margin-bottom: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #3b82f6; font-size: 14px; line-height: 1.5; }
-                .line-interim { margin-bottom: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #cbd5e1; font-size: 14px; opacity: 0.7; font-style: italic; }
-                .timestamp { font-weight: bold; color: #64748b; margin-right: 8px; font-size: 12px; }
-                .reconnecting { color: #ef4444; font-size: 12px; margin-left: 8px; font-style: italic; }
-                #audioContainer { display: flex; flex-direction: column; gap: 10px; }
-                .audio-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-                .fade-in { animation: fadeIn 0.5s ease-in-out; }
+                
+                .transcript-box { 
+                    background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px 20px; 
+                    border-radius: 20px; height: 300px; overflow-y: auto; 
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 16px; 
+                }
+                
+                .line-final { 
+                    margin-bottom: 12px; padding: 12px 16px; background: #ffffff; 
+                    border-radius: 12px; border-left: 5px solid #3b82f6; 
+                    font-size: 14px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                }
+                .line-interim { 
+                    margin-bottom: 12px; padding: 12px 16px; background: rgba(255,255,255,0.5); 
+                    border-radius: 12px; border-left: 5px solid #94a3b8; 
+                    font-size: 14px; opacity: 0.6; font-style: italic; 
+                }
+                .timestamp { font-weight: 700; color: #3b82f6; margin-right: 10px; font-size: 12px; background: #eff6ff; padding: 2px 8px; border-radius: 6px; display: inline-block; }
+                
+                .btn-custom { 
+                    font-family: inherit; color: white; padding: 10px 20px; border: none; 
+                    border-radius: 10px; cursor: pointer; font-weight: 600; 
+                    transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+                .btn-custom:active { transform: translateY(0); }
+                .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b; }
+                
+                .btn-start { background: #3b82f6; }
+                .btn-start:hover { background: #2563eb; }
+                .btn-stop { background: #ef4444; }
+                .btn-stop:hover { background: #dc2626; }
+                .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+                .btn-ai:hover { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none; } 
+                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                .btn-green { background: #10b981; }
+                .btn-green:hover { background: #059669; }
+                
+                select.btn-secondary, input.api-input { 
+                    outline: none; border: 1px solid #cbd5e1; padding: 10px 14px; 
+                    border-radius: 10px; font-family: inherit; font-size: 14px; background: white;
+                }
+                select.btn-secondary:focus, input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+                input.api-input { flex: 1; min-width: 200px; }
+                
+                .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }
+                .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; flex-shrink: 0; }
+                .indicator-dot.recording { background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: blink 1s infinite; }
+                @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+                
+                .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+                .ai-section .ai-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+                
+                #audioContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+                .audio-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }
+                .audio-item audio { height: 36px; flex: 1; min-width: 200px; }
+                
+                .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; position: relative; }
+                .btn-export { cursor: pointer; background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
+                .btn-export:hover { background: #059669; }
+                
+                .fade-in { animation: fadeIn 0.5s ease; }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0; position: relative; }
-                .btn-export { cursor:pointer; background:#10b981; color:white; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:bold; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
-                .btn-export:hover { background:#059669; }
+                
+                .instruction-box {
+                    background: #fffbeb; border: 2px solid #f59e0b; padding: 16px; border-radius: 12px;
+                    margin-bottom: 16px; font-size: 13px; color: #92400e;
+                }
+                
+                @media (max-width: 640px) {
+                    .controls-row { flex-direction: column; align-items: stretch; }
+                    .controls-row > * { width: 100%; }
+                    .status-badge { justify-content: center; }
+                    .ai-section .ai-row { flex-direction: column; }
+                    .ai-section .ai-row > * { width: 100%; }
+                }
             </style>
-            <script>
-                // FUNGSI DOWNLOAD PNG KHUSUS MARKMAP DENGAN TRANSLASI KOORDINAT
-                window.downloadMarkmapImage = function(wrapperId, title, event) {
-                    const container = document.getElementById(wrapperId);
-                    const svgEl = container.querySelector('svg');
-                    if (!svgEl) return;
-                    const btn = event.currentTarget;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
-                    try {
-                        const g = svgEl.querySelector('g');
-                        if (!g) throw new Error("G element not found");
-
-                        const originalContainerWidth = container.style.width; const originalContainerHeight = container.style.height;
-                        const originalContainerOverflow = container.style.overflow;
-                        const originalSvgWidth = svgEl.style.width; const originalSvgHeight = svgEl.style.height;
-                        const originalSvgAttrWidth = svgEl.getAttribute('width'); const originalSvgAttrHeight = svgEl.getAttribute('height');
-                        const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
-
-                        g.setAttribute('transform', 'translate(0,0) scale(1)');
-                        const bbox = g.getBBox();
-                        const padding = 50;
-                        const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-
-                        g.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding}) scale(1)`);
-                        svgEl.removeAttribute('viewBox');
-                        svgEl.setAttribute('width', trueWidth); svgEl.setAttribute('height', trueHeight);
-                        svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
-                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px';
-                        container.style.overflow = 'visible';
-
-                        setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight, windowWidth: trueWidth, windowHeight: trueHeight })
-                            .then(canvas => {
-                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
-                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
-                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
-                                g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-
-                                const link = document.createElement('a'); link.download = `MindMap_${title.replace(/[^a-zA-Z0-9]/g, "_")}.png`;
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
-
-                                btn.innerHTML = originalText; btn.disabled = false;
-                            }).catch(err => {
-                                console.error(err);
-                                container.style.width = originalContainerWidth; container.style.height = originalContainerHeight; container.style.overflow = originalContainerOverflow;
-                                svgEl.style.width = originalSvgWidth; svgEl.style.height = originalSvgHeight;
-                                if (originalSvgAttrWidth) svgEl.setAttribute('width', originalSvgAttrWidth); else svgEl.removeAttribute('width');
-                                if (originalSvgAttrHeight) svgEl.setAttribute('height', originalSvgAttrHeight); else svgEl.removeAttribute('height');
-                                g.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
-                            });
-                        }, 800); 
-                    } catch (err) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
-                };
-
-                window.downloadMermaidImage = function(wrapperId, title, event) {
-                    const container = document.getElementById(wrapperId);
-                    const btn = event.currentTarget;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
-                    const originalOverflow = container.style.overflow;
-                    container.style.overflow = 'visible'; 
-                    setTimeout(() => {
-                        html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
-                        .then(canvas => {
-                            container.style.overflow = originalOverflow;
-                            const link = document.createElement('a'); link.download = `Mermaid_${title}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                            btn.innerHTML = originalText; btn.disabled = false;
-                        }).catch(err => { container.style.overflow = originalOverflow; btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); });
-                    }, 500);
-                };
-
-                window.myCyInstance = null;
-                function exportCyToPng() {
-                    if(!window.myCyInstance) return alert("Cytoscape belum siap!");
-                    const b64 = window.myCyInstance.png({ full: true, scale: 4, bg: 'white' });
-                    const a = document.createElement('a'); a.href = b64; a.download = 'Cytoscape_Map_HighRes.png'; a.click();
-                }
-
-                window.lastAiData = null;
-                function exportNotulensiTxt() {
-                    if(!window.lastAiData) return alert("Data Notulensi belum ada!");
-                    const root = window.lastAiData; const data = root.notulensi_rapat;
-                    let txt = `NOTULENSI RAPAT\\n========================\\n\\nRINGKASAN EKSEKUTIF:\\n`;
-                    if(root.ringkasan_eksekutif) root.ringkasan_eksekutif.forEach(r => txt += `- ${r}\\n`);
-                    txt += `\\nAgenda: ${data.agenda || '-'}\\nPeserta: ${data.peserta ? data.peserta.join(', ') : '-'}\\n\\nJalannya Diskusi:\\n`;
-                    if(data.jalannya_diskusi) data.jalannya_diskusi.forEach(d => txt += `- ${d}\\n`);
-                    txt += `\\nKeputusan Utama:\\n`;
-                    if(data.keputusan) data.keputusan.forEach(k => txt += `- ${k}\\n`);
-                    txt += `\\nRencana Tindak Lanjut:\\n`; 
-                    if(data.rencana_tindak_lanjut && data.rencana_tindak_lanjut.length > 0) {
-                        data.rencana_tindak_lanjut.forEach(t => txt += `- [${t.prioritas}] ${t.tugas} (PIC: ${t.pic}, Deadline: ${t.deadline})\\n`);
-                    } else {
-                        txt += `- [Default] Belum ada action item.\\n`;
-                    }
-                    const blob = new Blob([txt], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Notulensi_Resmi.txt'; a.click();
-                }
-            </script>
         </head>
         <body>
+            <!-- INSTRUCTION BOX -->
+            <div class="instruction-box">
+                <strong>📺 CARA SCREEN CAPTURE (ZOOM / YOUTUBE):</strong><br>
+                1. Klik <b>"Start Capture"</b> di bawah<br>
+                2. Akan muncul dialog: pilih tab/window <b>Zoom</b> atau <b>YouTube</b><br>
+                3. <b>CENTANG "Share audio"</b> (ini WAJIB!)<br>
+                4. Klik <b>Share</b><br>
+                5. Suara dari tab/window tersebut akan otomatis ditranskrip
+            </div>
+        
+            <!-- MAIN CONTROLS -->
             <div class="controls-wrapper">
-                <div class="controls-line">
-                    <select id="langSelect" class="btn-custom btn-secondary"><option value="id-ID">🇮🇩 ID (Indonesia)</option><option value="en-US">🇬🇧 EN (English)</option></select>
-                    <button id="startBtn" class="btn-custom">🚀 START CAPTURE</button>
-                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ STOP</button>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-                        <div id="indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1;"></div>
-                        <span id="status" style="font-weight: bold; font-size: 14px; color: #64748b;">Standby...</span>
+                <div class="controls-row">
+                    <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
+                        <option value="id-ID">🇮🇩 Indonesia</option>
+                        <option value="en-US">🇬🇧 English</option>
+                        <option value="ja-JP">🇯🇵 Japanese</option>
+                        <option value="ko-KR">🇰🇷 Korean</option>
+                    </select>
+                    <button id="startBtn" class="btn-custom btn-start">▶️ Start Capture</button>
+                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop</button>
+                    <div class="status-badge" style="margin-left:auto;">
+                        <div id="indicator" class="indicator-dot"></div>
+                        <span id="status" style="color: #64748b;">Standby</span>
                     </div>
                 </div>
-                <div class="visualizer-container"><canvas id="visualizer"></canvas></div>
-                <div class="controls-line" style="background: #e2e8f0; padding: 10px; border-radius: 10px;">
-                    <span style="font-size: 14px; font-weight: bold;">🔑 LiteLLM API Key:</span>
-                    <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-...">
-                    <button id="aiBtn" class="btn-custom btn-ai">✨ Generate AI Summary & Mindmap</button>
+                
+                <div class="visualizer-container">
+                    <canvas id="visualizer"></canvas>
                 </div>
-                <div class="controls-line" style="justify-content: flex-end;">
-                    <button id="copyBtn" class="btn-custom btn-secondary">📋 Copy Text</button>
-                    <button id="clearBtn" class="btn-custom btn-secondary">🗑️ Clear</button>
-                    <button id="downloadTxtBtn" class="btn-custom" style="background: #10b981;">📝 Save TXT</button>
+                
+                <div class="ai-section">
+                    <div class="ai-row">
+                        <span style="font-size: 13px; font-weight: 700; color: #475569; white-space:nowrap;">🔑 API Key:</span>
+                        <input type="password" id="apiKeyInput" class="api-input" placeholder="Masukkan API Key LiteLLM / Gemini..." style="flex:1; min-width:150px;">
+                        <button id="aiBtn" class="btn-custom btn-ai" style="white-space:nowrap;">✨ Generate AI Summary</button>
+                    </div>
                 </div>
             </div>
 
+            <!-- TRANSCRIPT CONTROLS -->
+            <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
+                <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
+                <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
+                <button id="downloadTxtBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px;">📝 Save TXT</button>
+            </div>
+
+            <!-- TRANSCRIPT BOX -->
             <div id="transcriptBox" class="transcript-box">
-                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px;">Suara yang ditangkap akan muncul di sini...</div>
+                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
+                    🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
+                </div>
             </div>
 
+            <!-- AI CONTENT AREA -->
             <div id="aiContent" class="w-full"></div>
-            <h3 style="margin-bottom: 10px; font-size: 16px; margin-top: 20px;">🎧 Arsip Rekaman Suara</h3>
-            <div id="audioContainer"></div>
+            
+            <!-- AUDIO ARCHIVE -->
+            <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
+                <div id="audioContainer"></div>
+            </div>
 
             <script>
-                mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' } });
+                (function() {
+                    'use strict';
 
-                const startBtn = document.getElementById('startBtn'); const stopBtn = document.getElementById('stopBtn');
-                const copyBtn = document.getElementById('copyBtn'); const clearBtn = document.getElementById('clearBtn');
-                const downloadTxtBtn = document.getElementById('downloadTxtBtn'); const aiBtn = document.getElementById('aiBtn');
-                const apiKeyInput = document.getElementById('apiKeyInput'); const aiContent = document.getElementById('aiContent');
-                const langSelect = document.getElementById('langSelect'); const status = document.getElementById('status');
-                const indicator = document.getElementById('indicator'); const transcriptBox = document.getElementById('transcriptBox');
-                const audioContainer = document.getElementById('audioContainer'); const visualizer = document.getElementById('visualizer');
-                const canvasCtx = visualizer.getContext('2d');
+                    // ======== DOM REFS ========
+                    const startBtn = document.getElementById('startBtn');
+                    const stopBtn = document.getElementById('stopBtn');
+                    const copyBtn = document.getElementById('copyBtn');
+                    const clearBtn = document.getElementById('clearBtn');
+                    const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+                    const aiBtn = document.getElementById('aiBtn');
+                    const apiKeyInput = document.getElementById('apiKeyInput');
+                    const aiContent = document.getElementById('aiContent');
+                    const langSelect = document.getElementById('langSelect');
+                    const status = document.getElementById('status');
+                    const indicator = document.getElementById('indicator');
+                    const transcriptBox = document.getElementById('transcriptBox');
+                    const audioContainer = document.getElementById('audioContainer');
+                    const visualizer = document.getElementById('visualizer');
+                    const canvasCtx = visualizer.getContext('2d');
 
-                let recognition, mediaRecorder, audioChunks = [], audioStream, isRecording = false;
-                let audioContext, analyser, dataArray, bufferLength, drawVisual;
-                let currentInterimDiv = null; let lastFinalText = "";
+                    // ======== STATE ========
+                    let isRecording = false;
+                    let recognition = null;
+                    let mediaRecorder = null;
+                    let audioChunks = [];
+                    let audioStream = null;
+                    let audioContext = null;
+                    let analyser = null;
+                    let dataArray = null;
+                    let drawVisual = null;
+                    let currentInterimDiv = null;
+                    let lastFinalText = "";
+                    let displayStream = null;
 
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    status.innerText = "Browser tidak mendukung Speech API.";
-                } else {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    recognition = new SpeechRecognition();
-                    recognition.continuous = true; recognition.interimResults = true;
-
-                    function getTimestamp() { const now = new Date(); return `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`; }
-
-                    recognition.onresult = (event) => {
-                        let interimTranscript = ''; let finalTranscript = '';
-                        for (let i = event.resultIndex; i < event.results.length; ++i) {
-                            if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
-                            else interimTranscript += event.results[i][0].transcript;
+                    // ======== INIT SPEECH RECOGNITION ========
+                    function initSpeechRecognition() {
+                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        if (!SpeechRecognition) {
+                            status.innerText = "❌ Browser tidak mendukung Speech API";
+                            return null;
                         }
+                        const rec = new SpeechRecognition();
+                        rec.continuous = true;
+                        rec.interimResults = true;
+                        rec.lang = langSelect.value;
 
-                        if (finalTranscript) {
-                            if (finalTranscript.trim() === lastFinalText.trim()) return;
-                            lastFinalText = finalTranscript; const timeStr = getTimestamp();
-                            if (currentInterimDiv) {
-                                currentInterimDiv.className = 'line-final'; currentInterimDiv.innerHTML = `<span class="timestamp">${timeStr}</span> ${finalTranscript}`; currentInterimDiv = null;
+                        rec.onstart = function() {
+                            isRecording = true;
+                            status.innerText = "🎤 Menangkap audio (" + (langSelect.value === 'id-ID' ? 'ID' : langSelect.value) + ")...";
+                            indicator.className = 'indicator-dot recording';
+                            startBtn.disabled = true;
+                            stopBtn.disabled = false;
+                            langSelect.disabled = true;
+                            const placeholder = document.getElementById('placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
+                        };
+
+                        rec.onerror = function(event) {
+                            console.error('Speech recognition error:', event.error);
+                            if (event.error === 'not-allowed') {
+                                status.innerText = "❌ Izin mikrofon/screen capture ditolak!";
+                            } else if (event.error === 'no-speech') {
+                                // No speech - normal
+                            } else if (event.error === 'aborted') {
+                                // Normal abort
                             } else {
-                                const line = document.createElement('div'); line.className = 'line-final'; line.innerHTML = `<span class="timestamp">${timeStr}</span> ${finalTranscript}`; transcriptBox.appendChild(line);
+                                status.innerText = "⚠️ Error: " + event.error;
                             }
-                            transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                        } else if (interimTranscript) {
-                            if (!currentInterimDiv) { currentInterimDiv = document.createElement('div'); currentInterimDiv.className = 'line-interim'; transcriptBox.appendChild(currentInterimDiv); }
-                            currentInterimDiv.innerText = interimTranscript; transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                        }
-                    };
+                        };
 
-                    recognition.onend = () => { if (isRecording) { try { recognition.start(); } catch(e){} } };
+                        rec.onend = function() {
+                            // Restart jika masih recording
+                            if (isRecording) {
+                                try { 
+                                    rec.start();
+                                } catch(e) {
+                                    console.log('Restart recognition error:', e);
+                                }
+                            }
+                        };
 
+                        rec.onresult = function(event) {
+                            let interimTranscript = '';
+                            let finalTranscript = '';
+                            
+                            for (let i = event.resultIndex; i < event.results.length; i++) {
+                                const result = event.results[i];
+                                if (result.isFinal) {
+                                    finalTranscript += result[0].transcript + ' ';
+                                } else {
+                                    interimTranscript += result[0].transcript;
+                                }
+                            }
+
+                            if (finalTranscript.trim()) {
+                                const cleanFinal = finalTranscript.trim();
+                                if (cleanFinal === lastFinalText.trim()) return;
+                                lastFinalText = cleanFinal;
+                                
+                                const now = new Date();
+                                const timeStr = '[' + 
+                                    String(now.getHours()).padStart(2,'0') + ':' + 
+                                    String(now.getMinutes()).padStart(2,'0') + ':' + 
+                                    String(now.getSeconds()).padStart(2,'0') + ']';
+                                
+                                if (currentInterimDiv) {
+                                    currentInterimDiv.className = 'line-final';
+                                    currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
+                                    currentInterimDiv = null;
+                                } else {
+                                    const line = document.createElement('div');
+                                    line.className = 'line-final';
+                                    line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
+                                    transcriptBox.appendChild(line);
+                                }
+                                transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                            } else if (interimTranscript.trim()) {
+                                if (!currentInterimDiv) {
+                                    currentInterimDiv = document.createElement('div');
+                                    currentInterimDiv.className = 'line-interim';
+                                    transcriptBox.appendChild(currentInterimDiv);
+                                }
+                                currentInterimDiv.textContent = '💬 ' + interimTranscript;
+                                transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                            }
+                        };
+
+                        return rec;
+                    }
+
+                    // ======== VISUALIZER ========
                     function setupVisualizer(stream) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        const source = audioContext.createMediaStreamSource(stream);
-                        analyser = audioContext.createAnalyser(); analyser.fftSize = 256;
-                        bufferLength = analyser.frequencyBinCount; dataArray = new Uint8Array(bufferLength);
-                        source.connect(analyser);
+                        try {
+                            // Get only audio track for visualizer
+                            const audioTracks = stream.getAudioTracks();
+                            if (audioTracks.length === 0) return;
+                            
+                            const audioOnlyStream = new MediaStream(audioTracks);
+                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const source = audioContext.createMediaStreamSource(audioOnlyStream);
+                            analyser = audioContext.createAnalyser();
+                            analyser.fftSize = 256;
+                            dataArray = new Uint8Array(analyser.frequencyBinCount);
+                            source.connect(analyser);
+                        } catch(e) {
+                            console.warn('Visualizer setup error:', e);
+                        }
                     }
 
                     function drawVisualizer() {
-                        canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
-                        if (analyser) analyser.getByteFrequencyData(dataArray);
-                        const barWidth = (visualizer.width / bufferLength) * 2.5; let x = 0;
-                        for(let i = 0; i < bufferLength; i++) {
-                            const barHeight = dataArray[i]; canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ', 50, 255)';
-                            canvasCtx.shadowBlur = 10; canvasCtx.shadowColor = '#3b82f6';
-                            const y = (visualizer.height / 2) - (barHeight / 2);
-                            canvasCtx.beginPath(); canvasCtx.roundRect(x, y, barWidth, barHeight, 5); canvasCtx.fill(); x += barWidth + 1;
+                        if (!analyser || !isRecording) return;
+                        const width = visualizer.width;
+                        const height = visualizer.height;
+                        canvasCtx.clearRect(0, 0, width, height);
+                        
+                        analyser.getByteFrequencyData(dataArray);
+                        const bufferLength = analyser.frequencyBinCount;
+                        const barWidth = (width / bufferLength) * 2.5;
+                        let x = 0;
+                        
+                        for (let i = 0; i < bufferLength; i++) {
+                            const barHeight = dataArray[i] / 2;
+                            const r = Math.min(barHeight + 100, 255);
+                            const g = Math.min(barHeight / 2 + 50, 255);
+                            const b = Math.min(barHeight + 150, 255);
+                            canvasCtx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+                            canvasCtx.shadowBlur = 10;
+                            canvasCtx.shadowColor = '#f59e0b';
+                            const y = (height / 2) - (barHeight / 2);
+                            canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
+                            x += barWidth + 1;
                         }
-                        drawVisual = requestAnimationFrame(drawVisualizer);
+                        if (isRecording) {
+                            drawVisual = requestAnimationFrame(drawVisualizer);
+                        }
                     }
 
-                    startBtn.onclick = async () => {
+                    // ======== START - GUNAKAN getDisplayMedia UNTUK SCREEN CAPTURE ========
+                    startBtn.onclick = async function() {
                         try {
-                            lastFinalText = ""; recognition.lang = langSelect.value;
-                            audioStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                            audioChunks = []; mediaRecorder = new MediaRecorder(audioStream);
-                            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                            mediaRecorder.onstop = () => {
-                                const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                                const audioUrl = URL.createObjectURL(blob); const fileName = 'Rekaman_TranscribX_' + new Date().getTime() + '.webm';
-                                const audioItem = document.createElement('div'); audioItem.className = 'audio-item';
-                                audioItem.innerHTML = `<audio controls src="${audioUrl}"></audio> <a href="${audioUrl}" download="${fileName}" class="btn-custom" style="background:#10b981;">💾 Download Audio</a>`;
-                                audioContainer.prepend(audioItem);
+                            // Reset
+                            lastFinalText = "";
+                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Bicara atau putar audio di tab yang dipilih.</div>';
+                            
+                            // GUNAKAN getDisplayMedia untuk screen capture DENGAN AUDIO
+                            displayStream = await navigator.mediaDevices.getDisplayMedia({ 
+                                video: true,  // Perlu video untuk screen capture (bisa diabaikan)
+                                audio: true   // INI YANG PENTING: tangkap system audio
+                            });
+                            
+                            // Cek apakah audio track tersedia
+                            const audioTracks = displayStream.getAudioTracks();
+                            if (audioTracks.length === 0) {
+                                status.innerText = "⚠️ Tidak ada audio! Pastikan 'Share audio' dicentang.";
+                                startBtn.disabled = false;
+                                return;
+                            }
+                            
+                            // Gunakan audio stream untuk MediaRecorder
+                            audioStream = new MediaStream(audioTracks);
+                            
+                            // Setup MediaRecorder
+                            audioChunks = [];
+                            let mimeType = 'audio/webm';
+                            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                                mimeType = 'audio/mp4';
+                            }
+                            
+                            mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
+                            
+                            mediaRecorder.ondataavailable = function(e) {
+                                if (e.data.size > 0) audioChunks.push(e.data);
                             };
-                            setupVisualizer(audioStream); mediaRecorder.start(); recognition.start(); drawVisualizer(); isRecording = true;
-                            status.innerText = "Merekam (" + (langSelect.value === 'id-ID' ? 'ID' : 'EN') + ")..."; indicator.style.background = "#ef4444"; indicator.style.boxShadow = "0 0 10px #ef4444";
-                            startBtn.disabled = true; stopBtn.disabled = false; langSelect.disabled = true;
-                            if(document.getElementById('placeholder')) document.getElementById('placeholder').style.display = 'none';
-                        } catch(err) { console.error("Gagal akses mic:", err); status.innerText = "Izin Mic Ditolak!"; }
+                            
+                            mediaRecorder.onstop = function() {
+                                if (audioChunks.length > 0) {
+                                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                                    const audioUrl = URL.createObjectURL(blob);
+                                    const fileName = 'ScreenCapture_' + Date.now() + '.webm';
+                                    const audioItem = document.createElement('div');
+                                    audioItem.className = 'audio-item';
+                                    audioItem.innerHTML = `
+                                        <audio controls src="${audioUrl}"></audio>
+                                        <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:4px 12px; font-size:12px;">💾 Download</a>
+                                        <small style="color:#94a3b8;">WEBM</small>
+                                    `;
+                                    audioContainer.prepend(audioItem);
+                                }
+                                audioChunks = [];
+                            };
+
+                            // Setup visualizer dengan full displayStream (ada audionya)
+                            setupVisualizer(displayStream);
+                            
+                            // Start MediaRecorder
+                            mediaRecorder.start(1000);
+                            
+                            // Init dan start speech recognition
+                            recognition = initSpeechRecognition();
+                            if (recognition) {
+                                recognition.start();
+                            } else {
+                                throw new Error('Speech recognition tidak tersedia');
+                            }
+                            
+                            // Start visualizer
+                            drawVisualizer();
+                            resizeVisualizer();
+                            
+                        } catch(err) {
+                            console.error('Start error:', err);
+                            let errorMsg = "❌ Gagal: ";
+                            if (err.name === 'NotAllowedError') {
+                                errorMsg += "Screen capture dibatalkan atau izin ditolak.";
+                            } else if (err.name === 'AbortError') {
+                                errorMsg += "Screen capture dibatalkan.";
+                            } else {
+                                errorMsg += err.message;
+                            }
+                            status.innerText = errorMsg;
+                            startBtn.disabled = false;
+                            stopBtn.disabled = true;
+                        }
                     };
 
-                    stopBtn.onclick = () => {
-                        isRecording = false; recognition.stop();
-                        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-                        if (audioStream) audioStream.getTracks().forEach(track => track.stop());
-                        cancelAnimationFrame(drawVisual); if (audioContext) audioContext.close();
+                    // ======== STOP ========
+                    stopBtn.onclick = function() {
+                        isRecording = false;
+                        
+                        if (recognition) {
+                            try { recognition.stop(); } catch(e) {}
+                            recognition = null;
+                        }
+                        
+                        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                            mediaRecorder.stop();
+                            mediaRecorder = null;
+                        }
+                        
+                        if (audioStream) {
+                            audioStream.getTracks().forEach(track => track.stop());
+                            audioStream = null;
+                        }
+                        
+                        // Stop display stream (screen sharing)
+                        if (displayStream) {
+                            displayStream.getTracks().forEach(track => track.stop());
+                            displayStream = null;
+                        }
+                        
+                        if (drawVisual) {
+                            cancelAnimationFrame(drawVisual);
+                            drawVisual = null;
+                        }
+                        
+                        if (audioContext) {
+                            try { audioContext.close(); } catch(e) {}
+                            audioContext = null;
+                            analyser = null;
+                        }
+                        
                         canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
-                        status.innerText = "Standby..."; indicator.style.background = "#cbd5e1"; indicator.style.boxShadow = "none";
-                        startBtn.disabled = false; stopBtn.disabled = true; langSelect.disabled = false;
+                        status.innerText = "⏸️ Stopped";
+                        indicator.className = 'indicator-dot';
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        langSelect.disabled = false;
+                        
+                        if (currentInterimDiv) {
+                            currentInterimDiv.className = 'line-final';
+                            const now = new Date();
+                            const timeStr = '[' + 
+                                String(now.getHours()).padStart(2,'0') + ':' + 
+                                String(now.getMinutes()).padStart(2,'0') + ':' + 
+                                String(now.getSeconds()).padStart(2,'0') + ']';
+                            const text = currentInterimDiv.textContent.replace('💬 ', '');
+                            currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + text;
+                            currentInterimDiv = null;
+                        }
                     };
 
+                    // ======== LISTEN: Saat user stop sharing dari browser ========
+                    // Deteksi saat stream dihentikan dari luar (user klik "Stop sharing")
+                    if (displayStream) {
+                        displayStream.getVideoTracks()[0]?.addEventListener('ended', () => {
+                            if (isRecording) stopBtn.click();
+                        });
+                    }
+
+                    // ======== RESIZE VISUALIZER ========
+                    function resizeVisualizer() {
+                        const rect = visualizer.parentElement.getBoundingClientRect();
+                        visualizer.width = visualizer.parentElement.clientWidth || 600;
+                        visualizer.height = 80;
+                    }
+                    window.addEventListener('resize', resizeVisualizer);
+                    setTimeout(resizeVisualizer, 100);
+
+                    // ======== COPY ========
+                    copyBtn.onclick = function() {
+                        const lines = transcriptBox.querySelectorAll('.line-final');
+                        if (lines.length === 0) { alert('Belum ada teks untuk dicopy!'); return; }
+                        const text = Array.from(lines).map(line => line.innerText).join('\\n');
+                        navigator.clipboard.writeText(text).then(() => {
+                            const orig = copyBtn.innerText;
+                            copyBtn.innerText = '✅ Copied!';
+                            setTimeout(() => copyBtn.innerText = orig, 2000);
+                        }).catch(() => {
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            ta.remove();
+                            const orig = copyBtn.innerText;
+                            copyBtn.innerText = '✅ Copied!';
+                            setTimeout(() => copyBtn.innerText = orig, 2000);
+                        });
+                    };
+
+                    // ======== DOWNLOAD TXT ========
+                    downloadTxtBtn.onclick = function() {
+                        const lines = transcriptBox.querySelectorAll('.line-final');
+                        if (lines.length === 0) { alert('Belum ada teks untuk disimpan!'); return; }
+                        const text = Array.from(lines).map(line => line.innerText).join('\\n');
+                        const blob = new Blob([text], { type: 'text/plain' });
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = 'Transkrip_ScreenCapture_' + Date.now() + '.txt';
+                        a.click();
+                    };
+
+                    // ======== CLEAR ========
+                    clearBtn.onclick = function() {
+                        if (!confirm('Yakin ingin menghapus semua teks?')) return;
+                        transcriptBox.innerHTML = `
+                            <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
+                                🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
+                            </div>
+                        `;
+                        lastFinalText = "";
+                        currentInterimDiv = null;
+                        aiContent.innerHTML = "";
+                    };
+
+                    // ======== GET TRANSCRIPT TEXT ========
                     function getTranscriptText() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) return ""; return Array.from(lines).map(line => line.innerText).join('\\n');
+                        return Array.from(lines).map(line => line.innerText).join('\\n');
                     }
 
-                    copyBtn.onclick = () => {
-                        const text = getTranscriptText(); if (!text) return alert("Belum ada teks untuk dicopy!");
-                        navigator.clipboard.writeText(text).then(() => { const originalText = copyBtn.innerText; copyBtn.innerText = "✅ Copied!"; setTimeout(() => copyBtn.innerText = originalText, 2000); });
-                    };
-
-                    downloadTxtBtn.onclick = () => {
-                        const text = getTranscriptText(); if (!text) return alert("Belum ada teks untuk disimpan!");
-                        const blob = new Blob([text], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Transkrip_Raw_' + new Date().getTime() + '.txt'; a.click();
-                    };
-
-                    clearBtn.onclick = () => {
-                        if(confirm("Yakin ingin menghapus semua teks di layar?")) {
-                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px;">Suara yang ditangkap akan muncul di sini...</div>';
-                            lastFinalText = ""; aiContent.innerHTML = "";
+                    // ======== AI SUMMARY ========
+                    aiBtn.onclick = async function() {
+                        const transcript = getTranscriptText();
+                        const apiKey = apiKeyInput.value.trim();
+                        
+                        if (!apiKey) {
+                            alert('⚠️ Masukkan API Key LiteLLM / Gemini terlebih dahulu.');
+                            apiKeyInput.focus();
+                            return;
                         }
-                    };
+                        if (!transcript) {
+                            alert('⚠️ Transkrip masih kosong. Lakukan capture terlebih dahulu.');
+                            return;
+                        }
+                        
+                        const originalText = aiBtn.innerHTML;
+                        aiBtn.innerHTML = '⏳ Memproses...';
+                        aiBtn.disabled = true;
+                        aiContent.innerHTML = `
+                            <div class="p-6 bg-purple-50 rounded-2xl border border-purple-200 text-center mt-4 fade-in">
+                                <p class="text-purple-600 font-bold">🔄 AI sedang memproses Notulensi... Mohon tunggu.</p>
+                            </div>
+                        `;
 
-                    aiBtn.onclick = async () => {
-                        const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
-                        if (!apiKey) { alert("⚠️ Masukkan API Key LiteLLM/Gemini terlebih dahulu."); apiKeyInput.focus(); return; }
-                        if (!transcript) { alert("⚠️ Transkrip masih kosong."); return; }
-
-                        const originalText = aiBtn.innerHTML; aiBtn.innerHTML = "⏳ AI sedang memproses JSON..."; aiBtn.disabled = true;
-                        aiContent.innerHTML = `<div class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-200 shadow-sm text-center fade-in mt-6"><p class="text-purple-600 font-bold animate-pulse">Memproses Notulensi, Cytoscape, Markmap & Mermaid... Mohon tunggu (±15 detik).</p></div>`;
-
-                        // PENGUNCIAN PROMPT DUA WAJAH (Naratif Detail untuk JSON, Poin Ringkas Terstruktur untuk Markmap)
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN JSON NOTULENSI:
                         - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
-                        - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
-                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-
-                        ATURAN MARKMAP (PENTING!):
-                        Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
-                        # [Judul Topik Utama Rapat]
-                        ## Ringkasan Eksekutif
-                        - [Poin ringkas]
-                        ## Agenda / Topik
-                        - [Poin]
-                        ## Peserta
-                        - [Nama]
-                        ## Jalannya Diskusi
-                        - [Poin diskusi ringkas 1]
-                          - [Detail singkat]
-                        - [Poin diskusi ringkas 2]
-                        ## Kendala & Solusi (Jika ada)
-                        - [Kendala]
-                          - [Solusi]
-                        ## Keputusan Utama
-                        - [Poin keputusan]
-                        ## Rencana Tindak Lanjut
-                        - [Nama Tugas]
-                          - PIC: [Nama]
-                          - Deadline: [Waktu]
-                          - Prioritas: [Level]
-
-                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
+                        - notulensi_rapat: Object dengan agenda, peserta, jalannya_diskusi (array narasi detail), keputusan (array), rencana_tindak_lanjut (array of objects dengan tugas, pic, deadline, prioritas), hubungan_topik (array of objects dengan sumber, target, relasi).
+                        - visual_mindmap: Kode Mermaid graph LR.
+                        - markmap_code: Kode Markdown untuk Markmap.
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                            "model": "gemini/gemini-2.5-flash",
+                            "messages": [{ "role": "user", "content": prompt }],
+                            "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",
                                 "json_schema": {
-                                    "name": "meeting_summary", "strict": true,
+                                    "name": "meeting_summary",
+                                    "strict": true,
                                     "schema": {
                                         "type": "object",
                                         "properties": {
@@ -687,150 +1403,351 @@ else:
                                             "notulensi_rapat": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
-                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
-                                                }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
+                                                    "agenda": { "type": "string" },
+                                                    "peserta": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } },
+                                                    "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "rencana_tindak_lanjut": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "tugas": { "type": "string" },
+                                                                "pic": { "type": "string" },
+                                                                "deadline": { "type": "string" },
+                                                                "prioritas": { "type": "string" }
+                                                            },
+                                                            "required": ["tugas", "pic", "deadline", "prioritas"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    },
+                                                    "hubungan_topik": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "sumber": { "type": "string" },
+                                                                "target": { "type": "string" },
+                                                                "relasi": { "type": "string" }
+                                                            },
+                                                            "required": ["sumber", "target", "relasi"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    }
+                                                },
+                                                "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"],
+                                                "additionalProperties": false
                                             },
-                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": false
+                                            "visual_mindmap": { "type": "string" },
+                                            "markmap_code": { "type": "string" }
+                                        },
+                                        "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"],
+                                        "additionalProperties": false
                                     }
                                 }
                             }
                         };
 
                         try {
-                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", { method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
+                                method: "POST",
+                                headers: {
+                                    "Authorization": "Bearer " + apiKey,
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            
                             const resJson = await response.json();
-
+                            
                             if (resJson.choices && resJson.choices[0].message.content) {
                                 const data = JSON.parse(resJson.choices[0].message.content);
                                 window.lastAiData = data;
-                                const reportDiv = document.createElement('div'); reportDiv.className = "fade-in space-y-6 mt-6 mb-10";
                                 
-                                let taskListHtml = `<div class="mt-6 pt-4 border-t border-slate-100">
-                                    <p class="font-black text-blue-600 uppercase text-[11px] mb-3">📋 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
-                                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                                        <table class="w-full text-left border-collapse bg-white">
-                                            <tr class="bg-blue-50 text-blue-800 text-[11px] uppercase"><th class="p-3 border-b border-r">Tugas</th><th class="p-3 border-b border-r">PIC</th><th class="p-3 border-b border-r">Deadline</th><th class="p-3 border-b">Prioritas</th></tr>
-                                            ${data.notulensi_rapat.rencana_tindak_lanjut.map(t => `<tr class="text-[12px] border-b hover:bg-slate-50 transition"><td class="p-3 border-r font-medium text-slate-800">${t.tugas}</td><td class="p-3 border-r text-slate-600">${t.pic}</td><td class="p-3 border-r text-slate-600">${t.deadline}</td><td class="p-3 font-bold ${t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600'}">${t.prioritas}</td></tr>`).join('')}
-                                        </table>
-                                    </div>
-                                </div>`;
+                                const tasks = data.notulensi_rapat.rencana_tindak_lanjut || [];
+                                let taskRows = tasks.map(t => `
+                                    <tr class="text-[12px] border-b hover:bg-slate-50">
+                                        <td class="p-3 border-r font-medium text-slate-800">${t.tugas}</td>
+                                        <td class="p-3 border-r text-slate-600">${t.pic}</td>
+                                        <td class="p-3 border-r text-slate-600">${t.deadline}</td>
+                                        <td class="p-3 font-bold ${t.prioritas && t.prioritas.toLowerCase() === 'tinggi' ? 'text-red-600' : 'text-blue-600'}">${t.prioritas || '-'}</td>
+                                    </tr>
+                                `).join('');
 
-                                let notulensiHtml = `
-                                    <div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden mb-6">
-                                        <div class="flex justify-between items-center mb-6">
-                                            <h5 class="text-[15px] font-black text-slate-700 uppercase tracking-widest">NOTULENSI RESMI RAPAT</h5>
-                                            <button onclick="exportNotulensiTxt()" class="btn-export shadow-md">📝 Download TXT</button>
-                                        </div>
-                                        <div class="space-y-5 text-[13px] text-slate-700 leading-relaxed">
-                                            <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">RINGKASAN EKSEKUTIF:</p>
-                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-inner">
-                                                    <ul class="list-disc ml-5 space-y-2 font-semibold text-slate-800">${data.ringkasan_eksekutif.map(r => `<li>${r}</li>`).join('')}</ul>
+                                const ringkasanItems = (data.ringkasan_eksekutif || []).map(r => `<li>${r}</li>`).join('');
+                                const diskusiItems = (data.notulensi_rapat.jalannya_diskusi || []).map(d => `<li>${d}</li>`).join('');
+                                const keputusanItems = (data.notulensi_rapat.keputusan || []).map(k => `<li>${k}</li>`).join('');
+                                const pesertaList = (data.notulensi_rapat.peserta || []).join(', ') || '-';
+
+                                let reportHtml = `
+                                    <div class="fade-in space-y-6 mt-6 mb-10">
+                                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h5 class="text-sm font-bold text-slate-700 uppercase tracking-wide">📋 NOTULENSI RAPAT</h5>
+                                                <button onclick="exportNotulensiTxt()" class="btn-export">📝 Download TXT</button>
+                                            </div>
+                                            <div class="space-y-4 text-sm text-slate-700">
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">RINGKASAN EKSEKUTIF:</p>
+                                                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                                        <ul class="list-disc ml-5 space-y-1 font-semibold text-slate-800">${ringkasanItems}</ul>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                                                        <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">AGENDA:</p>
+                                                        <p class="font-bold text-slate-800">${data.notulensi_rapat.agenda || '-'}</p>
+                                                    </div>
+                                                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                                                        <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p>
+                                                        <p class="font-bold text-slate-800">${pesertaList}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">JALANNYA DISKUSI:</p>
+                                                    <div class="bg-white p-4 rounded-xl border border-slate-200">
+                                                        <ul class="list-disc ml-5 space-y-2">${diskusiItems}</ul>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">KEPUTUSAN UTAMA:</p>
+                                                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                                        <ul class="list-disc ml-5 space-y-1 font-bold text-emerald-900">${keputusanItems}</ul>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-blue-600 uppercase text-[10px] mb-1">📋 RENCANA TINDAK LANJUT:</p>
+                                                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                                                        <table class="w-full text-left border-collapse bg-white text-xs">
+                                                            <thead>
+                                                                <tr class="bg-blue-50 text-blue-800 uppercase">
+                                                                    <th class="p-3 border-b border-r">Tugas</th>
+                                                                    <th class="p-3 border-b border-r">PIC</th>
+                                                                    <th class="p-3 border-b border-r">Deadline</th>
+                                                                    <th class="p-3 border-b">Prioritas</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>${taskRows || '<tr><td colspan="4" class="p-3 text-center text-slate-400">Belum ada action item</td></tr>'}</tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">AGENDA / TOPIK:</p><p class="font-bold text-slate-800">${data.notulensi_rapat.agenda || '-'}</p></div>
-                                                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><p class="font-black text-blue-600 uppercase text-[10px] mb-1">PESERTA:</p><p class="font-bold text-slate-800">${data.notulensi_rapat.peserta.join(', ') || '-'}</p></div>
-                                            </div>
-                                            <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">JALANNYA DISKUSI:</p>
-                                                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                                    <ul class="list-disc ml-5 space-y-3">${data.notulensi_rapat.jalannya_diskusi.map(d => `<li>${d}</li>`).join('')}</ul>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p class="font-black text-blue-600 uppercase text-[11px] mb-2">KEPUTUSAN / KESIMPULAN UTAMA:</p>
-                                                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                                                    <ul class="list-disc ml-5 space-y-2 font-bold text-emerald-900">${data.notulensi_rapat.keputusan.map(k => `<li>${k}</li>`).join('')}</ul>
-                                                </div>
-                                            </div>
-                                            ${taskListHtml}
-                                        </div>
-                                    </div>
-                                `;
-
-                                let rawMermaid = data.visual_mindmap.replace(/```mermaid/gi, '').replace(/```/g, '').trim();
-                                if (!rawMermaid.toLowerCase().includes('graph') && !rawMermaid.toLowerCase().includes('mindmap')) {
-                                    rawMermaid = "graph LR\\n" + rawMermaid;
-                                }
-
-                                let rawMarkmap = data.markmap_code.replace(/```markdown/gi, '').replace(/```/g, '').trim();
-
-                                let visualizationHtml = `
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                                        <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2"><span>🌿</span> Markmap (Peta Konsep Rapat)</h5><button onclick="downloadMarkmapImage('markmap-capture-area', 'Markmap', event)" class="btn-export">📸 PNG</button></div>
-                                            <div id="markmap-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden markmap-svg-container relative p-2" style="min-height: 400px;"></div>
                                         </div>
                                         
-                                        <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                                            <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><span>🌊</span> Mermaid.js (Alur)</h5><button onclick="downloadMermaidImage('mermaid-capture-area', 'Mermaid', event)" class="btn-export">📸 PNG</button></div>
-                                            <div id="mermaid-capture-area" class="flex-grow bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto p-4 mermaid-container">
-                                                <div class="mermaid">${rawMermaid}</div>
+                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div class="p-4 bg-white rounded-2xl border border-slate-200">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <h5 class="text-[10px] font-bold text-emerald-600 uppercase">🌿 Markmap</h5>
+                                                    <button onclick="downloadMarkmapImage('markmap-area', 'Markmap', event)" class="btn-export">📸 PNG</button>
+                                                </div>
+                                                <div id="markmap-area" class="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden p-2" style="min-height:350px;">
+                                                    <svg id="markmap-svg" style="width:100%; height:350px;"></svg>
+                                                </div>
+                                            </div>
+                                            <div class="p-4 bg-white rounded-2xl border border-slate-200">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <h5 class="text-[10px] font-bold text-indigo-600 uppercase">🌊 Mermaid</h5>
+                                                    <button onclick="downloadMermaidImage('mermaid-area', 'Mermaid', event)" class="btn-export">📸 PNG</button>
+                                                </div>
+                                                <div id="mermaid-area" class="bg-slate-50 border border-slate-100 rounded-xl overflow-x-auto p-4">
+                                                    <div class="mermaid">${data.visual_mindmap || 'graph LR; A[No Data]'}</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col mb-6">
-                                        <div class="flex justify-between items-center mb-4"><h5 class="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><span>🕸️</span> Cytoscape.js (Jejaring Entitas)</h5><button onclick="exportCyToPng()" class="btn-export">📸 PNG Full</button></div>
-                                        <div id="cy" class="cy-container"></div>
+                                        
+                                        <div class="p-4 bg-white rounded-2xl border border-slate-200">
+                                            <div class="flex justify-between items-center mb-3">
+                                                <h5 class="text-[10px] font-bold text-rose-600 uppercase">🕸️ Cytoscape</h5>
+                                                <button onclick="exportCyToPng()" class="btn-export">📸 PNG</button>
+                                            </div>
+                                            <div id="cy" class="cy-container"></div>
+                                        </div>
                                     </div>
                                 `;
 
-                                reportDiv.innerHTML = notulensiHtml + visualizationHtml;
-                                aiContent.innerHTML = ""; aiContent.appendChild(reportDiv);
+                                aiContent.innerHTML = reportHtml;
 
-                                // 1. Render Markmap
+                                // Render Markmap
                                 try {
-                                    if (!window.markmap) throw new Error("Library Markmap gagal dimuat.");
-                                    const { Transformer, Markmap } = window.markmap; const { root } = new Transformer().transform(rawMarkmap);
-                                    const svgContainer = document.getElementById('markmap-capture-area'); svgContainer.innerHTML = '<svg id="markmap-svg" style="width:100%; height:400px; min-height:400px;"></svg>';
-                                    Markmap.create(document.getElementById('markmap-svg'), null, root);
-                                } catch (e) { console.error("Markmap Render Error:", e); document.getElementById('markmap-capture-area').innerHTML = `<p class="text-red-500 font-bold p-4 text-xs">Error merender Markmap: ${e.message}</p>`; }
+                                    const markdownCode = data.markmap_code || '# Mindmap\\n## Topik Utama';
+                                    const { Transformer, Markmap } = window.markmap;
+                                    const { root } = new Transformer().transform(markdownCode);
+                                    Markmap.create('#markmap-svg', null, root);
+                                } catch(e) {
+                                    document.getElementById('markmap-area').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Markmap</p>';
+                                }
 
-                                // 2. Render Mermaid 
+                                // Render Mermaid
                                 setTimeout(() => {
-                                    try { mermaid.run({ querySelector: '.mermaid' }); }
-                                    catch (e) { document.querySelector('.mermaid').innerHTML = `<p class="text-red-500 text-xs font-bold">⚠️ Error sintaks dari AI. Coba generate ulang.</p>`; }
-                                }, 500);
+                                    try { mermaid.run({ querySelector: '.mermaid' }); } catch(e) {}
+                                }, 300);
 
-                                // 3. Render Cytoscape
+                                // Render Cytoscape
                                 setTimeout(() => {
                                     try {
-                                        const cyElements = []; const nodesSet = new Set();
-                                        data.notulensi_rapat.hubungan_topik.forEach(rel => {
-                                            if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
-                                            if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
+                                        const relaciones = data.notulensi_rapat.hubungan_topik || [];
+                                        const cyElements = [];
+                                        const nodesSet = new Set();
+                                        relaciones.forEach(rel => {
+                                            if (!nodesSet.has(rel.sumber)) {
+                                                nodesSet.add(rel.sumber);
+                                                cyElements.push({ data: { id: rel.sumber, label: rel.sumber } });
+                                            }
+                                            if (!nodesSet.has(rel.target)) {
+                                                nodesSet.add(rel.target);
+                                                cyElements.push({ data: { id: rel.target, label: rel.target } });
+                                            }
                                             cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
                                         });
+                                        
+                                        if (window.myCyInstance) window.myCyInstance.destroy();
+                                        
                                         window.myCyInstance = cytoscape({
-                                            container: document.getElementById('cy'), elements: cyElements,
-                                            style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }],
+                                            container: document.getElementById('cy'),
+                                            elements: cyElements.length ? cyElements : [{ data: { id: 'no-data', label: 'Tidak ada data' } }],
+                                            style: [
+                                                { selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } },
+                                                { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }
+                                            ],
                                             layout: { name: 'cose', padding: 20 }
                                         });
-                                    } catch (e) { console.error("Cytoscape Error:", e); document.getElementById('cy').innerHTML = `<p class="text-red-500 font-bold p-4 text-xs">Error merender Cytoscape: ${e.message}</p>`; }
-                                }, 600);
+                                    } catch(e) {
+                                        document.getElementById('cy').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Cytoscape</p>';
+                                    }
+                                }, 500);
 
-                            } else if (resJson.error) { aiContent.innerHTML = `<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Error: ${resJson.error.message}</p>`; }
-                        } catch (err) { aiContent.innerHTML = `<p class="text-red-500 font-bold p-4 bg-red-50 rounded-xl mt-6">Koneksi Gagal: Cek API Key. Detail: ${err.message}</p>`; }
-                        finally { aiBtn.innerHTML = originalText; aiBtn.disabled = false; aiContent.scrollIntoView({ behavior: 'smooth' }); }
+                            } else {
+                                aiContent.innerHTML = `<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Error: ${resJson.error?.message || 'Unknown error'}</div>`;
+                            }
+                        } catch(err) {
+                            aiContent.innerHTML = `<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Koneksi Gagal: ${err.message}</div>`;
+                        } finally {
+                            aiBtn.innerHTML = originalText;
+                            aiBtn.disabled = false;
+                            aiContent.scrollIntoView({ behavior: 'smooth' });
+                        }
                     };
-                }
+
+                    // ======== GLOBAL EXPORT FUNCTIONS ========
+                    window.exportCyToPng = function() {
+                        if (!window.myCyInstance) { alert('Cytoscape belum siap!'); return; }
+                        const b64 = window.myCyInstance.png({ full: true, scale: 4, bg: 'white' });
+                        const a = document.createElement('a');
+                        a.href = b64;
+                        a.download = 'Cytoscape_Map_HighRes.png';
+                        a.click();
+                    };
+
+                    window.exportNotulensiTxt = function() {
+                        if (!window.lastAiData) { alert('Data Notulensi belum ada!'); return; }
+                        const data = window.lastAiData;
+                        let txt = 'NOTULENSI RAPAT\\n========================\\n\\n';
+                        txt += 'RINGKASAN EKSEKUTIF:\\n';
+                        (data.ringkasan_eksekutif || []).forEach(r => txt += '- ' + r + '\\n');
+                        txt += '\\nAgenda: ' + (data.notulensi_rapat.agenda || '-') + '\\n';
+                        txt += 'Peserta: ' + (data.notulensi_rapat.peserta ? data.notulensi_rapat.peserta.join(', ') : '-') + '\\n\\n';
+                        txt += 'Jalannya Diskusi:\\n';
+                        (data.notulensi_rapat.jalannya_diskusi || []).forEach(d => txt += '- ' + d + '\\n');
+                        txt += '\\nKeputusan Utama:\\n';
+                        (data.notulensi_rapat.keputusan || []).forEach(k => txt += '- ' + k + '\\n');
+                        txt += '\\nRencana Tindak Lanjut:\\n';
+                        (data.notulensi_rapat.rencana_tindak_lanjut || []).forEach(t => {
+                            txt += '- [' + (t.prioritas || 'Normal') + '] ' + t.tugas + ' (PIC: ' + t.pic + ', Deadline: ' + t.deadline + ')\\n';
+                        });
+                        const blob = new Blob([txt], { type: 'text/plain' });
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = 'Notulensi_Resmi.txt';
+                        a.click();
+                    };
+
+                    window.downloadMarkmapImage = function(wrapperId, title, event) {
+                        const container = document.getElementById(wrapperId);
+                        const svgEl = container.querySelector('svg');
+                        if (!svgEl) return;
+                        const btn = event.currentTarget;
+                        const origText = btn.innerHTML;
+                        btn.innerHTML = '⏳ Saving...';
+                        btn.disabled = true;
+                        
+                        try {
+                            const g = svgEl.querySelector('g');
+                            if (!g) throw new Error('No g element');
+                            const bbox = g.getBBox();
+                            const padding = 50;
+                            const width = Math.max(bbox.width, 300) + padding * 2;
+                            const height = Math.max(bbox.height, 300) + padding * 2;
+                            
+                            const originalViewBox = svgEl.getAttribute('viewBox');
+                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + width + ' ' + height);
+                            svgEl.style.width = width + 'px';
+                            svgEl.style.height = height + 'px';
+                            container.style.overflow = 'visible';
+                            
+                            setTimeout(() => {
+                                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+                                .then(canvas => {
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
+                                    else svgEl.removeAttribute('viewBox');
+                                    svgEl.style.width = '';
+                                    svgEl.style.height = '';
+                                    container.style.overflow = '';
+                                    const a = document.createElement('a');
+                                    a.download = 'Markmap_' + title + '.png';
+                                    a.href = canvas.toDataURL('image/png', 1.0);
+                                    a.click();
+                                    btn.innerHTML = origText;
+                                    btn.disabled = false;
+                                }).catch(() => {
+                                    btn.innerHTML = '❌ Failed';
+                                    setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+                                });
+                            }, 300);
+                        } catch(e) {
+                            btn.innerHTML = '❌ Failed';
+                            setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+                        }
+                    };
+
+                    window.downloadMermaidImage = function(wrapperId, title, event) {
+                        const container = document.getElementById(wrapperId);
+                        const btn = event.currentTarget;
+                        const origText = btn.innerHTML;
+                        btn.innerHTML = '⏳ Saving...';
+                        btn.disabled = true;
+                        const origOverflow = container.style.overflow;
+                        container.style.overflow = 'visible';
+                        setTimeout(() => {
+                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+                            .then(canvas => {
+                                container.style.overflow = origOverflow;
+                                const a = document.createElement('a');
+                                a.download = 'Mermaid_' + title + '.png';
+                                a.href = canvas.toDataURL('image/png', 1.0);
+                                a.click();
+                                btn.innerHTML = origText;
+                                btn.disabled = false;
+                            }).catch(() => {
+                                container.style.overflow = origOverflow;
+                                btn.innerHTML = '❌ Failed';
+                                setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
+                            });
+                        }, 300);
+                    };
+
+                })();
             </script>
         </body>
         </html>
         """
-        components.html(html_code, height=1350, scrolling=True)
+        components.html(html_code, height=1450, scrolling=True)
 
     # =====================================================================
-    # TAB 2: FITUR OFFLINE TRANSCRIPTION (PYTHON/STREAMLIT NATIVE)
+    # TAB 2: FITUR OFFLINE TRANSCRIPTION
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
-        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Pastikan server LiteLLM Anda sudah siap.")
+        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini).")
 
         llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
         uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
@@ -840,108 +1757,175 @@ else:
                 st.error("⚠️ Ukuran file melebihi 25MB. Silakan kompres audio Anda terlebih dahulu.")
             else:
                 st.audio(uploaded_file)
-                if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
-                    if not llm_key: 
-                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                
+                if not is_admin():
+                    kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+                    if kuota_upload_sekarang <= 0:
+                        st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
                     else:
-                        with st.spinner("⏳ Sedang mentranskripsi audio... Proses ini memakan waktu tergantung durasi file."):
-                            try:
-                                url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                headers = {"Authorization": f"Bearer {llm_key}"}
-                                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                                data = {"model": "whisper-1", "response_format": "json"}
-                                response = requests.post(url, headers=headers, files=files, data=data)
+                        if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
+                            if not llm_key: 
+                                st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                            else:
+                                with st.spinner("⏳ Sedang mentranskripsi audio..."):
+                                    try:
+                                        url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                        headers = {"Authorization": f"Bearer {llm_key}"}
+                                        files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                                        data = {"model": "whisper-1", "response_format": "json"}
+                                        response = requests.post(url, headers=headers, files=files, data=data)
 
-                                if response.status_code == 200:
-                                    st.session_state["offline_transcript"] = response.json().get("text", "")
-                                    st.success("✅ Transkripsi berhasil!")
-                                else: 
-                                    st.error(f"❌ Error dari API LiteLLM: {response.text}")
-                            except Exception as e: 
-                                st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
+                                        if response.status_code == 200:
+                                            st.session_state["offline_transcript"] = response.json().get("text", "")
+                                            st.session_state["user_kuota_upload"] -= 1
+                                            db.collection("users").document(st.session_state["user_uid"]).update({
+                                                "kuota_upload": st.session_state["user_kuota_upload"]
+                                            })
+                                            st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
+                                        else: 
+                                            st.error(f"❌ Error dari API LiteLLM: {response.text}")
+                                    except Exception as e: 
+                                        st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
+                else:
+                    if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
+                        if not llm_key: 
+                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                        else:
+                            with st.spinner("⏳ Sedang mentranskripsi audio..."):
+                                try:
+                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                    headers = {"Authorization": f"Bearer {llm_key}"}
+                                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                                    data = {"model": "whisper-1", "response_format": "json"}
+                                    response = requests.post(url, headers=headers, files=files, data=data)
+
+                                    if response.status_code == 200:
+                                        st.session_state["offline_transcript"] = response.json().get("text", "")
+                                        st.success(f"✅ Transkripsi berhasil! (Admin Mode: Unlimited Access)")
+                                    else: 
+                                        st.error(f"❌ Error dari API LiteLLM: {response.text}")
+                                except Exception as e: 
+                                    st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
 
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
             transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
             st.session_state["offline_transcript"] = transcript_area 
 
-            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                if not llm_key: 
-                    st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+            if not is_admin():
+                kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
+                if kuota_ai_sekarang <= 0:
+                    st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
                 else:
-                    with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
-                        
-                        prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP untuk setiap poin kronologis agar tidak ada info hilang.
-                        - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT (contoh: Review hasil rapat).
-                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                    if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                        if not llm_key: 
+                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                        else:
+                            with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
+                                prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                                ATURAN JSON NOTULENSI:
+                                - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
+                                - keputusan: Array of strings. Kesimpulan utama.
+                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
+                                - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                                ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                                ATURAN MERMAID: WAJIB format 'graph LR'.
+                                Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
-                        ATURAN MARKMAP (PENTING!):
-                        Gunakan kode murni markdown. Isi Markmap HARUS RINGKAS berupa poin-poin. WAJIB ikuti POLA STRUKTUR INI secara lengkap tanpa ada yang dihilangkan:
-                        # [Judul Topik Utama Rapat]
-                        ## Ringkasan Eksekutif
-                        - [Poin ringkas]
-                        ## Agenda / Topik
-                        - [Poin]
-                        ## Peserta
-                        - [Nama]
-                        ## Jalannya Diskusi
-                        - [Poin diskusi ringkas 1]
-                          - [Detail singkat]
-                        - [Poin diskusi ringkas 2]
-                        ## Kendala & Solusi (Jika ada)
-                        - [Kendala]
-                          - [Solusi]
-                        ## Keputusan Utama
-                        - [Poin keputusan]
-                        ## Rencana Tindak Lanjut
-                        - [Nama Tugas]
-                          - PIC: [Nama]
-                          - Deadline: [Waktu]
-                          - Prioritas: [Level]
-
-                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada node (A["Teks"]). Root diagram WAJIB berisi Judul Topik Rapat/Agenda.
-                        Transkrip Rapat: "{st.session_state['offline_transcript']}" """
-
-                        payload = {
-                            "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
-                            "response_format": {
-                                "type": "json_schema",
-                                "json_schema": {
-                                    "name": "meeting_summary", "strict": True,
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                            "notulensi_rapat": {
+                                payload = {
+                                    "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                                    "response_format": {
+                                        "type": "json_schema",
+                                        "json_schema": {
+                                            "name": "meeting_summary", "strict": True,
+                                            "schema": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
-                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
-                                                }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
-                                            },
-                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
+                                                    "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                                    "notulensi_rapat": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                            "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                            "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
+                                                            "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
+                                                        }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
+                                                    },
+                                                    "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                                }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
+                                            }
+                                        }
+                                    }
+                                }
+
+                                try:
+                                    res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                                    if res.status_code == 200: 
+                                        st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                        st.session_state["user_kuota_ai"] -= 1
+                                        db.collection("users").document(st.session_state["user_uid"]).update({
+                                            "kuota_ai": st.session_state["user_kuota_ai"]
+                                        })
+                                        st.success(f"✅ AI Summary berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
+                                    else: 
+                                        st.error(f"Error AI: {res.text}")
+                                except Exception as e: 
+                                    st.error(f"Koneksi LLM Gagal: {str(e)}")
+            else:
+                if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                    if not llm_key: 
+                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                    else:
+                        with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
+                            prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                            ATURAN JSON NOTULENSI:
+                            - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                            - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
+                            - keputusan: Array of strings. Kesimpulan utama.
+                            - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
+                            - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                            ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                            ATURAN MERMAID: WAJIB format 'graph LR'.
+                            Transkrip Rapat: "{st.session_state['offline_transcript']}" """
+
+                            payload = {
+                                "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                                "response_format": {
+                                    "type": "json_schema",
+                                    "json_schema": {
+                                        "name": "meeting_summary", "strict": True,
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                                "notulensi_rapat": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                        "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                        "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
+                                                        "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
+                                                    }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
+                                                },
+                                                "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                            }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        try:
-                            res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
-                            if res.status_code == 200: 
-                                st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                            else: 
-                                st.error(f"Error AI: {res.text}")
-                        except Exception as e: 
-                            st.error(f"Koneksi LLM Gagal: {str(e)}")
+                            try:
+                                res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                                if res.status_code == 200: 
+                                    st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                    st.success(f"✅ AI Summary berhasil digenerate! (Admin Mode: Unlimited Access)")
+                                else: 
+                                    st.error(f"Error AI: {res.text}")
+                            except Exception as e: 
+                                st.error(f"Koneksi LLM Gagal: {str(e)}")
 
-        if st.session_state["offline_summary"]:
+        if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")
             
@@ -991,7 +1975,7 @@ else:
                 df_tasks.columns = ["Tugas", "PIC", "Deadline", "Prioritas"]
                 st.table(df_tasks)
 
-            st.markdown("### 🕸️ Visualisasi (Hover/Klik Tombol PNG di Kanan Atas)")
+            st.markdown("### 🕸️ Visualisasi")
 
             col_v1, col_v2 = st.columns(2)
             with col_v1:
@@ -1024,7 +2008,7 @@ else:
                 
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
-                    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
@@ -1039,15 +2023,13 @@ else:
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
                             const originalOverflow = container.style.overflow;
                             container.style.overflow = 'visible'; 
-                            
                             setTimeout(() => {{
                                 html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff' }})
                                 .then(canvas => {{
                                     container.style.overflow = originalOverflow;
-                                    const link = document.createElement('a'); link.download = `Mermaid_${{title}}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
                                 }}).catch(err => {{
                                     container.style.overflow = originalOverflow; btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
@@ -1060,15 +2042,15 @@ else:
                 components.html(mer_html, height=450)
 
             st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat)")
-            raw_markmap = data['markmap_code'].replace("```markdown", "").replace("```", "").strip()
+            raw_markmap = data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip()
 
             markmap_html = f"""
             <!DOCTYPE html>
             <html>
             <head>
-                <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             </head>
             <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
@@ -1087,57 +2069,45 @@ else:
                         const container = document.getElementById(wrapperId);
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
-
                         const btn = document.getElementById('dlBtnMM');
                         const originalText = btn.innerHTML;
                         btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
-
                         try {{
                             const g = svgEl.querySelector('g');
                             if (!g) throw new Error("G element not found");
-
                             const originalWidth = container.style.width;
                             const originalHeight = container.style.height;
                             const originalOverflow = container.style.overflow;
                             const originalTransform = g.getAttribute('transform');
                             const originalViewBox = svgEl.getAttribute('viewBox');
-
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
                             const bbox = g.getBBox();
-
                             const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-
                             container.style.width = trueWidth + 'px';
                             container.style.height = trueHeight + 'px';
                             container.style.overflow = 'visible';
-                            
-                            svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
+                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
                             svgEl.style.width = '100%'; svgEl.style.height = '100%';
-
                             setTimeout(() => {{
-                                html2canvas(container, {{
-                                    scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight
-                                }}).then(canvas => {{
+                                html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-
-                                    const link = document.createElement('a'); link.download = `MindMap_${{title}}.png`;
+                                    const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
-
                                     btn.innerHTML = originalText; btn.disabled = false;
                                 }}).catch(err => {{
-                                    console.error("html2canvas error:", err);
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                     btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                                 }});
-                            }}, 600); 
+                            }}, 600);
                         }} catch (err) {{
-                            console.error("Error saving markmap:", err); btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                            btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
                         }}
                     }};
                 </script>

@@ -81,6 +81,30 @@ footer {visibility: hidden;}
 .profile-card.user-inactive {
     background: linear-gradient(135deg, #64748b 0%, #334155 100%);
 }
+
+/* Mempercantik Tombol Utama Streamlit */
+.stButton>button {
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    font-weight: bold !important;
+}
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+/* Mempercantik Tab Navigasi */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px 8px 0px 0px;
+    padding: 10px 20px;
+    background-color: #f1f5f9;
+}
+.stTabs [aria-selected="true"] {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -201,7 +225,7 @@ def cek_reset_kuota_bulanan(uid, user_data):
     return False
 
 # =====================================================================
-# AREA SIDEBAR: HIASAN ROBOT & INFO AKUN (UI DIPERBARUI)
+# AREA SIDEBAR: HIASAN ROBOT & INFO AKUN
 # =====================================================================
 with st.sidebar:
     st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
@@ -278,23 +302,19 @@ with st.sidebar:
                 if sisa_hari <= 3: card_class = "profile-card user-warning"
                 else: card_class = "profile-card user-active"
 
-        # RENDER HTML CARD
-        profile_html = f"""
-        <div class="{card_class}">
-            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
-            <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
-            
-            <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
-                <div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
-                <div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
-            </div>
-            
-            <div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
-                {hari_str}
-            </div>
-        </div>
-        """
+        # RENDER HTML CARD (Tanpa spasi di awal agar tidak jadi Markdown Code Block)
+        profile_html = f"""<div class="{card_class}">
+<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
+<div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
+<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+<div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+<div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
+<div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
+</div>
+<div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
+{hari_str}
+</div>
+</div>"""
         st.markdown(profile_html, unsafe_allow_html=True)
         
         if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
@@ -309,20 +329,71 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN
+# HALAMAN LOGIN (UI/UX DIPERBARUI)
 # =====================================================================
 if not st.session_state["logged_in"]:
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # CSS Khusus Halaman Login yang Eye-Catching
+    st.markdown("""
+    <style>
+    /* Animated Gradient Background */
+    .stApp {
+        background: linear-gradient(-45deg, #4f46e5, #3b82f6, #06b6d4, #10b981);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Menyembunyikan Sidebar di halaman Login agar terlihat seperti Landing Page */
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+    
+    /* Glassmorphism Card untuk Form Login */
+    div[data-testid="stForm"] {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 40px 30px;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    /* Styling Teks Judul */
+    .login-title {
+        color: white;
+        font-weight: 900;
+        font-size: 3rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        margin-bottom: 0px;
+    }
+    .login-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Layout agar Card Login berada pas di tengah
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.write("")
         st.write("")
-        st.markdown("<h2 style='text-align: center;'>🔒 Portal TranscribX Enterprise</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b;'>Gunakan kredensial Anda untuk mengakses sistem Notulensi AI.</p>", unsafe_allow_html=True)
+        st.write("")
+        st.markdown("<h1 class='login-title' style='text-align: center;'>✨ TranscribX</h1>", unsafe_allow_html=True)
+        st.markdown("<p class='login-subtitle' style='text-align: center;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>", unsafe_allow_html=True)
         
         with st.form("login_form"):
-            email_login = st.text_input("Email", placeholder="Ketik email Anda di sini...")
-            pass_login = st.text_input("Password", type="password", placeholder="Ketik password Anda...")
-            btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True)
+            st.markdown("<h3 style='text-align: center; color: #1e293b; margin-bottom: 25px;'>Secure Login</h3>", unsafe_allow_html=True)
+            email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
+            pass_login = st.text_input("Password", type="password", placeholder="••••••••")
+            st.write("")
+            btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True, type="primary")
             
             if btn_login:
                 if email_login and pass_login:
@@ -1480,5 +1551,5 @@ else:
             """
             components.html(markmap_html, height=450)
 
-            with st.expander("Lihat Source Code Markdown"):
-                st.code(raw_markmap, language="markdown")
+        with st.expander("Lihat Source Code Markdown"):
+            st.code(raw_markmap, language="markdown")

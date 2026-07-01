@@ -82,7 +82,6 @@ footer {visibility: hidden;}
     background: linear-gradient(135deg, #64748b 0%, #334155 100%);
 }
 
-/* Mempercantik Tombol Utama Streamlit */
 .stButton>button {
     border-radius: 8px !important;
     transition: all 0.3s ease !important;
@@ -92,7 +91,6 @@ footer {visibility: hidden;}
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
-/* Mempercantik Tab Navigasi */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
 }
@@ -233,13 +231,11 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN (UI/UX DIPERBARUI)
+# HALAMAN LOGIN
 # =====================================================================
 if not st.session_state["logged_in"]:
-    # CSS Khusus Halaman Login yang Eye-Catching
     st.markdown("""
     <style>
-    /* Animated Gradient Background */
     .stApp {
         background: linear-gradient(-45deg, #4f46e5, #3b82f6, #06b6d4, #10b981);
         background-size: 400% 400%;
@@ -250,13 +246,7 @@ if not st.session_state["logged_in"]:
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-    
-    /* Murni menyembunyikan Sidebar HANYA di halaman Login */
-    [data-testid="stSidebar"] {
-        display: none;
-    }
-    
-    /* Glassmorphism Card untuk Form Login */
+    [data-testid="stSidebar"] { display: none; }
     div[data-testid="stForm"] {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
@@ -265,8 +255,6 @@ if not st.session_state["logged_in"]:
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(255, 255, 255, 0.4);
     }
-    
-    /* Styling Teks Judul */
     .login-title {
         color: white;
         font-weight: 900;
@@ -283,7 +271,6 @@ if not st.session_state["logged_in"]:
     </style>
     """, unsafe_allow_html=True)
 
-    # Layout agar Card Login berada pas di tengah
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.write("")
@@ -334,7 +321,6 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA
 # =====================================================================
 else:
-    # Mengembalikan warna background putih & memanggil kembali si Robot Sidebar
     st.markdown("""
     <style>
     .stApp {
@@ -348,7 +334,7 @@ else:
     """, unsafe_allow_html=True)
 
     # =====================================================================
-    # AREA SIDEBAR: HIASAN ROBOT & INFO AKUN
+    # AREA SIDEBAR
     # =====================================================================
     with st.sidebar:
         st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
@@ -398,7 +384,6 @@ else:
         if st.session_state.get("logged_in"):
             user_email = st.session_state.get('user_email')
             
-            # LOGIC UNTUK TAMPILAN CARD
             if is_admin():
                 card_class = "profile-card admin"
                 paket_str = "👑 ADMIN (Unlimited)"
@@ -425,7 +410,6 @@ else:
                     if sisa_hari <= 3: card_class = "profile-card user-warning"
                     else: card_class = "profile-card user-active"
 
-            # RENDER HTML CARD
             profile_html = f"""<div class="{card_class}">
 <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
 <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
@@ -453,7 +437,7 @@ else:
     st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")
 
     if is_admin():
-        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab_admin, tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3]
         
         # =====================================================================
@@ -462,7 +446,6 @@ else:
         with tab_admin:
             st.markdown("### 👑 Dashboard Admin: Enterprise Control Center")
             
-            # --- METRICS SECTION ---
             with st.spinner("Memuat metrik & menyegarkan data klien..."):
                 users_ref = db.collection("users").stream()
                 users_list = []
@@ -735,7 +718,7 @@ else:
             else: st.info("Tidak ada klien yang terdaftar atau sesuai filter untuk dikelola.")
 
     else:
-        tabs = st.tabs(["🔴 Live Zoom (Web API)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tabs = st.tabs(["🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2]
 
     # =====================================================================
@@ -796,13 +779,14 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE - VERSI DIPERBAIKI (getUserMedia)
+    # TAB 1: LIVE CAPTURE - SCREEN CAPTURE DENGAN getDisplayMedia
     # =====================================================================
     with tab1:
-        st.markdown("### 🎙️ Live Transcribe - Web Speech API + AI Summarizer")
-        st.info("💡 **TIPS:** Pastikan izin mikrofon diberikan. Gunakan browser Chrome/Edge untuk hasil terbaik.")
+        st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
+        st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share audio'** → Klik Share. Gunakan Chrome/Edge untuk hasil terbaik.")
+        st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share audio'**!")
         
-        # HTML YANG SUDAH DIPERBAIKI
+        # HTML DENGAN getDisplayMedia UNTUK SCREEN CAPTURE
         html_code = """
         <!DOCTYPE html>
         <html>
@@ -901,7 +885,11 @@ else:
                 .fade-in { animation: fadeIn 0.5s ease; }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 
-                /* Responsive */
+                .instruction-box {
+                    background: #fffbeb; border: 2px solid #f59e0b; padding: 16px; border-radius: 12px;
+                    margin-bottom: 16px; font-size: 13px; color: #92400e;
+                }
+                
                 @media (max-width: 640px) {
                     .controls-row { flex-direction: column; align-items: stretch; }
                     .controls-row > * { width: 100%; }
@@ -912,12 +900,24 @@ else:
             </style>
         </head>
         <body>
+            <!-- INSTRUCTION BOX -->
+            <div class="instruction-box">
+                <strong>📺 CARA SCREEN CAPTURE (ZOOM / YOUTUBE):</strong><br>
+                1. Klik <b>"Start Capture"</b> di bawah<br>
+                2. Akan muncul dialog: pilih tab/window <b>Zoom</b> atau <b>YouTube</b><br>
+                3. <b>CENTANG "Share audio"</b> (ini WAJIB!)<br>
+                4. Klik <b>Share</b><br>
+                5. Suara dari tab/window tersebut akan otomatis ditranskrip
+            </div>
+        
             <!-- MAIN CONTROLS -->
             <div class="controls-wrapper">
                 <div class="controls-row">
                     <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
                         <option value="id-ID">🇮🇩 Indonesia</option>
                         <option value="en-US">🇬🇧 English</option>
+                        <option value="ja-JP">🇯🇵 Japanese</option>
+                        <option value="ko-KR">🇰🇷 Korean</option>
                     </select>
                     <button id="startBtn" class="btn-custom btn-start">▶️ Start Capture</button>
                     <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop</button>
@@ -950,7 +950,7 @@ else:
             <!-- TRANSCRIPT BOX -->
             <div id="transcriptBox" class="transcript-box">
                 <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
-                    🎤 Klik "Start Capture" dan izinkan akses mikrofon...
+                    🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
                 </div>
             </div>
 
@@ -959,7 +959,7 @@ else:
             
             <!-- AUDIO ARCHIVE -->
             <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
-                <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman</h3>
+                <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
                 <div id="audioContainer"></div>
             </div>
 
@@ -996,6 +996,7 @@ else:
                     let drawVisual = null;
                     let currentInterimDiv = null;
                     let lastFinalText = "";
+                    let displayStream = null;
 
                     // ======== INIT SPEECH RECOGNITION ========
                     function initSpeechRecognition() {
@@ -1011,7 +1012,7 @@ else:
 
                         rec.onstart = function() {
                             isRecording = true;
-                            status.innerText = "🎤 Merekam (" + (langSelect.value === 'id-ID' ? 'ID' : 'EN') + ")...";
+                            status.innerText = "🎤 Menangkap audio (" + (langSelect.value === 'id-ID' ? 'ID' : langSelect.value) + ")...";
                             indicator.className = 'indicator-dot recording';
                             startBtn.disabled = true;
                             stopBtn.disabled = false;
@@ -1023,11 +1024,11 @@ else:
                         rec.onerror = function(event) {
                             console.error('Speech recognition error:', event.error);
                             if (event.error === 'not-allowed') {
-                                status.innerText = "❌ Izin mikrofon ditolak!";
+                                status.innerText = "❌ Izin mikrofon/screen capture ditolak!";
                             } else if (event.error === 'no-speech') {
-                                // ignore - no speech detected
+                                // No speech - normal
                             } else if (event.error === 'aborted') {
-                                // normal abort
+                                // Normal abort
                             } else {
                                 status.innerText = "⚠️ Error: " + event.error;
                             }
@@ -1096,8 +1097,13 @@ else:
                     // ======== VISUALIZER ========
                     function setupVisualizer(stream) {
                         try {
+                            // Get only audio track for visualizer
+                            const audioTracks = stream.getAudioTracks();
+                            if (audioTracks.length === 0) return;
+                            
+                            const audioOnlyStream = new MediaStream(audioTracks);
                             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                            const source = audioContext.createMediaStreamSource(stream);
+                            const source = audioContext.createMediaStreamSource(audioOnlyStream);
                             analyser = audioContext.createAnalyser();
                             analyser.fftSize = 256;
                             dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -1125,7 +1131,7 @@ else:
                             const b = Math.min(barHeight + 150, 255);
                             canvasCtx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
                             canvasCtx.shadowBlur = 10;
-                            canvasCtx.shadowColor = '#3b82f6';
+                            canvasCtx.shadowColor = '#f59e0b';
                             const y = (height / 2) - (barHeight / 2);
                             canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
                             x += barWidth + 1;
@@ -1135,31 +1141,35 @@ else:
                         }
                     }
 
-                    // ======== START - GUNAKAN getUserMedia UNTUK MIKROFON ========
+                    // ======== START - GUNAKAN getDisplayMedia UNTUK SCREEN CAPTURE ========
                     startBtn.onclick = async function() {
                         try {
                             // Reset
                             lastFinalText = "";
-                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Merekam... Bicara sekarang.</div>';
+                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Bicara atau putar audio di tab yang dipilih.</div>';
                             
-                            // GUNAKAN getUserMedia UNTUK MIKROFON (bukan getDisplayMedia)
-                            audioStream = await navigator.mediaDevices.getUserMedia({ 
-                                audio: {
-                                    echoCancellation: true,
-                                    noiseSuppression: true,
-                                    autoGainControl: true
-                                },
-                                video: false
+                            // GUNAKAN getDisplayMedia untuk screen capture DENGAN AUDIO
+                            displayStream = await navigator.mediaDevices.getDisplayMedia({ 
+                                video: true,  // Perlu video untuk screen capture (bisa diabaikan)
+                                audio: true   // INI YANG PENTING: tangkap system audio
                             });
                             
-                            // Setup MediaRecorder untuk merekam audio
+                            // Cek apakah audio track tersedia
+                            const audioTracks = displayStream.getAudioTracks();
+                            if (audioTracks.length === 0) {
+                                status.innerText = "⚠️ Tidak ada audio! Pastikan 'Share audio' dicentang.";
+                                startBtn.disabled = false;
+                                return;
+                            }
+                            
+                            // Gunakan audio stream untuk MediaRecorder
+                            audioStream = new MediaStream(audioTracks);
+                            
+                            // Setup MediaRecorder
                             audioChunks = [];
                             let mimeType = 'audio/webm';
                             if (!MediaRecorder.isTypeSupported('audio/webm')) {
                                 mimeType = 'audio/mp4';
-                            }
-                            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                                mimeType = 'audio/ogg';
                             }
                             
                             mediaRecorder = new MediaRecorder(audioStream, { mimeType: mimeType });
@@ -1172,22 +1182,21 @@ else:
                                 if (audioChunks.length > 0) {
                                     const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
                                     const audioUrl = URL.createObjectURL(blob);
-                                    const ext = mediaRecorder.mimeType.split('/')[1].split(';')[0] || 'webm';
-                                    const fileName = 'Rekaman_TranscribX_' + Date.now() + '.' + ext;
+                                    const fileName = 'ScreenCapture_' + Date.now() + '.webm';
                                     const audioItem = document.createElement('div');
                                     audioItem.className = 'audio-item';
                                     audioItem.innerHTML = `
                                         <audio controls src="${audioUrl}"></audio>
                                         <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:4px 12px; font-size:12px;">💾 Download</a>
-                                        <small style="color:#94a3b8;">${ext.toUpperCase()}</small>
+                                        <small style="color:#94a3b8;">WEBM</small>
                                     `;
                                     audioContainer.prepend(audioItem);
                                 }
                                 audioChunks = [];
                             };
 
-                            // Setup visualizer
-                            setupVisualizer(audioStream);
+                            // Setup visualizer dengan full displayStream (ada audionya)
+                            setupVisualizer(displayStream);
                             
                             // Start MediaRecorder
                             mediaRecorder.start(1000);
@@ -1197,24 +1206,20 @@ else:
                             if (recognition) {
                                 recognition.start();
                             } else {
-                                throw new Error('Speech recognition tidak tersedia di browser ini');
+                                throw new Error('Speech recognition tidak tersedia');
                             }
                             
-                            // Start visualizer animation
+                            // Start visualizer
                             drawVisualizer();
-                            
-                            // Resize visualizer
                             resizeVisualizer();
                             
                         } catch(err) {
                             console.error('Start error:', err);
                             let errorMsg = "❌ Gagal: ";
                             if (err.name === 'NotAllowedError') {
-                                errorMsg += "Izin mikrofon ditolak. Klik ikon gembok/kamera di address bar dan izinkan akses mikrofon.";
-                            } else if (err.name === 'NotFoundError') {
-                                errorMsg += "Mikrofon tidak ditemukan. Pastikan mikrofon terpasang.";
-                            } else if (err.name === 'NotReadableError') {
-                                errorMsg += "Mikrofon sedang digunakan oleh aplikasi lain.";
+                                errorMsg += "Screen capture dibatalkan atau izin ditolak.";
+                            } else if (err.name === 'AbortError') {
+                                errorMsg += "Screen capture dibatalkan.";
                             } else {
                                 errorMsg += err.message;
                             }
@@ -1241,6 +1246,12 @@ else:
                         if (audioStream) {
                             audioStream.getTracks().forEach(track => track.stop());
                             audioStream = null;
+                        }
+                        
+                        // Stop display stream (screen sharing)
+                        if (displayStream) {
+                            displayStream.getTracks().forEach(track => track.stop());
+                            displayStream = null;
                         }
                         
                         if (drawVisual) {
@@ -1273,6 +1284,14 @@ else:
                             currentInterimDiv = null;
                         }
                     };
+
+                    // ======== LISTEN: Saat user stop sharing dari browser ========
+                    // Deteksi saat stream dihentikan dari luar (user klik "Stop sharing")
+                    if (displayStream) {
+                        displayStream.getVideoTracks()[0]?.addEventListener('ended', () => {
+                            if (isRecording) stopBtn.click();
+                        });
+                    }
 
                     // ======== RESIZE VISUALIZER ========
                     function resizeVisualizer() {
@@ -1313,7 +1332,7 @@ else:
                         const blob = new Blob([text], { type: 'text/plain' });
                         const a = document.createElement('a');
                         a.href = URL.createObjectURL(blob);
-                        a.download = 'Transkrip_TranscribX_' + Date.now() + '.txt';
+                        a.download = 'Transkrip_ScreenCapture_' + Date.now() + '.txt';
                         a.click();
                     };
 
@@ -1322,7 +1341,7 @@ else:
                         if (!confirm('Yakin ingin menghapus semua teks?')) return;
                         transcriptBox.innerHTML = `
                             <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
-                                🎤 Klik "Start Capture" dan izinkan akses mikrofon...
+                                🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
                             </div>
                         `;
                         lastFinalText = "";
@@ -1553,22 +1572,14 @@ else:
                                     const markdownCode = data.markmap_code || '# Mindmap\\n## Topik Utama';
                                     const { Transformer, Markmap } = window.markmap;
                                     const { root } = new Transformer().transform(markdownCode);
-                                    const svgContainer = document.getElementById('markmap-svg');
-                                    if (svgContainer) {
-                                        Markmap.create('#markmap-svg', null, root);
-                                    }
+                                    Markmap.create('#markmap-svg', null, root);
                                 } catch(e) {
-                                    console.warn('Markmap error:', e);
                                     document.getElementById('markmap-area').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Markmap</p>';
                                 }
 
                                 // Render Mermaid
                                 setTimeout(() => {
-                                    try {
-                                        mermaid.run({ querySelector: '.mermaid' });
-                                    } catch(e) {
-                                        document.querySelector('.mermaid').innerHTML = '<p class="text-red-500 text-xs">Error render Mermaid</p>';
-                                    }
+                                    try { mermaid.run({ querySelector: '.mermaid' }); } catch(e) {}
                                 }, 300);
 
                                 // Render Cytoscape
@@ -1589,9 +1600,7 @@ else:
                                             cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
                                         });
                                         
-                                        if (window.myCyInstance) {
-                                            window.myCyInstance.destroy();
-                                        }
+                                        if (window.myCyInstance) window.myCyInstance.destroy();
                                         
                                         window.myCyInstance = cytoscape({
                                             container: document.getElementById('cy'),
@@ -1603,7 +1612,6 @@ else:
                                             layout: { name: 'cose', padding: 20 }
                                         });
                                     } catch(e) {
-                                        console.warn('Cytoscape error:', e);
                                         document.getElementById('cy').innerHTML = '<p class="text-red-500 text-xs p-2">Error render Cytoscape</p>';
                                     }
                                 }, 500);
@@ -1691,11 +1699,6 @@ else:
                                     btn.innerHTML = origText;
                                     btn.disabled = false;
                                 }).catch(() => {
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox);
-                                    else svgEl.removeAttribute('viewBox');
-                                    svgEl.style.width = '';
-                                    svgEl.style.height = '';
-                                    container.style.overflow = '';
                                     btn.innerHTML = '❌ Failed';
                                     setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2000);
                                 });
@@ -1737,7 +1740,7 @@ else:
         </body>
         </html>
         """
-        components.html(html_code, height=1350, scrolling=True)
+        components.html(html_code, height=1450, scrolling=True)
 
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION
@@ -1972,7 +1975,7 @@ else:
                 df_tasks.columns = ["Tugas", "PIC", "Deadline", "Prioritas"]
                 st.table(df_tasks)
 
-            st.markdown("### 🕸️ Visualisasi (Hover/Klik Tombol PNG di Kanan Atas)")
+            st.markdown("### 🕸️ Visualisasi")
 
             col_v1, col_v2 = st.columns(2)
             with col_v1:

@@ -302,7 +302,7 @@ with st.sidebar:
                 if sisa_hari <= 3: card_class = "profile-card user-warning"
                 else: card_class = "profile-card user-active"
 
-        # RENDER HTML CARD (Tanpa spasi di awal agar tidak jadi Markdown Code Block)
+        # RENDER HTML CARD
         profile_html = f"""<div class="{card_class}">
 <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
 <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
@@ -332,7 +332,7 @@ if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] 
 # HALAMAN LOGIN (UI/UX DIPERBARUI)
 # =====================================================================
 if not st.session_state["logged_in"]:
-    # CSS Khusus Halaman Login yang Eye-Catching
+    # CSS Khusus Halaman Login yang Eye-Catching tanpa menghilangkan Sidebar
     st.markdown("""
     <style>
     /* Animated Gradient Background */
@@ -345,11 +345,6 @@ if not st.session_state["logged_in"]:
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
-    }
-    
-    /* Menyembunyikan Sidebar di halaman Login agar terlihat seperti Landing Page */
-    [data-testid="stSidebar"] {
-        display: none;
     }
     
     /* Glassmorphism Card untuk Form Login */
@@ -430,6 +425,16 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA
 # =====================================================================
 else:
+    # Mengembalikan warna background normal saat login berhasil
+    st.markdown("""
+    <style>
+    .stApp {
+        background: white;
+        animation: none;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):
@@ -449,7 +454,7 @@ else:
         with tab_admin:
             st.markdown("### 👑 Dashboard Admin: Enterprise Control Center")
             
-            # --- METRICS SECTION (UI DIPERBARUI) ---
+            # --- METRICS SECTION ---
             with st.spinner("Memuat metrik & menyegarkan data klien..."):
                 users_ref = db.collection("users").stream()
                 users_list = []
@@ -545,7 +550,6 @@ else:
                                     else: st.error(f"⚠️ Gagal mendaftar: {new_user.get('error', {}).get('message', 'Gagal')}")
                         else: st.warning("Pastikan email terisi dan password minimal 6 karakter.")
 
-            # Menampilkan Charts (Bawaan Streamlit)
             st.markdown("#### 📊 Analitik Distribusi")
             col_chart1, col_chart2 = st.columns(2)
             with col_chart1:
@@ -562,7 +566,6 @@ else:
 
             st.markdown("---")
             
-            # TABEL DAN FILTER USER
             st.markdown("### 📋 Tabel Manajemen Klien")
             col_search1, col_search2, col_search3 = st.columns([3, 2, 2])
             with col_search1: search_query = st.text_input("🔍 Cari email atau paket...", placeholder="Ketik untuk filter...")
@@ -598,9 +601,6 @@ else:
 
             st.markdown("---")
             
-            # =================================================================
-            # ACTION CENTER (UI DIPERBARUI)
-            # =================================================================
             st.markdown("### 🛠️ Action Center (Kelola & Edit Klien)")
             
             user_options = [u['Email'] for u in filtered_users if u['Status'] != 'admin']
@@ -610,7 +610,6 @@ else:
                     selected_user = next((u for u in filtered_users if u['Email'] == selected_email), None)
                     
                     if selected_user:
-                        # Info Header
                         st.markdown(f"""
                         <div style='background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 5px solid #3b82f6; margin-bottom: 20px;'>
                             <h4 style='margin: 0; color: #1e293b;'>Pengaturan: <b>{selected_user['Email']}</b></h4>
@@ -1360,7 +1359,7 @@ else:
                             except Exception as e: 
                                 st.error(f"Koneksi LLM Gagal: {str(e)}")
 
-        if st.session_state["offline_summary"]:
+        if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")
             
@@ -1477,7 +1476,7 @@ else:
                 components.html(mer_html, height=450)
 
             st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat)")
-            raw_markmap = data['markmap_code'].replace("```markdown", "").replace("```", "").strip()
+            raw_markmap = data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip()
 
             markmap_html = f"""
             <!DOCTYPE html>
@@ -1551,5 +1550,5 @@ else:
             """
             components.html(markmap_html, height=450)
 
-        with st.expander("Lihat Source Code Markdown"):
-            st.code(raw_markmap, language="markdown")
+            with st.expander("Lihat Source Code Markdown"):
+                st.code(raw_markmap, language="markdown")

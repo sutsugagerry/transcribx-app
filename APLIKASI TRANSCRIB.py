@@ -908,6 +908,7 @@ else:
             </style>
         </head>
         <body>
+            <!-- INSTRUCTION BOX -->
             <div class="instruction-box">
                 <strong>📺 CARA SCREEN CAPTURE:</strong><br>
                 1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b><br>
@@ -918,6 +919,7 @@ else:
                 6. Rekaman muncul di <b>Arsip Rekaman</b> setelah Stop
             </div>
         
+            <!-- MAIN CONTROLS -->
             <div class="controls-wrapper">
                 <div class="controls-row">
                     <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
@@ -937,6 +939,7 @@ else:
                     <canvas id="visualizer"></canvas>
                 </div>
                 
+                <!-- DEBUG INFO -->
                 <div id="debugInfo" class="debug-box" style="display:none;">
                     <strong>🔍 Debug Log:</strong>
                 </div>
@@ -950,20 +953,24 @@ else:
                 </div>
             </div>
 
+            <!-- TRANSCRIPT CONTROLS -->
             <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
                 <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
                 <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
                 <button id="downloadTxtBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px;">📝 Save TXT</button>
             </div>
 
+            <!-- TRANSCRIPT BOX -->
             <div id="transcriptBox" class="transcript-box">
                 <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
                     🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
                 </div>
             </div>
 
+            <!-- AI CONTENT AREA -->
             <div id="aiContent" class="w-full"></div>
             
+            <!-- AUDIO ARCHIVE -->
             <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
                 <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
                 <div id="audioContainer">
@@ -1577,6 +1584,7 @@ else:
                                 
                                 aiContent.innerHTML = `
                                     <div class="fade-in mt-6 mb-10">
+                                        <!-- RINGKASAN EKSEKUTIF -->
                                         <div class="mb-4">
                                             <p class="font-bold text-sm mb-2">🌟 RINGKASAN EKSEKUTIF:</p>
                                             <div class="bg-blue-50 p-4 rounded-xl text-blue-900 font-bold text-sm">
@@ -1584,6 +1592,7 @@ else:
                                             </div>
                                         </div>
 
+                                        <!-- AGENDA & PESERTA -->
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                             <div>
                                                 <p class="font-bold text-sm">📌 AGENDA / TOPIK:</p>
@@ -1595,6 +1604,7 @@ else:
                                             </div>
                                         </div>
 
+                                        <!-- JALANNYA DISKUSI -->
                                         <div class="mb-4">
                                             <p class="font-bold text-sm mb-2">🗣️ JALANNYA DISKUSI:</p>
                                             <div class="bg-white p-4 rounded-xl border shadow-sm text-sm">
@@ -1602,11 +1612,13 @@ else:
                                             </div>
                                         </div>
 
+                                        <!-- KEPUTUSAN UTAMA -->
                                         <div class="mb-4">
                                             <p class="font-bold text-sm mb-2">✅ KEPUTUSAN / KESIMPULAN UTAMA:</p>
                                             <ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul>
                                         </div>
 
+                                        <!-- TINDAK LANJUT -->
                                         <div class="mb-8">
                                             <p class="font-bold text-sm mb-2">📅 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
                                             <div class="overflow-x-auto">
@@ -1617,8 +1629,10 @@ else:
                                             </div>
                                         </div>
 
+                                        <!-- AREA VISUALISASI -->
                                         <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">🕸️ Visualisasi</h3>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <!-- Cytoscape -->
                                             <div>
                                                 <p class="font-bold text-sm mb-2">Cytoscape.js</p>
                                                 <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden p-2">
@@ -1627,6 +1641,7 @@ else:
                                                 </div>
                                             </div>
 
+                                            <!-- Mermaid -->
                                             <div>
                                                 <p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
                                                 <div class="relative bg-white border border-slate-200 rounded-xl p-4">
@@ -1638,6 +1653,7 @@ else:
                                             </div>
                                         </div>
 
+                                        <!-- Markmap -->
                                         <div class="mt-4">
                                             <p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p>
                                             <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -2080,5 +2096,5 @@ else:
             """
             components.html(markmap_html, height=450)
 
-        with st.expander("Lihat Source Code Markdown"):
-            st.code(raw_markmap, language="markdown")
+            with st.expander("Lihat Source Code Markdown"):
+                st.code(raw_markmap, language="markdown")

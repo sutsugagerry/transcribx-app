@@ -1967,7 +1967,7 @@ else:
                 if kuota_ai_sekarang <= 0:
                     st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
                 else:
-if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                    if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                         if not llm_key: 
                             st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                         else:
@@ -2110,8 +2110,7 @@ if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, 
                 colA, colB = st.columns(2)
                 colA.markdown(f"**📌 AGENDA / TOPIK:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
                 colB.markdown(f"**👥 PESERTA:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
-
-st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
+                st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
                 
                 dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border: 1px solid #cbd5e1; margin-bottom:20px; max-height: 350px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);'>"
                 
@@ -2147,7 +2146,6 @@ st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
                         
                 dialog_html += "</div>"
                 st.markdown(dialog_html, unsafe_allow_html=True)
-                
                 st.markdown("**🗣️ JALANNYA DISKUSI:**")
                 diskusi_html = "<div style='background-color:#ffffff; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'><ul style='margin:0; padding-left:20px; line-height: 1.6;'>"
                 for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:8px;'>{d}</li>"

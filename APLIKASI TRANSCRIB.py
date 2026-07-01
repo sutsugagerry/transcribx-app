@@ -234,20 +234,21 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN (UI DENGAN ANIMASI NODE BACKGROUND & GERMIC)
+# HALAMAN LOGIN (UI DENGAN ANIMASI NODE, GERMIC KARTUN BESAR & TRACKING MOUSE)
 # =====================================================================
 if not st.session_state["logged_in"]:
-    # 1. Injeksi CSS agar Streamlit transparan dan menampilkan canvas di belakangnya
+    # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun, dan perbesar GERMIC
     st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
+    
     /* Membuat layer bawaan Streamlit menjadi transparan */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background: transparent !important;
     }
     [data-testid="stSidebar"] { display: none; }
     
-    /* Styling form login tetap dipertahankan seperti aslinya, 
-       sedikit penyesuaian transparansi agar background node lebih menyatu */
+    /* Styling form login */
     div[data-testid="stForm"] {
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(12px);
@@ -257,11 +258,13 @@ if not st.session_state["logged_in"]:
         border: 1px solid rgba(255, 255, 255, 0.4);
     }
     .login-title {
+        font-family: 'Balsamiq Sans', cursive; /* Font Doodle Kartun */
         color: white;
-        font-weight: 900;
-        font-size: 3rem;
+        font-weight: 700;
+        font-size: 4.5rem; /* Disesuaikan agar proporsional dengan GERMIC yang besar */
         text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
-        margin-bottom: 0px;
+        margin: 0;
+        line-height: 1;
     }
     .login-subtitle {
         color: rgba(255, 255, 255, 0.9);
@@ -271,16 +274,16 @@ if not st.session_state["logged_in"]:
     }
     
     /* Animasi GERMIC khusus untuk halaman Login */
-    @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+    @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
     @keyframes signal-login { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
     @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     
     .germic-login-wrapper {
-        width: 75px; 
-        height: 75px; 
+        width: 140px; /* DIPERBESAR dari 75px */
+        height: 140px; 
         animation: float-login 4s ease-in-out infinite;
-        margin-right: 15px;
-        filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.4));
+        margin-right: 20px;
+        filter: drop-shadow(0px 6px 15px rgba(0,0,0,0.5));
     }
     .signal-wave-login { transform-origin: 50px 12px; animation: signal-login 2s infinite; }
     .signal-wave-2-login { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal-login 2s infinite; }
@@ -288,7 +291,7 @@ if not st.session_state["logged_in"]:
     </style>
     """, unsafe_allow_html=True)
 
-    # 2. Injeksi Javascript murni untuk membuat animasi partikel/node di Body HTML (Parent)
+    # 2. Injeksi Javascript murni untuk animasi Node DAN Mouse Tracking GERMIC
     components.html("""
     <script>
         const parentWindow = window.parent;
@@ -383,19 +386,38 @@ if not st.session_state["logged_in"]:
             parentWindow.nodeAnimFrame = requestAnimationFrame(animate);
         }
         animate();
+
+        // --- Logika GERMIC Melirik Mengikuti Mouse ---
+        parentWindow.addEventListener('mousemove', (e) => {
+            const face = parentDoc.getElementById('germic-login-face');
+            if (face) {
+                // Kalkulasi batasan lirik mata
+                const limit = 8;
+                const rect = face.getBoundingClientRect();
+                // Mengukur jarak mouse ke titik tengah GERMIC
+                const mouseX = e.clientX - (rect.left + rect.width / 2); 
+                const mouseY = e.clientY - (rect.top + rect.height / 2);
+                
+                const moveX = Math.max(Math.min(mouseX / 30, limit), -limit);
+                const moveY = Math.max(Math.min(mouseY / 30, limit), -limit);
+                
+                face.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                face.style.transition = "transform 0.1s ease-out";
+            }
+        });
     </script>
     """, height=0, width=0)
 
-    # 3. Struktur Form Login Tetap Menggunakan Kode Asli Anda
+    # 3. Struktur Form Login
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.write("")
         st.write("")
         st.write("")
         
-        # Injeksi GERMIC bersebelahan dengan teks menggunakan Flexbox
+        # Injeksi GERMIC dengan ID khusus pada wajahnya agar bisa dilacak JS
         title_html = """
-        <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 5px;'>
+        <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 10px;'>
             <div class="germic-login-wrapper">
                 <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
                     <circle class="signal-wave-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
@@ -407,10 +429,15 @@ if not st.session_state["logged_in"]:
                     <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
                     <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
                     <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
-                    <g><rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/></g>
+                    <!-- Menambahkan id="germic-login-face" untuk pelacakan mouse -->
+                    <g id="germic-login-face">
+                        <rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
+                        <rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
+                        <rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/>
+                    </g>
                 </svg>
             </div>
-            <h1 class='login-title' style='margin: 0;'>TranscribX</h1>
+            <h1 class='login-title'>TranscribX</h1>
         </div>
         """
         st.markdown(title_html, unsafe_allow_html=True)

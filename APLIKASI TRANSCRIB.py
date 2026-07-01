@@ -579,13 +579,105 @@ if not st.session_state["logged_in"]:
 else:
     st.markdown("""
     <style>
-    .stApp {
-        background: white;
-        animation: none;
+    @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
+    
+    /* Membuat layer bawaan Streamlit menjadi transparan */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background: transparent !important;
     }
-    [data-testid="stSidebar"] {
-        display: flex !important;
+    [data-testid="stSidebar"] { display: none; }
+    
+    /* --- STYLING FORM LOGIN (DARK GLASSMORPHISM) --- */
+    div[data-testid="stForm"] {
+        background: rgba(15, 23, 42, 0.4) !important; /* Biru tua transparan */
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        padding: 40px 35px !important;
+        border-radius: 24px !important;
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important; /* Glow border cyan tipis */
+        transition: all 0.3s ease-in-out;
     }
+    div[data-testid="stForm"]:hover {
+        box-shadow: 0 0 50px rgba(56, 189, 248, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(56, 189, 248, 0.6) !important;
+    }
+    
+    /* Mengubah warna text label agar terang */
+    div[data-testid="stForm"] p, div[data-testid="stForm"] label {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Mempercantik Input Box */
+    div[data-baseweb="input"] {
+        background-color: rgba(30, 41, 59, 0.7) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(100, 116, 139, 0.5) !important;
+    }
+    div[data-baseweb="input"]:focus-within {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
+    }
+    div[data-baseweb="input"] input {
+        color: #ffffff !important;
+    }
+    div[data-baseweb="input"] input::placeholder {
+        color: #64748b !important;
+    }
+    
+    /* Mempercantik Tombol Login menjadi Glow & Gradasi */
+    div[data-testid="stForm"] button[type="submit"] {
+        background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px;
+        padding: 0.75rem 1rem !important;
+        box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.5) !important;
+        transition: all 0.3s ease !important;
+        margin-top: 15px;
+    }
+    div[data-testid="stForm"] button[type="submit"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px -5px rgba(14, 165, 233, 0.7) !important;
+        background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%) !important;
+    }
+    
+    /* Styling Title & Subtitle */
+    .login-title {
+        font-family: 'Balsamiq Sans', cursive; 
+        color: #FFD166; 
+        font-weight: 700;
+        font-size: 4.5rem;
+        text-shadow: 3px 3px 0px #FF9F1C, 0px 5px 15px rgba(0, 0, 0, 0.6); 
+        margin: 0;
+        line-height: 1;
+    }
+    .login-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+        text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Animasi GERMIC */
+    @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
+    @keyframes signal-login { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    
+    .germic-login-wrapper {
+        width: 140px; 
+        height: 140px; 
+        animation: float-login 4s ease-in-out infinite;
+        margin-right: 20px;
+        filter: drop-shadow(0px 6px 15px rgba(0,0,0,0.5));
+    }
+    .signal-wave-login { transform-origin: 50px 12px; animation: signal-login 2s infinite; }
+    .signal-wave-2-login { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal-login 2s infinite; }
+    .animate-pulse-login { animation: pulse-login 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
     """, unsafe_allow_html=True)
 

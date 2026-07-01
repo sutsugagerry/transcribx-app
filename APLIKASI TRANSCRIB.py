@@ -234,10 +234,10 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN (UI DENGAN ANIMASI NODE, GERMIC KARTUN BESAR & TRACKING MOUSE)
+# HALAMAN LOGIN (UI DENGAN ANIMASI NODE, GERMIC KARTUN BESAR & JUDUL KUNING LUCU)
 # =====================================================================
 if not st.session_state["logged_in"]:
-    # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun, dan perbesar GERMIC
+    # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun (Warna Kuning Lucu), dan perbesar GERMIC
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
@@ -259,10 +259,11 @@ if not st.session_state["logged_in"]:
     }
     .login-title {
         font-family: 'Balsamiq Sans', cursive; /* Font Doodle Kartun */
-        color: white;
+        color: #FFD166; /* Warna kuning lucu / ceria */
         font-weight: 700;
-        font-size: 4.5rem; /* Disesuaikan agar proporsional dengan GERMIC yang besar */
-        text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+        font-size: 4.5rem;
+        /* Tambahan efek 3D kartun orange dan shadow gelap biar makin pop-out */
+        text-shadow: 3px 3px 0px #FF9F1C, 0px 5px 15px rgba(0, 0, 0, 0.6); 
         margin: 0;
         line-height: 1;
     }
@@ -279,7 +280,7 @@ if not st.session_state["logged_in"]:
     @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     
     .germic-login-wrapper {
-        width: 140px; /* DIPERBESAR dari 75px */
+        width: 140px; /* GERMIC Besar */
         height: 140px; 
         animation: float-login 4s ease-in-out infinite;
         margin-right: 20px;

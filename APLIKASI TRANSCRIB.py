@@ -1891,26 +1891,28 @@ else:
                         aiBtn.disabled = true;
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi & Visual...</p></div>';
 
-                        const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
-                        - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
-                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                        ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
-                        ATURAN MERMAID: WAJIB format 'graph LR'.
-                        Transkrip Rapat: "${transcript}"`;
+                        // Ganti bagian prompt di dalam aiBtn.onclick dengan ini:
+                       const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
 
+                       ATURAN STRUKTUR OUTPUT:
+                       1. "ringkasan_eksekutif": Array of strings (poin-poin padat).
+                       2. "transkrip_dialog": Array of strings (format: "Pembicara: Isi").
+                       3. "jalannya_diskusi": Array of strings (Narasi detail & lengkap).
+                       4. "keputusan": Array of strings.
+                       5. "rencana_tindak_lanjut": Array of objects (tugas, pic, deadline, prioritas).
+                       6. "hubungan_topik": Array of objects (sumber, target, relasi).
 
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Array of strings.
-                        - jalannya_diskusi: Array of strings (Narasi detail & lengkap).
-                        - keputusan: Array of strings.
-                        - rencana_tindak_lanjut: Array of objects (tugas, pic, deadline, prioritas).
-                        - hubungan_topik: Array of objects (sumber, target, relasi).
+                       ATURAN MERMAID (WAJIB DIIKUTI!):
+                       - Gunakan format 'graph LR'.
+                       - Gunakan format Node ID dengan kutip ganda dan kurung siku untuk kotak: A["Teks Node 1"] --> B["Teks Node 2"].
+                       - Pastikan alur logical, dari kiri ke kanan (LR).
+                       - Jangan gunakan spasi pada ID Node (Gunakan underscore jika perlu, misal: A_1).
+                       - Struktur harus hierarkis: Parent["Topik Utama"] --> Child["Detail 1"] --> Sub["Detail 2"].
 
-                        Transkrip Rapat: "${transcript}"`;
+                       ATURAN MARKMAP:
+                       - Gunakan markdown murni dengan nesting yang rapi menggunakan bullet points (#, -, dll).
+
+                       Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
                             model: "openai/gpt-5-mini", 

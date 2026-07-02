@@ -1039,7 +1039,7 @@ else:
         st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
         st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
         
-        html_code = """
+       html_code = """
         <!DOCTYPE html>
         <html>
         <head>
@@ -1247,13 +1247,14 @@ else:
                     const canvasCtx = visualizer.getContext('2d');
                     const debugInfo = document.getElementById('debugInfo');
 
-                    // ======== AI BRAIN VISUALIZER (OBSIDIAN GRAPH STYLE) ========
+                    // ======== AI BRAIN VISUALIZER (CLUSTER ORB STYLE) ========
                     const brainCanvas = document.getElementById('aiBrainCanvas');
                     const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
                     const brainText = document.getElementById('aiBrainText');
                     let brainParticles = [];
                     let isThinking = false;
                     let brainAnimationId;
+                    let timeOscillator = 0; // Untuk efek nafas/mengambang pusat
 
                     function initBrain() {
                         if (!brainCanvas) return;
@@ -1262,19 +1263,18 @@ else:
                         brainCanvas.height = 180;
                         
                         brainParticles = [];
-                        // Membuat banyak nodes agar padat seperti Obsidian
-                        const numParticles = Math.floor((brainCanvas.width * brainCanvas.height) / 2500); 
+                        const numParticles = 160; // Padat seperti Obsidian Graph
                         
                         for(let i=0; i<numParticles; i++) {
-                            // Buat 5% node menjadi "Core" yang sedikit lebih besar
                             let isCore = Math.random() > 0.95;
                             brainParticles.push({
-                                x: Math.random() * brainCanvas.width,
-                                y: Math.random() * brainCanvas.height,
-                                vx: (Math.random() - 0.5) * (isCore ? 0.3 : 1.0),
-                                vy: (Math.random() - 0.5) * (isCore ? 0.3 : 1.0),
-                                radius: isCore ? (Math.random() * 2 + 3) : (Math.random() * 1.5 + 0.5),
-                                isCore: isCore
+                                angle: Math.random() * Math.PI * 2,
+                                // Jarak ngumpul dari tengah: radius 5 sampai 70
+                                orbitRadius: Math.random() * 65 + 5, 
+                                speed: Math.random() * 0.015 + 0.002,
+                                baseRadius: isCore ? (Math.random() * 2 + 2) : (Math.random() * 1.5 + 0.5),
+                                isCore: isCore,
+                                x: 0, y: 0
                             });
                         }
                     }
@@ -1283,43 +1283,48 @@ else:
                         if (!brainCanvas) return;
                         brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
                         
-                        // Konfigurasi jarak sinapsis & kecepatan
-                        const maxDistance = isThinking ? 85 : 65;
-                        const speedMultiplier = isThinking ? 2.5 : 0.8;
+                        timeOscillator += 0.02;
                         
-                        // Warna Nodes & Lines (Idle: Slate/Blue | Thinking: Neon Purple/Cyan)
-                        const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.7)"; 
-                        const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 0.9)";
-                        const lineColorR = isThinking ? 192 : 100;
-                        const lineColorG = isThinking ? 132 : 116;
-                        const lineColorB = isThinking ? 252 : 139;
-
+                        // Titik pusat gumpalan otak (mengambang pelan)
+                        const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
+                        const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
+                        
+                        const maxDistance = isThinking ? 40 : 25; // Makin jauh koneksinya saat mikir
+                        const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
+                        const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
+                        
+                        // 1. Update Posisi agar Terus Membentuk Bola
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             
-                            p.x += p.vx * speedMultiplier;
-                            p.y += p.vy * speedMultiplier;
+                            // Putar perlahan. Kalo mikir putar lebih cepat
+                            p.angle += isThinking ? p.speed * 4 : p.speed;
                             
-                            // Pantulan dinding
-                            if(p.x < 0 || p.x > brainCanvas.width) p.vx *= -1;
-                            if(p.y < 0 || p.y > brainCanvas.height) p.vy *= -1;
+                            // Efek nafas (radius membesar/mengecil)
+                            let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
+                            let currentRadius = p.orbitRadius + breath;
                             
-                            // Gambar Node
+                            // Hitung koordinat berdasarkan orbit pusat (Elips agar memenuhi layar)
+                            p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
+                            p.y = cy + Math.sin(p.angle) * currentRadius;
+                            
+                            // Gambar Titik
                             brainCtx.beginPath();
-                            brainCtx.arc(p.x, p.y, isThinking ? p.radius * 1.3 : p.radius, 0, Math.PI * 2);
+                            brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
                             brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
                             
-                            // Efek Glow saat Thinking
                             if (isThinking) {
-                                brainCtx.shadowBlur = p.isCore ? 15 : 8;
+                                brainCtx.shadowBlur = p.isCore ? 15 : 5;
                                 brainCtx.shadowColor = p.isCore ? "#2dd4bf" : "#d8b4fe";
                             } else {
                                 brainCtx.shadowBlur = 0;
                             }
-                            
                             brainCtx.fill();
-                            
-                            // Hitung & Gambar Garis Koneksi (Sinapsis)
+                        }
+                        
+                        // 2. Gambar Cabang (Sinapsis) Antar Titik yang Berdekatan
+                        for(let i=0; i<brainParticles.length; i++) {
+                            let p = brainParticles[i];
                             for(let j=i+1; j<brainParticles.length; j++) {
                                 let p2 = brainParticles[j];
                                 let dx = p.x - p2.x;
@@ -1331,12 +1336,14 @@ else:
                                     brainCtx.moveTo(p.x, p.y);
                                     brainCtx.lineTo(p2.x, p2.y);
                                     
-                                    // Opasitas berkurang jika jarak semakin jauh
                                     let opacity = 1 - (dist / maxDistance);
-                                    let alpha = isThinking ? opacity * 0.7 : opacity * 0.25;
+                                    let alpha = isThinking ? opacity * 0.7 : opacity * 0.2;
+                                    let r = isThinking ? 192 : 148;
+                                    let g = isThinking ? 132 : 163;
+                                    let b = isThinking ? 252 : 184;
                                     
-                                    brainCtx.strokeStyle = `rgba(${lineColorR}, ${lineColorG}, ${lineColorB}, ${alpha})`;
-                                    brainCtx.lineWidth = isThinking ? 1.2 : 0.5;
+                                    brainCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                                    brainCtx.lineWidth = isThinking ? 1.0 : 0.4;
                                     brainCtx.stroke();
                                 }
                             }

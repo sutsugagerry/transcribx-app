@@ -1039,7 +1039,7 @@ else:
         st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
         st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
         
-       html_code = """
+        html_code = """
         <!DOCTYPE html>
         <html>
         <head>

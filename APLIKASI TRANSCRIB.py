@@ -59,12 +59,12 @@ footer {visibility: hidden;}
 @keyframes pulse-border {
     0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
     70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
 }
 @keyframes pulse-border-admin {
     0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
     70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
 }
 .profile-card {
     border-radius: 16px;
@@ -243,7 +243,7 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN (UI DENGAN ANIMASI NODE, GERMIC KARTUN BESAR & JUDUL KUNING LUCU)
+# HALAMAN LOGIN
 # =====================================================================
 if not st.session_state["logged_in"]:
     st.markdown("""
@@ -314,12 +314,6 @@ if not st.session_state["logged_in"]:
         text-shadow: 3px 3px 0px #FF9F1C, 0px 5px 15px rgba(0, 0, 0, 0.6); 
         margin: 0;
         line-height: 1;
-    }
-    .login-subtitle {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1.1rem;
-        margin-bottom: 40px;
-        text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
     }
     
     @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
@@ -707,7 +701,7 @@ else:
             st.session_state["logged_in"] = False
             st.rerun()
 
-    st.title("🎙️ TranscribX: Enterprise Transcription & AI Summarizer")
+    st.title("🎙️ TranscribX: SmartDose Enterprise Transcription")
 
     if is_admin():
         tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
@@ -1258,14 +1252,19 @@ else:
                     const canvasCtx = visualizer.getContext('2d');
                     const debugInfo = document.getElementById('debugInfo');
 
-                    // ======== AI BRAIN VISUALIZER (CLUSTER ORB STYLE) ========
+                    // ======== INSIALISASI MERMAID GLOBALLY ========
+                    if (window.mermaid) {
+                        mermaid.initialize({ startOnLoad: false });
+                    }
+
+                    // ======== AI BRAIN VISUALIZER ========
                     const brainCanvas = document.getElementById('aiBrainCanvas');
                     const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
                     const brainText = document.getElementById('aiBrainText');
                     let brainParticles = [];
                     let isThinking = false;
                     let brainAnimationId;
-                    let timeOscillator = 0; // Untuk efek nafas/mengambang pusat
+                    let timeOscillator = 0;
 
                     function initBrain() {
                         if (!brainCanvas) return;
@@ -1274,7 +1273,7 @@ else:
                         brainCanvas.height = 180;
                         
                         brainParticles = [];
-                        const numParticles = 160; // Padat seperti Obsidian Graph
+                        const numParticles = 160;
                         
                         for(let i=0; i<numParticles; i++) {
                             let isCore = Math.random() > 0.95;
@@ -1292,47 +1291,37 @@ else:
                     function drawBrain() {
                         if (!brainCanvas) return;
                         brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
-                        
                         timeOscillator += 0.02;
                         
-                        // Titik pusat gumpalan otak (mengambang pelan)
                         const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
                         const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
                         
-                        const maxDistance = isThinking ? 40 : 25; // Makin jauh koneksinya saat mikir
+                        const maxDistance = isThinking ? 40 : 25;
                         const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
                         const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
                         
-                        // 1. Update Posisi agar Terus Membentuk Bola
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
-                            
-                            // Putar perlahan. Kalo mikir putar lebih cepat
                             p.angle += isThinking ? p.speed * 4 : p.speed;
-                            
-                            // Efek nafas (radius membesar/mengecil)
                             let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
                             let currentRadius = p.orbitRadius + breath;
                             
-                            // Hitung koordinat berdasarkan orbit pusat (Elips agar memenuhi layar)
                             p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
                             p.y = cy + Math.sin(p.angle) * currentRadius;
                             
-                            // Gambar Titik
                             brainCtx.beginPath();
                             brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
                             brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
                             
                             if (isThinking) {
                                 brainCtx.shadowBlur = p.isCore ? 15 : 5;
-                                brainCtx.shadowColor = p.isCore ? "#2dd4bf" : "#d8b4fe";
+                                brainCtx.shadowColor = "#2dd4bf";
                             } else {
                                 brainCtx.shadowBlur = 0;
                             }
                             brainCtx.fill();
                         }
                         
-                        // 2. Gambar Cabang (Sinapsis) Antar Titik yang Berdekatan
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             for(let j=i+1; j<brainParticles.length; j++) {
@@ -1345,14 +1334,9 @@ else:
                                     brainCtx.beginPath();
                                     brainCtx.moveTo(p.x, p.y);
                                     brainCtx.lineTo(p2.x, p2.y);
-                                    
                                     let opacity = 1 - (dist / maxDistance);
                                     let alpha = isThinking ? opacity * 0.7 : opacity * 0.2;
-                                    let r = isThinking ? 192 : 148;
-                                    let g = isThinking ? 132 : 163;
-                                    let b = isThinking ? 252 : 184;
-                                    
-                                    brainCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                                    brainCtx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
                                     brainCtx.lineWidth = isThinking ? 1.0 : 0.4;
                                     brainCtx.stroke();
                                 }
@@ -1362,14 +1346,11 @@ else:
                     }
 
                     if (brainCanvas) {
-                        setTimeout(() => {
-                            initBrain();
-                            drawBrain();
-                        }, 500);
+                        setTimeout(() => { initBrain(); drawBrain(); }, 500);
                         window.addEventListener('resize', initBrain);
                     }
 
-                    // ======== STATE ========
+                    // ======== STATE MANAGEMENT ========
                     let isRecording = false;
                     let isVisualizerActive = false;
                     let recognition = null;
@@ -1390,12 +1371,10 @@ else:
                         debugInfo.scrollTop = debugInfo.scrollHeight;
                     }
 
-                    // ======== INIT SPEECH RECOGNITION ========
                     function initSpeechRecognition() {
                         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                         if (!SpeechRecognition) {
                             status.innerText = "❌ Browser tidak mendukung Speech API";
-                            updateDebug('ERROR: Speech API not supported');
                             return null;
                         }
                         const rec = new SpeechRecognition();
@@ -1409,44 +1388,28 @@ else:
                             indicator.className = 'indicator-dot recording';
                             startBtn.disabled = true;
                             stopBtn.disabled = false;
-                            langSelect.disabled = true;
                             const placeholder = document.getElementById('placeholder');
                             if (placeholder) placeholder.style.display = 'none';
-                            updateDebug('Speech recognition STARTED');
                         };
 
                         rec.onerror = function(event) {
-                            updateDebug('Speech error: ' + event.error);
-                            if (event.error === 'no-speech') return;
-                            if (event.error === 'aborted') return;
-                            if (event.error === 'not-allowed') {
-                                status.innerText = "❌ Izin Mic ditolak! Transkrip tidak akan muncul.";
-                            } else {
-                                status.innerText = "⚠️ Speech Error: " + event.error;
-                            }
+                            if (event.error === 'no-speech' || event.error === 'aborted') return;
+                            status.innerText = "⚠️ Speech Error: " + event.error;
                         };
 
                         rec.onend = function() {
-                            updateDebug('Speech ended. isRecording=' + isRecording);
                             if (isRecording) {
-                                setTimeout(() => {
-                                    try { rec.start(); updateDebug('Speech restarted'); } 
-                                    catch(e) { updateDebug('Restart failed: ' + e.message); }
-                                }, 200);
+                                setTimeout(() => { try { rec.start(); } catch(e) {} }, 200);
                             }
                         };
 
                         rec.onresult = function(event) {
                             let interimTranscript = '';
                             let finalTranscript = '';
-                            
                             for (let i = event.resultIndex; i < event.results.length; i++) {
                                 const result = event.results[i];
-                                if (result.isFinal) {
-                                    finalTranscript += result[0].transcript + ' ';
-                                } else {
-                                    interimTranscript += result[0].transcript;
-                                }
+                                if (result.isFinal) finalTranscript += result[0].transcript + ' ';
+                                else interimTranscript += result[0].transcript;
                             }
 
                             if (finalTranscript.trim()) {
@@ -1455,10 +1418,7 @@ else:
                                 lastFinalText = cleanFinal;
                                 
                                 const now = new Date();
-                                const timeStr = '[' + 
-                                    String(now.getHours()).padStart(2,'0') + ':' + 
-                                    String(now.getMinutes()).padStart(2,'0') + ':' + 
-                                    String(now.getSeconds()).padStart(2,'0') + ']';
+                                const timeStr = '[' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0') + ']';
                                 
                                 if (currentInterimDiv) {
                                     currentInterimDiv.className = 'line-final';
@@ -1481,33 +1441,24 @@ else:
                                 transcriptBox.scrollTop = transcriptBox.scrollHeight;
                             }
                         };
-
                         return rec;
                     }
 
-                    // ======== VISUALIZER ========
                     function setupVisualizer(stream) {
                         try {
                             const audioTracks = stream.getAudioTracks();
-                            if (audioTracks.length === 0) {
-                                updateDebug('WARNING: No audio tracks for visualizer');
-                                return;
-                            }
+                            if (audioTracks.length === 0) return;
                             const audioOnlyStream = new MediaStream(audioTracks);
                             const source = globalAudioCtx.createMediaStreamSource(audioOnlyStream);
                             analyser = globalAudioCtx.createAnalyser();
                             analyser.fftSize = 256;
                             dataArray = new Uint8Array(analyser.frequencyBinCount);
                             source.connect(analyser);
-                            updateDebug('Visualizer OK.');
-                        } catch(e) {
-                            updateDebug('Visualizer error: ' + e.message);
-                        }
+                        } catch(e) { console.error(e); }
                     }
 
                     function drawVisualizer() {
                         if (!isVisualizerActive) return;
-                        
                         const width = visualizer.width;
                         const height = visualizer.height;
                         canvasCtx.clearRect(0, 0, width, height);
@@ -1517,256 +1468,102 @@ else:
                             const bufferLength = analyser.frequencyBinCount;
                             const barWidth = (width / bufferLength) * 2.5;
                             let x = 0;
-                            
                             for (let i = 0; i < bufferLength; i++) {
                                 const barHeight = dataArray[i] / 2;
-                                const r = Math.min(barHeight + 100, 255);
-                                const g = Math.min(barHeight / 2 + 50, 255);
-                                const b = Math.min(barHeight + 150, 255);
-                                canvasCtx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
-                                canvasCtx.shadowBlur = 10;
-                                canvasCtx.shadowColor = '#f59e0b';
+                                canvasCtx.fillStyle = 'rgb(' + Math.min(barHeight + 100, 255) + ',158,11)';
                                 const y = (height / 2) - (barHeight / 2);
                                 canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
                                 x += barWidth + 1;
                             }
                         }
-                        
-                        if (isVisualizerActive) {
-                            drawVisual = requestAnimationFrame(drawVisualizer);
-                        }
+                        drawVisual = requestAnimationFrame(drawVisualizer);
                     }
 
-                    // ======== SETUP MEDIA RECORDER ========
                     function setupMediaRecorder(stream) {
                         audioChunks = [];
-                        
-                        const options = { mimeType: 'video/webm;codecs=vp9,opus' };
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = 'video/webm;codecs=vp8,opus';
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = 'video/webm';
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = '';
-                        
-                        updateDebug('MediaRecorder mimeType: ' + (options.mimeType || 'browser default'));
+                        let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
                         
                         try {
                             mediaRecorder = new MediaRecorder(stream, options.mimeType ? options : undefined);
                         } catch(e) {
-                            updateDebug('MediaRecorder with options failed, trying default');
                             mediaRecorder = new MediaRecorder(stream);
                         }
                         
                         mediaRecorder.ondataavailable = function(e) {
-                            if (e.data && e.data.size > 0) {
-                                audioChunks.push(e.data);
-                                updateDebug('Chunk: ' + (e.data.size / 1024).toFixed(1) + ' KB');
-                            }
-                        };
-                        
-                        mediaRecorder.onstart = function() {
-                            updateDebug('MediaRecorder STARTED recording');
+                            if (e.data && e.data.size > 0) audioChunks.push(e.data);
                         };
                         
                         mediaRecorder.onstop = function() {
-                            updateDebug('MediaRecorder STOPPED. Total chunks: ' + audioChunks.length);
-                            
                             if (audioChunks.length > 0) {
                                 const mimeType = mediaRecorder.mimeType || 'video/webm';
                                 const blob = new Blob(audioChunks, { type: mimeType });
-                                const blobSizeKB = (blob.size / 1024).toFixed(1);
-                                updateDebug('BLOB created: ' + blobSizeKB + ' KB, type: ' + blob.type);
-                                
                                 const audioUrl = URL.createObjectURL(blob);
-                                const timestamp = Date.now();
-                                const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-                                const fileName = 'ScreenCapture_' + timestamp + '.' + ext;
-                                
-                                const placeholder = document.getElementById('audioPlaceholder');
-                                if (placeholder) {
-                                    placeholder.remove();
-                                }
-                                
                                 const audioItem = document.createElement('div');
                                 audioItem.className = 'audio-item fade-in';
                                 audioItem.innerHTML = `
                                     <audio controls src="${audioUrl}" preload="auto" style="flex:1; min-width:200px;"></audio>
-                                    <a href="${audioUrl}" download="${fileName}" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; white-space:nowrap; text-decoration:none;">💾 Download</a>
-                                    <small style="color:#94a3b8; white-space:nowrap;">${blobSizeKB} KB</small>
+                                    <a href="${audioUrl}" download="Capture_${Date.now()}.webm" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; text-decoration:none;">💾 Download</a>
                                 `;
+                                document.getElementById('audioPlaceholder')?.remove();
                                 audioContainer.appendChild(audioItem);
-                                updateDebug('✅ Audio player ADDED to container');
-                            } else {
-                                const errorItem = document.createElement('p');
-                                errorItem.style.color = '#ef4444';
-                                errorItem.style.textAlign = 'center';
-                                errorItem.style.padding = '10px';
-                                errorItem.innerText = '⚠️ Tidak ada data audio. Pastikan "Share tab audio" DICENTANG saat capture!';
-                                audioContainer.appendChild(errorItem);
-                                updateDebug('❌ NO audio chunks recorded!');
                             }
-                            
-                            audioChunks = [];
-                        };
-                        
-                        mediaRecorder.onerror = function(e) {
-                            updateDebug('MediaRecorder ERROR: ' + (e.error?.message || 'unknown'));
                         };
                     }
 
-                    // ======== START ========
                     startBtn.onclick = async function() {
                         try {
-                            lastFinalText = "";
-                            currentInterimDiv = null;
-                            audioChunks = [];
-                            debugInfo.innerHTML = '<strong>🔍 Debug Log:</strong>';
-                            debugInfo.style.display = 'block';
-                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Bicara atau putar audio di tab yang dipilih.</div>';
-                            
-                            updateDebug('=== START CAPTURE ===');
-                            
-                            try {
-                                await navigator.mediaDevices.getUserMedia({ audio: true });
-                            } catch (micErr) {
-                                alert("PENTING: Izin Microphone diperlukan agar Transkrip teks muncul. Mohon klik allow/izinkan!");
-                                updateDebug('Mic permission denied: ' + micErr.message);
-                            }
+                            lastFinalText = ""; currentInterimDiv = null; audioChunks = [];
+                            transcriptBox.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Rapat/Tab sedang berjalan.</div>';
+                            await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                            if (!globalAudioCtx) {
-                                globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                            }
-                            if (globalAudioCtx.state === 'suspended') {
-                                globalAudioCtx.resume();
-                            }
+                            if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
                             
                             displayStream = await navigator.mediaDevices.getDisplayMedia({ 
-                                video: {
-                                    width: { ideal: 640 },
-                                    height: { ideal: 480 },
-                                    frameRate: { ideal: 1 }
-                                },
-                                audio: {
-                                    echoCancellation: false,
-                                    noiseSuppression: false,
-                                    autoGainControl: false
-                                }
+                                video: { width: 640, height: 480, frameRate: 1 },
+                                audio: { echoCancellation: false, noiseSuppression: false }
                             });
                             
-                            updateDebug('Display stream obtained');
-                            
-                            const videoTracks = displayStream.getVideoTracks();
-                            const audioTracks = displayStream.getAudioTracks();
-                            updateDebug('Video tracks: ' + videoTracks.length);
-                            updateDebug('Audio tracks: ' + audioTracks.length);
-                            
-                            if (audioTracks.length === 0) {
-                                status.innerText = "⚠️ TIDAK ADA AUDIO! Centang 'Share tab audio'";
-                                updateDebug('ERROR: No audio tracks in stream!');
-                                videoTracks.forEach(t => t.stop());
-                                startBtn.disabled = false;
-                                stopBtn.disabled = true;
+                            if (displayStream.getAudioTracks().length === 0) {
+                                status.innerText = "⚠️ CENTANG 'Share tab audio'!";
+                                displayStream.getVideoTracks().forEach(t => t.stop());
                                 return;
                             }
                             
                             setupMediaRecorder(displayStream);
                             mediaRecorder.start(1000);
-                            
                             setupVisualizer(displayStream);
-                            
-                            isVisualizerActive = true;
-                            drawVisualizer();
+                            isVisualizerActive = true; drawVisualizer();
                             
                             recognition = initSpeechRecognition();
-                            if (recognition) {
-                                recognition.start();
-                            }
+                            if (recognition) recognition.start();
                             
-                            videoTracks[0]?.addEventListener('ended', () => {
-                                updateDebug('Video track ended (user stopped sharing from browser)');
-                                if (isRecording) {
-                                    updateDebug('Auto-stopping...');
-                                    stopBtn.click();
-                                }
-                            });
-                            
-                            audioTracks[0]?.addEventListener('ended', () => {
-                                updateDebug('Audio track ended');
-                            });
-                            
+                            displayStream.getVideoTracks()[0].addEventListener('ended', () => { if (isRecording) stopBtn.click(); });
                             resizeVisualizer();
-                            updateDebug('=== CAPTURE STARTED SUCCESSFULLY ===');
-                            
                         } catch(err) {
-                            updateDebug('ERROR: ' + err.name + ' - ' + err.message);
-                            status.innerText = "❌ Gagal: " + (err.name === 'NotAllowedError' ? 'Screen capture dibatalkan' : err.message);
-                            startBtn.disabled = false;
-                            stopBtn.disabled = true;
+                            status.innerText = "❌ Gagal: " + err.message;
                         }
                     };
 
-                    // ======== STOP ========
                     stopBtn.onclick = function() {
-                        updateDebug('=== STOP BUTTON CLICKED ===');
-                        isRecording = false;
-                        
-                        isVisualizerActive = false;
+                        isRecording = false; isVisualizerActive = false;
                         if (drawVisual) cancelAnimationFrame(drawVisual);
+                        if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+                        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                        if (displayStream) { displayStream.getTracks().forEach(t => t.stop()); displayStream = null; }
                         
-                        if (recognition) {
-                            try { recognition.stop(); } catch(e) {}
-                            recognition = null;
-                            updateDebug('Speech recognition stopped');
-                        }
-                        
-                        if (mediaRecorder && mediaRecorder.state === 'recording') {
-                            updateDebug('Requesting MediaRecorder stop... Current state: ' + mediaRecorder.state);
-                            mediaRecorder.stop();
-                        }
-                        
-                        if (displayStream) {
-                            displayStream.getTracks().forEach(track => {
-                                updateDebug('Stopping track: ' + track.kind + ' - ' + track.label);
-                                track.stop();
-                            });
-                            displayStream = null;
-                        }
-                        
-                        if (globalAudioCtx && globalAudioCtx.state === 'running') {
-                            globalAudioCtx.suspend(); 
-                        }
-                        analyser = null;
-                        dataArray = null;
-                        
-                        canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
                         status.innerText = "⏸️ Stopped - Cek Arsip Rekaman ↓";
                         indicator.className = 'indicator-dot';
-                        startBtn.disabled = false;
-                        stopBtn.disabled = true;
-                        langSelect.disabled = false;
-                        
-                        if (currentInterimDiv) {
-                            currentInterimDiv.className = 'line-final';
-                            const now = new Date();
-                            const timeStr = '[' + 
-                                String(now.getHours()).padStart(2,'0') + ':' + 
-                                String(now.getMinutes()).padStart(2,'0') + ':' + 
-                                String(now.getSeconds()).padStart(2,'0') + ']';
-                            const text = currentInterimDiv.textContent.replace('💬 ', '');
-                            currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + text;
-                            currentInterimDiv = null;
-                        }
-                        
-                        updateDebug('=== STOP COMPLETE ===');
+                        startBtn.disabled = false; stopBtn.disabled = true; langSelect.disabled = false;
                     };
 
-                    // ======== RESIZE VISUALIZER ========
                     function resizeVisualizer() {
                         visualizer.width = visualizer.parentElement.clientWidth || 600;
                         visualizer.height = 80;
                     }
                     window.addEventListener('resize', resizeVisualizer);
-                    setTimeout(resizeVisualizer, 100);
 
-                    // ======== COPY ========
                     copyBtn.onclick = function() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
                         if (lines.length === 0) { alert('Belum ada teks!'); return; }
@@ -1774,16 +1571,9 @@ else:
                         navigator.clipboard.writeText(text).then(() => {
                             copyBtn.innerText = '✅ Copied!';
                             setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
-                        }).catch(() => {
-                            const ta = document.createElement('textarea');
-                            ta.value = text; document.body.appendChild(ta);
-                            ta.select(); document.execCommand('copy'); ta.remove();
-                            copyBtn.innerText = '✅ Copied!';
-                            setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
                         });
                     };
 
-                    // ======== DOWNLOAD TXT ========
                     downloadTxtBtn.onclick = function() {
                         const lines = transcriptBox.querySelectorAll('.line-final');
                         if (lines.length === 0) { alert('Belum ada teks!'); return; }
@@ -1791,34 +1581,24 @@ else:
                         const blob = new Blob([text], { type: 'text/plain' });
                         const a = document.createElement('a');
                         a.href = URL.createObjectURL(blob);
-                        a.download = 'Transkrip_Capture_' + Date.now() + '.txt';
+                        a.download = 'Transkrip_Live_' + Date.now() + '.txt';
                         a.click();
                     };
 
-                    // ======== CLEAR ========
                     clearBtn.onclick = function() {
-                        transcriptBox.innerHTML = `
-                            <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
-                                🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
-                            </div>
-                        `;
-                        lastFinalText = "";
-                        currentInterimDiv = null;
-                        aiContent.innerHTML = "";
+                        transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
+                        lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = "";
                     };
 
-                    // ======== GET TRANSCRIPT ========
                     function getTranscriptText() {
                         return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
                     }
 
-                    // ======== FUNGSI DOWNLOAD VISUALISASI LIVE ========
                     window.dlCyLive = function() {
                         if (window.cyInstance) {
                             const a = document.createElement('a'); 
                             a.href = window.cyInstance.png({full: true, scale: 4, bg: 'white'}); 
-                            a.download = 'Cytoscape_Live.png'; 
-                            a.click();
+                            a.download = 'Cytoscape_Live.png'; a.click();
                         }
                     };
 
@@ -1826,93 +1606,59 @@ else:
                         const container = document.getElementById('mermaidLiveWrapper');
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
-                        
                         const btn = document.getElementById('dlBtnMermaidLive');
-                        const originalText = btn ? btn.innerHTML : "📸 PNG";
                         if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
 
-                        if (window.panZoomLive) {
-                            window.panZoomLive.destroy();
-                            window.panZoomLive = null;
-                        }
+                        if (window.panZoomLive) { window.panZoomLive.destroy(); window.panZoomLive = null; }
 
                         setTimeout(() => {
-                            const originalWidth = container.style.width;
-                            const originalHeight = container.style.height;
-                            const originalOverflow = container.style.overflow;
+                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                            const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                             
-                            const originalWAttr = svgEl.getAttribute('width');
-                            const originalHAttr = svgEl.getAttribute('height');
-                            const originalViewBox = svgEl.getAttribute('viewBox');
-                            
-                            const bbox = svgEl.getBBox();
-                            const padding = 50;
+                            const bbox = svgEl.getBBox(); const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
                             
-                            container.style.width = trueWidth + 'px';
-                            container.style.height = trueHeight + 'px';
-                            container.style.overflow = 'visible';
-                            
-                            // PERBAIKAN MERMAID EXPORT
+                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                             svgEl.style.maxWidth = 'none';
                             svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                            svgEl.style.width = trueWidth + 'px';
-                            svgEl.style.height = trueHeight + 'px';
+                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {
                                 html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                                 .then(canvas => {
-                                    container.style.width = originalWidth; 
-                                    container.style.height = originalHeight; 
-                                    container.style.overflow = originalOverflow;
-                                    
+                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
                                     if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                     
-                                    window.panZoomLive = svgPanZoom(svgEl, {
-                                        zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
-                                    });
+                                    svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                    window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
                                     
-                                    const link = document.createElement('a'); 
-                                    link.download = 'Mermaid_Live.png'; 
-                                    link.href = canvas.toDataURL('image/png', 1.0); 
-                                    link.click();
-                                    
-                                    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-                                }).catch(err => {
-                                    if (btn) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
-                                });
+                                    const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
+                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
                             }, 600);
                         }, 100);
                     };
 
                     window.dlMarkmapLive = function() {
                         const container = document.getElementById('markmapLiveWrapper');
-                        const svgEl = container.querySelector('svg');
-                        if (!svgEl) return;
+                        const svgEl = container.querySelector('svg'); if (!svgEl) return;
+                        const g = svgEl.querySelector('g'); if (!g) return;
                         
-                        const g = svgEl.querySelector('g');
-                        if (!g) return;
-                        
-                        const originalWidth = container.style.width;
-                        const originalHeight = container.style.height;
-                        const originalOverflow = container.style.overflow;
-                        const originalTransform = g.getAttribute('transform');
-                        const originalViewBox = svgEl.getAttribute('viewBox');
+                        const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                        const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
                         
                         g.setAttribute('transform', 'translate(0,0) scale(1)');
-                        const bbox = g.getBBox();
-                        const padding = 50;
+                        const bbox = g.getBBox(); const padding = 50;
                         const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                         const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
                         
-                        container.style.width = trueWidth + 'px';
-                        container.style.height = trueHeight + 'px';
-                        container.style.overflow = 'visible';
+                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                         svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                        svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                        svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                         
                         setTimeout(() => {
                             html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
@@ -1920,32 +1666,20 @@ else:
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                const link = document.createElement('a'); 
-                                link.download = 'Markmap_Live.png';
-                                link.href = canvas.toDataURL('image/png', 1.0); 
-                                link.click();
+                                svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                const link = document.createElement('a'); link.download = 'Markmap_Live.png';
+                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
                             });
                         }, 600);
                     };
 
-                    // ======== AI SUMMARY ========
                     aiBtn.onclick = async function() {
-                        const transcript = getTranscriptText();
-                        const apiKey = apiKeyInput.value.trim();
-                        if (!apiKey) { alert('Masukkan API Key!'); return; }
-                        if (!transcript) { alert('Transkrip kosong!'); return; }
+                        const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
+                        if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                         
-                        // 🔴 AKTIFKAN ANIMASI BRAIN (OBSIDIAN GRAPH STYLE)
                         isThinking = true;
-                        if (brainText) {
-                            brainText.innerText = "PROCESSING NEURAL DATA...";
-                            brainText.style.color = "#d8b4fe"; // glowing purple
-                            brainText.style.textShadow = "0 0 15px #c084fc";
-                        }
-                        
-                        aiBtn.innerHTML = '⏳ Memproses...';
-                        aiBtn.disabled = true;
-                        aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi & Visual...</p></div>';
+                        if (brainText) { brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }
+                        aiBtn.innerHTML = '⏳ Memproses...'; aiBtn.disabled = true;
 
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN STRUKTUR OUTPUT:
@@ -1955,20 +1689,12 @@ else:
                         4. "keputusan": Array of strings.
                         5. "rencana_tindak_lanjut": Array of objects (tugas, pic, deadline, prioritas).
                         6. "hubungan_topik": Array of objects (sumber, target, relasi).
-                        ATURAN MERMAID (WAJIB DIIKUTI!):
-                        - Gunakan format 'graph LR'.
-                        - Gunakan format Node ID dengan kutip ganda dan kurung siku untuk kotak: A["Teks Node 1"] --> B["Teks Node 2"].
-                        - Pastikan alur logical, dari kiri ke kanan (LR).
-                        - Jangan gunakan spasi pada ID Node (Gunakan underscore jika perlu, misal: A_1).
-                        - Struktur harus hierarkis: Parent["Topik Utama"] --> Child["Detail 1"] --> Sub["Detail 2"].
-                        ATURAN MARKMAP:
-                        - Gunakan markdown murni dengan nesting yang rapi menggunakan bullet points (#, -, dll).
+                        ATURAN MERMAID: Wajib format 'graph LR' dengan tanda kutip ganda pada teks node.
+                        ATURAN MARKMAP (MUTLAK): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat kaya, padat, mendalam, dan bercabang banyak seperti peta konsep profesional menggunakan hirarki nested markdown murni (#, ##, ###, -, dll) hingga sub-poin terkecil agar visualisasinya luas.
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            model: "openai/gpt-5-mini", 
-                            messages: [{ role: "user", content: prompt }], 
-                            temperature: 0.2,
+                            model: "openai/gpt-5-mini", messages: [{ role: "user", content: prompt }], temperature: 0.2,
                             response_format: {
                                 type: "json_schema",
                                 json_schema: {
@@ -1995,193 +1721,69 @@ else:
 
                         try {
                             const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
-                                method: "POST",
-                                headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+                                method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
                                 body: JSON.stringify(payload)
                             });
+                            const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
                             
-                            const textResponse = await response.text();
+                            let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
+                                `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
+                            ).join('');
                             
-                            let resJson;
-                            try {
-                                resJson = JSON.parse(textResponse);
-                            } catch (e) {
-                                throw new Error("Server API tidak merespon dengan format JSON.");
-                            }
+                            aiContent.innerHTML = `
+                                <div class="fade-in mt-6 mb-10">
+                                    <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
+                                    <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
+                                    <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
+                                    <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
+                                    <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:400px;"></div></div></div>
+                                        <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl p-2"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden;"><pre id="mermaidLive" class="mermaid"></pre></div></div></div>
+                                    </div>
+                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                </div>`;
 
-                            if (!response.ok) {
-                                throw new Error(resJson.error?.message || "HTTP Error " + response.status);
-                            }
+                            setTimeout(() => {
+                                const nodesSet = new Set(); const cyElements = [];
+                                (data.notulensi_rapat.hubungan_topik || []).forEach(rel => {
+                                    if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
+                                    if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
+                                    cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
+                                });
+                                window.cyInstance = cytoscape({
+                                    container: document.getElementById('cyLiveContainer'), elements: cyElements,
+                                    style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '11px', 'text-valign': 'top' } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '9px' } }],
+                                    layout: { name: 'cose', padding: 20 }
+                                });
+                            }, 100);
 
-                            if (resJson.choices) {
-                                const data = JSON.parse(resJson.choices[0].message.content);
-                                
-                                let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
-                                    `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
-                                ).join('');
-                                
-                                aiContent.innerHTML = `
-                                    <div class="fade-in mt-6 mb-10">
-                                        <div class="mb-4">
-                                            <p class="font-bold text-sm mb-2">🌟 RINGKASAN EKSEKUTIF:</p>
-                                            <div class="bg-blue-50 p-4 rounded-xl text-blue-900 font-bold text-sm">
-                                                <ul class="list-disc ml-5 leading-relaxed">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul>
-                                            </div>
-                                        </div>
+                            setTimeout(() => {
+                                let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
+                                if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) rawMer = `graph LR\n` + rawMer;
+                                const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
+                                mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
+                                    const svg = mDiv.querySelector('svg');
+                                    if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true }); }
+                                });
+                            }, 100);
 
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <p class="font-bold text-sm">📌 AGENDA / TOPIK:</p>
-                                                <p class="text-sm mt-1">${data.notulensi_rapat.agenda || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-sm">👥 PESERTA:</p>
-                                                <p class="text-sm mt-1">${(data.notulensi_rapat.peserta || []).join(', ') || '-'}</p>
-                                            </div>
-                                        </div>
+                            setTimeout(() => {
+                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                const { Transformer, Markmap } = window.markmap;
+                                const { root } = new Transformer().transform(rawMm);
+                                Markmap.create('#markmapLive', null, root);
+                            }, 100);
 
-                                        <div class="mb-4">
-                                            <p class="font-bold text-sm mb-2">🗣️ JALANNYA DISKUSI:</p>
-                                            <div class="bg-white p-4 rounded-xl border shadow-sm text-sm">
-                                                <ul class="list-disc ml-5 leading-relaxed">${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">' + d + '</li>').join('')}</ul>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-4">
-                                            <p class="font-bold text-sm mb-2">✅ KEPUTUSAN / KESIMPULAN UTAMA:</p>
-                                            <ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul>
-                                        </div>
-
-                                        <div class="mb-8">
-                                            <p class="font-bold text-sm mb-2">📅 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
-                                            <div class="overflow-x-auto">
-                                                <table class="w-full text-sm text-left border rounded-lg">
-                                                    <thead class="bg-gray-100"><tr class="border-b"><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead>
-                                                    <tbody>${taskRows}</tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-
-                                        <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">🕸️ Visualisasi</h3>
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <p class="font-bold text-sm mb-2">Cytoscape.js</p>
-                                                <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden p-2">
-                                                    <button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white font-bold px-3 py-1 rounded shadow cursor-pointer text-xs">📸 PNG Full</button>
-                                                    <div id="cyLiveContainer" style="width:100%; height:400px; background:#ffffff; border-radius:8px;"></div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
-                                                <div class="relative bg-white border border-slate-200 rounded-xl p-4">
-                                                    <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white font-bold px-3 py-1 rounded shadow cursor-pointer text-xs">📸 PNG</button>
-                                                    <div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden; background:#ffffff;">
-                                                        <pre id="mermaidLive" class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit;"></pre>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="mt-4">
-                                            <p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p>
-                                            <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
-                                                <button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white font-bold px-3 py-1 rounded shadow cursor-pointer text-xs">📸 PNG HD</button>
-                                                <div id="markmapLiveWrapper" style="width:100%; height:400px; background:#ffffff;">
-                                                    <svg id="markmapLive" style="width:100%; height:100%;"></svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>`;
-
-                                setTimeout(() => {
-                                    const cyData = data.notulensi_rapat.hubungan_topik || [];
-                                    const cyElements = [];
-                                    const nodesSet = new Set();
-                                    cyData.forEach(rel => {
-                                        if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
-                                        if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
-                                        cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
-                                    });
-                                    
-                                    window.cyInstance = cytoscape({
-                                        container: document.getElementById('cyLiveContainer'),
-                                        elements: cyElements,
-                                        style: [
-                                            { selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 } },
-                                            { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 } }
-                                        ],
-                                        layout: { name: 'cose', padding: 20 }
-                                    });
-                                }, 100);
-
-                                setTimeout(() => {
-                                    let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
-                                    // PERBAIKAN SYNTAX ERROR (Gunakan Template Literal)
-                                    if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) { 
-                                        rawMer = `graph LR\n` + rawMer; 
-                                    }
-                                    const mermaidDiv = document.getElementById('mermaidLive');
-                                    mermaidDiv.textContent = rawMer; 
-                                    mermaidDiv.removeAttribute('data-processed'); 
-                                    
-                                    // Matikan overflow bawaan agar pan-zoom jalan mulus
-                                    document.getElementById('mermaidLiveWrapper').style.overflow = 'hidden';
-
-                                    try {
-                                        mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
-                                            const svgEl = mermaidDiv.querySelector('svg');
-                                            if (svgEl) {
-                                                svgEl.style.maxWidth = 'none';
-                                                svgEl.style.width = '100%';
-                                                svgEl.style.height = '100%';
-                                                window.panZoomLive = svgPanZoom(svgEl, {
-                                                    zoomEnabled: true,
-                                                    controlIconsEnabled: true,
-                                                    fit: true,
-                                                    center: true,
-                                                    minZoom: 0.1
-                                                });
-                                            }
-                                        });
-                                    } catch(err) {
-                                        console.error("Mermaid Render Error:", err);
-                                    }
-                                }, 100);
-
-                                setTimeout(() => {
-                                    let rawMarkmap = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                    const { Transformer, Markmap } = window.markmap;
-                                    const transformer = new Transformer();
-                                    const { root } = transformer.transform(rawMarkmap);
-                                    Markmap.create('#markmapLive', null, root);
-                                }, 100);
-
-                            } else {
-                                aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600">Error: ' + (resJson.error?.message || 'Unknown') + '</div>';
-                            }
-                        } catch(err) {
-                            aiContent.innerHTML = '<div class="p-4 bg-red-50 rounded-xl mt-4 text-red-600" style="word-wrap: break-word;">Koneksi Gagal: ' + err.message + '</div>';
-                        } finally {
-                            aiBtn.innerHTML = '✨ Generate AI Summary';
-                            aiBtn.disabled = false;
-                            
-                            // 🔴 MATIKAN ANIMASI BRAIN SAAT SELESAI
-                            isThinking = false;
-                            if (brainText) {
-                                brainText.innerText = "NEURAL NETWORK IDLE";
-                                brainText.style.color = "#64748b";
-                                brainText.style.textShadow = "none";
-                            }
-                        }
+                        } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
+                        finally { aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; }
                     };
-
                 })();
             </script>
         </body>
         </html>
         """
-        components.html(html_code, height=1500, scrolling=True)
+        components.html(html_code, height=1600, scrolling=True)
 
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION (DENGAN SMART CHUNKING PYDUB)
@@ -2195,7 +1797,6 @@ else:
 
         if uploaded_file is not None:
             st.audio(uploaded_file)
-            
             kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
             is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
 
@@ -2203,18 +1804,13 @@ else:
                 st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
             else:
                 if st.button("🎙️ Mulai Transkripsi (Smart Chunking)", use_container_width=True, type="primary"):
-                    if not llm_key: 
-                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                    if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
                         with st.spinner("⏳ Membaca dan memproses file audio..."):
                             try:
-                                # 1. Load audio menggunakan pydub
                                 audio = AudioSegment.from_file(uploaded_file)
-                                
-                                # 2. Tentukan ukuran chunk (contoh: 10 menit = 600.000 ms)
                                 chunk_length_ms = 10 * 60 * 1000 
                                 total_chunks = math.ceil(len(audio) / chunk_length_ms)
-                                
                                 full_transcript = ""
                                 progress_bar = st.progress(0)
                                 status_text = st.empty()
@@ -2222,267 +1818,145 @@ else:
                                 url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                 headers = {"Authorization": f"Bearer {llm_key}"}
 
-                                # 3. Looping untuk memotong dan mengirim audio
                                 success_transcription = True
                                 for i in range(total_chunks):
                                     status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
+                                    audio_chunk = audio[i * chunk_length_ms : min((i + 1) * chunk_length_ms, len(audio))]
                                     
-                                    start_time = i * chunk_length_ms
-                                    end_time = min((i + 1) * chunk_length_ms, len(audio))
-                                    audio_chunk = audio[start_time:end_time]
-                                    
-                                    # Export chunk ke dalam memori (BytesIO) agar tidak memakan storage lokal
                                     chunk_buffer = io.BytesIO()
                                     audio_chunk.export(chunk_buffer, format="mp3")
                                     chunk_buffer.name = f"chunk_{i}.mp3"
                                     chunk_buffer.seek(0)
                                     
                                     files = {"file": (chunk_buffer.name, chunk_buffer.read(), "audio/mpeg")}
-                                    data = {"model": "whisper-1", "response_format": "json"}
+                                    response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
                                     
-                                    response = requests.post(url, headers=headers, files=files, data=data)
-                                    
-                                    if response.status_code == 200:
-                                        chunk_text = response.json().get("text", "")
-                                        full_transcript += chunk_text + " "
-                                    else:
-                                        st.error(f"❌ Error dari API LiteLLM pada chunk {i+1}: {response.text}")
-                                        success_transcription = False
-                                        break
-                                        
+                                    if response.status_code == 200: full_transcript += response.json().get("text", "") + " "
+                                    else: st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}"); success_transcription = False; break
                                     progress_bar.progress((i + 1) / total_chunks)
                                 
-                                # 4. Proses pasca-transkripsi
                                 if success_transcription and full_transcript.strip():
-                                    status_text.success("✅ Seluruh audio berhasil digabungkan!")
+                                    status_text.success("✅ Seluruh audio berhasil ditranskrip!")
                                     st.session_state["offline_transcript"] = full_transcript.strip()
-                                    
-                                    # Update kuota hanya jika bukan admin
                                     if not is_admin():
                                         st.session_state["user_kuota_upload"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({
-                                            "kuota_upload": st.session_state["user_kuota_upload"]
-                                        })
-                                        st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
-                                    else:
-                                        st.success("✅ Transkripsi berhasil! (Admin Mode: Unlimited Access)")
-
-                            except Exception as e: 
-                                st.error(f"Terjadi kesalahan saat memproses audio: {str(e)}")
+                                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                            except Exception as e: st.error(f"Terjadi kesalahan saat memproses audio: {str(e)}")
 
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
-            transcript_area = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
-            st.session_state["offline_transcript"] = transcript_area 
+            st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
 
-            if not is_admin():
-                kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
-                if kuota_ai_sekarang <= 0:
-                    st.error("❌ Kuota AI Summary Anda telah habis. Silakan hubungi Admin untuk upgrade.")
+            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM!")
+                elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: st.error("❌ Kuota AI Summary habis!")
                 else:
-                    if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                        if not llm_key: 
-                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                        else:
-                            with st.spinner("⏳ AI sedang memproses JSON Notulensi, Diarization & Visual..."):
-                                prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                                ATURAN JSON NOTULENSI:
-                                - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                                - transkrip_dialog: Lakukan SPEAKER DIARIZATION. Ubah teks mentah menjadi array of strings berformat dialog. Tebak pergantian pembicara berdasarkan konteks percakapan (Contoh format: "Pembicara 1: Mari kita mulai rapat komite hari ini." / "Pembicara 2: Siap, untuk evaluasi pertama...").
-                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
-                                - keputusan: Array of strings. Kesimpulan utama.
-                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
-                                - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                                ATURAN MARKMAP: Gunakan kode murni markdown.
-                                ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
-                                Transkrip Rapat: "{st.session_state['offline_transcript']}"
-"""
-                                payload = {
-                                    "model": "openai/gpt-5-mini", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
-                                    "response_format": {
-                                        "type": "json_schema",
-                                        "json_schema": {
-                                            "name": "meeting_summary", "strict": False,
-                                            "schema": {
+                    with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
+                        prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                        ATURAN JSON NOTULENSI:
+                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                        - transkrip_dialog: Lakukan SPEAKER DIARIZATION berformat "Pembicara X: Teks".
+                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
+                        - keputusan: Array of strings. Kesimpulan utama.
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan (tugas, pic, deadline, prioritas).
+                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada teks node.
+                        ATURAN MARKMAP (MUTLAK): HCLASSES mindmap horizontal left-to-right tree yang kaya, padat, mendalam, dan bercabang luas seperti konsep profesional menggunakan hirarki nested markdown murni (#, ##, ###, -, dll) hingga sub-poin terkecil agar visualisasinya memanjang megah.
+                        Transkrip Rapat: "{st.session_state['offline_transcript']}" """
+
+                        payload = {
+                            "model": "openai/gpt-5-mini" if not is_admin() else "gemini/gemini-2.5-flash",
+                            "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                            "response_format": {
+                                "type": "json_schema",
+                                "json_schema": {
+                                    "name": "meeting_summary", "strict": False,
+                                    "schema": {
+                                        type: "object",
+                                        properties: {
+                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                            "notulensi_rapat": {
                                                 "type": "object",
-                                                "properties": {
-                                                    "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                                    "notulensi_rapat": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                            "transkrip_dialog": { "type": "array", "items": { "type": "string" } },
-                                                            "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                            "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
-                                                            "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
-                                                        }, "required": ["agenda", "peserta", "transkrip_dialog", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
-                                                    },
-                                                    "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                                }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
-                                            }
-                                        }
-                                    }
-                                }
-
-                                try:
-                                    res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
-                                    if res.status_code == 200: 
-                                        st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                                        st.session_state["user_kuota_ai"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
-                                        st.success(f"✅ AI Summary & Diarization berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
-                                    else: 
-                                        st.error(f"Error AI: {res.text}")
-                                except Exception as e: 
-                                    st.error(f"Koneksi LLM Gagal: {str(e)}")
-            else:
-                if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                    if not llm_key: 
-                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                    else:
-                        with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
-                            prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                                ATURAN JSON NOTULENSI:
-                                - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
-                                - keputusan: Array of strings. Kesimpulan utama.
-                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
-                                - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                                ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
-                                ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
-                                Transkrip Rapat: "{st.session_state['offline_transcript']}" """
-
-                            payload = {
-                                "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
-                                "response_format": {
-                                    "type": "json_schema",
-                                    "json_schema": {
-                                        "name": "meeting_summary", "strict": False,
-                                        "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                                "notulensi_rapat": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                        "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                        "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
-                                                        "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
-                                                    }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
-                                                },
-                                                "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                            }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
-                                        }
+                                                properties: {
+                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                    "transkrip_dialog": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } },
+                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } }
+                                                }, "required": ["agenda", "peserta", "transkrip_dialog", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": False
+                                            },
+                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": False
                                     }
                                 }
                             }
+                        }
 
-                            try:
-                                res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
-                                if res.status_code == 200: 
-                                    st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                                    st.success(f"✅ AI Summary berhasil digenerate! (Admin Mode: Unlimited Access)")
-                                else: 
-                                    st.error(f"Error AI: {res.text}")
-                            except Exception as e: 
-                                st.error(f"Koneksi LLM Gagal: {str(e)}")
+                        try:
+                            res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                            if res.status_code == 200:
+                                st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                if not is_admin():
+                                    st.session_state["user_kuota_ai"] -= 1
+                                    db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+                                st.success("✅ Analisis AI Selesai!")
+                            else: st.error(f"Error AI: {res.text}")
+                        except Exception as e: st.error(f"Koneksi LLM Gagal: {str(e)}")
 
         if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")
             
             col_t1, col_t2 = st.columns([3, 1])
-            with col_t1: 
-                st.markdown("### 📋 Laporan Notulensi AI")
+            with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            txt_report = "NOTULENSI RAPAT\n====================\n\n"
-            txt_report += "Ringkasan Eksekutif:\n"
-            for r in data.get('ringkasan_eksekutif', []): txt_report += f"- {r}\n"
-            txt_report += f"\nAgenda/Topik: {data['notulensi_rapat'].get('agenda', '-')}\n"
-            txt_report += f"Peserta: {', '.join(data['notulensi_rapat'].get('peserta', []))}\n\n"
-            txt_report += "Jalannya Diskusi:\n"
-            for d in data['notulensi_rapat'].get('jalannya_diskusi', []): txt_report += f"- {d}\n"
-            txt_report += "\nKeputusan Utama:\n"
-            for k in data['notulensi_rapat'].get('keputusan', []): txt_report += f"- {k}\n"
-            txt_report += "\nRencana Tindak Lanjut:\n"
-            for t in data['notulensi_rapat'].get('rencana_tindak_lanjut', []):
-                txt_report += f"- [{t.get('prioritas')}] {t.get('tugas')} (PIC: {t.get('pic')}, Deadline: {t.get('deadline')})\n"
-            
-            with col_t2: 
-                st.download_button(label="📝 Download Notulensi (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
+            txt_report = f"NOTULENSI RAPAT\\n====================\\n\\nRingkasan:\\n" + "\\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
+            with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
                 st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
-                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>"
-                for r in data.get('ringkasan_eksekutif', []): rx_html += f"<li style='margin-bottom:5px;'>{r}</li>"
-                rx_html += "</ul></div>"
+                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>"
                 st.markdown(rx_html, unsafe_allow_html=True)
                 
                 colA, colB = st.columns(2)
-                colA.markdown(f"**📌 AGENDA / TOPIK:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
-                colB.markdown(f"**👥 PESERTA:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
+                colA.markdown(f"**📌 AGENDA:** {data['notulensi_rapat']['agenda']}")
+                colB.markdown(f"**👥 PESERTA:** {', '.join(data['notulensi_rapat']['peserta'])}")
                 
                 if 'transkrip_dialog' in data['notulensi_rapat']:
                     st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
-                    dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border: 1px solid #cbd5e1; margin-bottom:20px; max-height: 350px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);'>"
-                    
-                    colors = ["#e0f2fe", "#fef3c7", "#dcfce3", "#f3e8ff", "#ffedd5"]
-                    speaker_color_map = {}
-                    color_index = 0
-                    
+                    dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #cbd5e1; max-height:350px; overflow-y:auto;'>"
                     for line in data['notulensi_rapat'].get('transkrip_dialog', []):
                         if ":" in line:
-                            speaker, text = line.split(":", 1)
-                            speaker = speaker.strip()
-                            text = text.strip()
-                            
-                            if speaker not in speaker_color_map:
-                                speaker_color_map[speaker] = colors[color_index % len(colors)]
-                                color_index += 1
-                            
-                            bg_color = speaker_color_map[speaker]
-                            
-                            dialog_html += f"""
-                            <div style='margin-bottom: 12px; display: flex; flex-direction: column;'>
-                                <span style='font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 4px; margin-left: 4px;'>{speaker}</span>
-                                <div style='background-color: {bg_color}; padding: 12px 16px; border-radius: 0px 15px 15px 15px; display: inline-block; max-width: 90%; color: #1e293b; font-size: 14px; border: 1px solid rgba(0,0,0,0.05);'>
-                                    {text}
-                                </div>
-                            </div>
-                            """
-                        else:
-                            dialog_html += f"<div style='margin-bottom: 8px; color: #64748b; font-style: italic; font-size: 13px;'>{line}</div>"
-                            
-                    dialog_html += "</div>"
-                    st.markdown(dialog_html, unsafe_allow_html=True)
-                
-                st.markdown("**🗣️ JALANNYA DISKUSI:**")
-                diskusi_html = "<div style='background-color:#ffffff; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'><ul style='margin:0; padding-left:20px; line-height: 1.6;'>"
-                for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:8px;'>{d}</li>"
-                diskusi_html += "</ul></div>"
-                st.markdown(diskusi_html, unsafe_allow_html=True)
-                
-                st.markdown("**✅ KEPUTUSAN / KESIMPULAN UTAMA:**")
-                for kep in data['notulensi_rapat']['keputusan']: 
-                    st.markdown(f"- {kep}")
-                
-                st.markdown("**📅 RENCANA TINDAK LANJUT (ACTION ITEMS):**")
-                df_tasks = pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut'])
-                df_tasks.columns = ["Tugas", "PIC", "Deadline", "Prioritas"]
-                st.table(df_tasks)
+                            spk, txt = line.split(":", 1)
+                            dialog_html += f"<div style='margin-bottom:12px;'><span style='font-size:12px; font-weight:bold; color:#475569;'>{spk.strip()}</span><div style='background-color:#e0f2fe; padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:#1e293b; margin-top:2px;'>{txt.strip()}</div></div>"
+                        else: dialog_html += f"<div style='margin-bottom:8px; font-style:italic; color:#64748b; font-size:13px;'>{line}</div>"
+                    st.markdown(dialog_html + "</div>", unsafe_allow_html=True)
 
-            st.markdown("### 🕸️ Visualisasi")
+                st.markdown("**🗣️ JALANNYA DISKUSI:**")
+                st.markdown("<div style='background-color:#fff; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;'><ul>" + "".join([f"<li style='margin-bottom:6px;'>- {d}</li>" for d in data['notulensi_rapat'].get('jalannya_diskusi', [])]) + "</ul></div>", unsafe_allow_html=True)
+                
+                st.markdown("**📅 ACTION ITEMS:**")
+                st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
+
+            # Safe Serialization to escape newlines & match template variables securely
+            clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
+            if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('mindmap'):
+                clean_mer = "graph LR\n" + clean_mer
             
+            mer_json_str = json.dumps(clean_mer)
+            markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
+            hubungan_json = json.dumps(data['notulensi_rapat']['hubungan_topik'])
+
+            st.markdown("### 🕸️ Visualisasi Terintegrasi")
             col_v1, col_v2 = st.columns(2)
+            
             with col_v1:
-                st.markdown("**Cytoscape.js**")
-                hubungan_json = json.dumps(data['notulensi_rapat']['hubungan_topik'])
+                st.markdown("**Cytoscape.js Network**")
                 cytoscape_html = f"""
                 <!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head>
-                <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; font-family: sans-serif; position:relative;">
-                    <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
-                    <div id="cy" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff;"></div>
+                <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                    <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
+                    <div id="cy" style="width:100%; height:400px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px;"></div>
                     <script>
                         const rawData = {hubungan_json}; const cyElements = []; const nodesSet = new Set();
                         rawData.forEach(rel => {{
@@ -2490,7 +1964,7 @@ else:
                             if (!nodesSet.has(rel.target)) {{ nodesSet.add(rel.target); cyElements.push({{ data: {{ id: rel.target, label: rel.target }} }}); }}
                             cyElements.push({{ data: {{ source: rel.sumber, target: rel.target, label: rel.relasi }} }});
                         }});
-                        var cy = cytoscape({{ container: document.getElementById('cy'), elements: cyElements, style: [ {{ selector: 'node', style: {{ 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': -5, 'width': 30, 'height': 30 }} }}, {{ selector: 'edge', style: {{ 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'label': 'data(label)', 'font-size': '10px', 'color': '#64748b', 'text-rotation': 'autorotate', 'text-background-opacity': 1, 'text-background-color': '#ffffff', 'text-background-padding': 3 }} }} ], layout: {{ name: 'cose', padding: 20 }} }});
+                        var cy = cytoscape({{ container: document.getElementById('cy'), elements: cyElements, style: [ {{ selector: 'node', style: {{ 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top' }} }}, {{ selector: 'edge', style: {{ 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '10px' }} }} ], layout: {{ name: 'cose' }} }});
                         function dlCy() {{ const a = document.createElement('a'); a.href = cy.png({{full: true, scale: 4, bg: 'white'}}); a.download = 'Cytoscape.png'; a.click(); }}
                     </script>
                 </body></html>
@@ -2499,109 +1973,62 @@ else:
 
             with col_v2:
                 st.markdown("**Mermaid (Mindmap)**")
-                raw_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
-                if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
-                    raw_mer = "graph LR\n" + raw_mer
-                
-                # Sanitasi karakter HTML sebelum dimasukkan ke komponen
-                safe_mer = raw_mer.replace("<", "&lt;").replace(">", "&gt;")
-                
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
                     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
                 </head>
-                <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
+                <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
                     <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
-                        <pre class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit; width:100%; height:100%;">{safe_mer}</pre>
+                        <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; width:100%; height:100%;"></pre>
                     </div>
                     <script>
+                        document.getElementById('merContainer').textContent = {mer_json_str};
                         mermaid.initialize({{ startOnLoad: false }});
-                        
-                        // Render Mermaid lalu tempelkan kontrol Pan & Zoom
                         mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
                             const svgEl = document.querySelector('.mermaid svg');
                             if (svgEl) {{
-                                svgEl.style.maxWidth = 'none'; // Matikan max-width bawaan
-                                svgEl.style.width = '100%';
-                                svgEl.style.height = '100%';
-                                window.panZoom = svgPanZoom(svgEl, {{
-                                    zoomEnabled: true,
-                                    controlIconsEnabled: true, // Memunculkan tombol +/- di pojok
-                                    fit: true,
-                                    center: true,
-                                    minZoom: 0.1
-                                }});
+                                svgEl.style.maxWidth = 'none'; svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
                             }}
                         }});
 
-                        window.downloadMermaidImage = function(wrapperId, title, event) {{
-                            const container = document.getElementById(wrapperId);
-                            const svgEl = container.querySelector('svg');
+                        window.downloadMermaidImage = function(wrapperId, title) {{
+                            const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg');
                             if (!svgEl) return;
-                            
-                            const btn = document.getElementById('dlBtn');
-                            const originalText = btn.innerHTML;
+                            const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
                             
-                            // 1. Matikan sementara pan-zoom
-                            if (window.panZoom) {{
-                                window.panZoom.destroy();
-                                window.panZoom = null;
-                            }}
+                            if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
                             
                             setTimeout(() => {{
-                                const originalWidth = container.style.width;
-                                const originalHeight = container.style.height;
-                                const originalOverflow = container.style.overflow;
+                                const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                                const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
-                                const originalWAttr = svgEl.getAttribute('width');
-                                const originalHAttr = svgEl.getAttribute('height');
-                                const originalViewBox = svgEl.getAttribute('viewBox');
+                                const bbox = svgEl.getBBox(); const padding = 50;
+                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
                                 
-                                const bbox = svgEl.getBBox();
-                                const padding = 50;
-                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                                const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                                
-                                container.style.width = trueWidth + 'px';
-                                container.style.height = trueHeight + 'px';
-                                container.style.overflow = 'visible';
-                                
-                                // PERBAIKAN MERMAID EXPORT
+                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                                 svgEl.style.maxWidth = 'none';
                                 svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                                svgEl.style.width = trueWidth + 'px';
-                                svgEl.style.height = trueHeight + 'px';
+                                svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
                                 setTimeout(() => {{
                                     html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                     .then(canvas => {{
-                                        // Kembalikan semula
-                                        container.style.width = originalWidth; 
-                                        container.style.height = originalHeight; 
-                                        container.style.overflow = originalOverflow;
-                                        
+                                        container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                         if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
                                         if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
                                         if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                         
-                                        // Nyalakan pan-zoom kembali
-                                        window.panZoom = svgPanZoom(svgEl, {{
-                                            zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
-                                        }});
+                                        svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                        window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
                                         
-                                        const link = document.createElement('a'); 
-                                        link.download = 'Mermaid_' + title + '.png'; 
-                                        link.href = canvas.toDataURL('image/png', 1.0); 
-                                        link.click();
-                                        
+                                        const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                         btn.innerHTML = originalText; btn.disabled = false;
-                                    }}).catch(err => {{
-                                        btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
-                                    }});
+                                    }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
                                 }}, 600);
                             }}, 100);
                         }};
@@ -2610,80 +2037,58 @@ else:
                 """
                 components.html(mer_html, height=450)
 
-            st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat)")
-            raw_markmap = data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip()
-
+            st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
             markmap_html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
+            <!DOCTYPE html><html><head>
                 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             </head>
-            <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button>
-                <div id="markmap-wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
+            <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG HD</button>
+                <div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
                     <svg id="markmap" style="width:100%; height:100%;"></svg>
                 </div>
                 <script>
-                    const markdown = `{raw_markmap}`;
+                    const markdown = {markmap_json_str};
                     const {{ Transformer, Markmap }} = window.markmap;
-                    const transformer = new Transformer();
-                    const {{ root }} = transformer.transform(markdown);
+                    const {{ root }} = new Transformer().transform(markdown);
                     Markmap.create('#markmap', null, root);
 
-                    window.downloadMarkmapImage = function(wrapperId, title, event) {{
-                        const container = document.getElementById(wrapperId);
-                        const svgEl = container.querySelector('svg');
-                        if (!svgEl) return;
-                        const btn = document.getElementById('dlBtnMM');
-                        const originalText = btn.innerHTML;
+                    window.downloadMarkmapImage = function(wrapperId, title) {{
+                        const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
+                        const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
                         btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
                         try {{
-                            const g = svgEl.querySelector('g');
-                            if (!g) throw new Error("G element not found");
-                            const originalWidth = container.style.width;
-                            const originalHeight = container.style.height;
-                            const originalOverflow = container.style.overflow;
-                            const originalTransform = g.getAttribute('transform');
-                            const originalViewBox = svgEl.getAttribute('viewBox');
+                            const g = svgEl.querySelector('g'); if (!g) throw new Error("G missing");
+                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                            const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
+                            
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
-                            const bbox = g.getBBox();
-                            const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                            container.style.width = trueWidth + 'px';
-                            container.style.height = trueHeight + 'px';
-                            container.style.overflow = 'visible';
+                            const bbox = g.getBBox(); const padding = 50;
+                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                            
+                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                             svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                            svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
+                            
                             setTimeout(() => {{
                                 html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                 .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                    svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                    
                                     const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
-                                }}).catch(err => {{
-                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                    g.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
-                                }});
+                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
                             }}, 600);
-                        }} catch (err) {{
-                            btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
-                        }}
+                        }} catch (err) {{ btn.innerHTML = originalText; btn.disabled = false; }}
                     }};
                 </script>
-            </body>
-            </html>
+            </body></html>
             """
-            components.html(markmap_html, height=450)
-
-            with st.expander("Lihat Source Code Markdown"):
-                st.code(raw_markmap, language="markdown")
+            components.html(markmap_html, height=600)

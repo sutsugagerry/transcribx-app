@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import time
 import io
 import math
+import re
 from pydub import AudioSegment
 
 # Konfigurasi Halaman
@@ -1511,6 +1512,7 @@ else:
                         };
                     }
 
+                    // ======== START CAPTURE TETAP SEPERTI ASLINYA 100% ========
                     startBtn.onclick = async function() {
                         try {
                             lastFinalText = ""; currentInterimDiv = null; audioChunks = [];
@@ -1610,8 +1612,10 @@ else:
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMermaidLive');
+                        const originalBtnText = btn.innerHTML;
                         if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
 
+                        // MATIKAN PAN-ZOOM AGAR KEMBALI KE UKURAN ASLI SEBELUM CAPTURE
                         if (window.panZoomLive) { window.panZoomLive.destroy(); window.panZoomLive = null; }
 
                         setTimeout(() => {
@@ -1622,7 +1626,6 @@ else:
                             const originalHAttr = svgEl.getAttribute('height'); 
                             const originalViewBox = svgEl.getAttribute('viewBox');
                             
-                            // RESET TRANSFORM DARI PAN-ZOOM AGAR TIDAK KEPOTONG
                             const g = svgEl.querySelector('g');
                             const originalTransform = g ? g.getAttribute('transform') : null;
                             if(g) g.setAttribute('transform', 'translate(0,0) scale(1)');
@@ -1636,7 +1639,7 @@ else:
                             container.style.height = trueHeight + 'px'; 
                             container.style.overflow = 'visible';
                             
-                            svgEl.removeAttribute('style'); // Hapus max-width dll
+                            svgEl.removeAttribute('style'); 
                             svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
                             svgEl.style.width = trueWidth + 'px'; 
                             svgEl.style.height = trueHeight + 'px';
@@ -1651,12 +1654,14 @@ else:
                                     if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                     
                                     svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                    
+                                    // NYALAKAN KEMBALI PAN-ZOOM
                                     window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
                                     
                                     const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                    if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
+                                    if (btn) { btn.innerHTML = originalBtnText; btn.disabled = false; }
+                                }).catch(() => { if (btn) { btn.innerHTML = originalBtnText; btn.disabled = false; } });
                             }, 600);
                         }, 100);
                     };
@@ -1666,6 +1671,10 @@ else:
                         const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         const g = svgEl.querySelector('g'); if (!g) return;
                         
+                        const btn = document.getElementById('dlBtnMarkmapLive');
+                        const originalBtnText = btn ? btn.innerHTML : "📸 PNG HD";
+                        if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
+
                         const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                         const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
                         
@@ -1685,8 +1694,10 @@ else:
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                
                                 const link = document.createElement('a'); link.download = 'Markmap_Live.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                if (btn) { btn.innerHTML = originalBtnText; btn.disabled = false; }
                             });
                         }, 600);
                     };
@@ -1794,7 +1805,7 @@ else:
                                         <div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:400px;"></div></div></div>
                                         <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl p-2"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden;"><pre id="mermaidLive" class="mermaid"></pre></div></div></div>
                                     </div>
-                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMarkmapLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                 </div>`;
 
                             setTimeout(() => {
@@ -1969,7 +1980,11 @@ else:
                         try:
                             res = requests.post("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                             if res.status_code == 200:
-                                st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
+                                ai_resp = res.json()["choices"][0]["message"]["content"]
+                                ai_resp = re.sub(r"^```json", "", ai_resp, flags=re.IGNORECASE)
+                                ai_resp = re.sub(r"```$", "", ai_resp).strip()
+                                
+                                st.session_state["offline_summary"] = json.loads(ai_resp)
                                 if not is_admin():
                                     st.session_state["user_kuota_ai"] -= 1
                                     db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
@@ -2080,13 +2095,13 @@ else:
                             const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
                             
+                            // MATIKAN PAN-ZOOM AGAR KEMBALI KE UKURAN ASLI SEBELUM CAPTURE
                             if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
                             
                             setTimeout(() => {{
                                 const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                                 const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
-                                // Reset transform dari elemen G di dalam SVG agar tidak berantakan / crop
                                 const g = svgEl.querySelector('g');
                                 const originalTransform = g ? g.getAttribute('transform') : null;
                                 if(g) g.setAttribute('transform', 'translate(0,0) scale(1)');
@@ -2110,6 +2125,8 @@ else:
                                         if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                         
                                         svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                        
+                                        // NYALAKAN LAGI PAN-ZOOM SETELAH DOWNLOAD
                                         window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
                                         
                                         const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();

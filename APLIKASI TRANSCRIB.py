@@ -1892,15 +1892,16 @@ else:
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi & Visual...</p></div>';
 
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                        ATURAN JSON NOTULENSI:
+                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
+                        - keputusan: Array of strings. Kesimpulan utama.
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
+                        - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                        ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                        ATURAN MERMAID: WAJIB format 'graph LR'.
+                        Transkrip Rapat: "${transcript}"`;
 
-                        ATURAN MERMAID (SANGAT PENTING):
-                        - WAJIB gunakan format: graph LR.
-                        - WAJIB gunakan sintaks ID_NODE["Teks Label"] untuk setiap node agar tampilan rapi.
-                        - ID_NODE harus singkat (contoh: N1, N2, N3) dan tidak boleh ada spasi atau underscore.
-                        - Teks Label di dalam kurung siku boleh menggunakan spasi normal agar mudah dibaca.
-                        - JANGAN gunakan underscore pada Teks Label.
-                        - CONTOH BENAR: N1["Pengaruh Arus Modal"] --> N2["Yield Nominal 7%"].
-                        - JANGAN gunakan format: N1["Pengaruh_Arus_Modal"].
 
                         ATURAN JSON NOTULENSI:
                         - ringkasan_eksekutif: Array of strings.

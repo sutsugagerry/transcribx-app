@@ -10,7 +10,7 @@ import time
 import re
 
 # Konfigurasi Halaman
-st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide")
+st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide", initial_sidebar_state="expanded")
 
 # =====================================================================
 # CSS CUSTOM UNTUK ANIMASI, CARD, DAN UI ENTERPRISE
@@ -19,9 +19,8 @@ custom_css = """
 <style>
 /* Menyembunyikan elemen bawaan Streamlit */
 #MainMenu {visibility: hidden;}
-header {visibility: hidden; background-color: transparent;}
+header {background-color: transparent;} /* Hapus visibility: hidden; */
 footer {visibility: hidden;}
-.st-emotion-cache-1vt4ygl {display: none;}
 
 /* Metric Card Styling */
 .metric-card {

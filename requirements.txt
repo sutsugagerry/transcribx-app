@@ -2,7 +2,6 @@ streamlit
 streamlit-webrtc
 faster-whisper
 pydub
-import io
 pyngrok
 numpy
 librosa

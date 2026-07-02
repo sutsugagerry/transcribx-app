@@ -22,6 +22,11 @@ custom_css = """
 header {background-color: transparent;} /* Hapus visibility: hidden; */
 footer {visibility: hidden;}
 
+/* Menyembunyikan Toolbar Streamlit */
+[data-testid="stToolbar"] {
+    visibility: hidden;
+}
+
 /* Metric Card Styling */
 .metric-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);

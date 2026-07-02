@@ -8,3 +8,4 @@ librosa
 firebase-admin
 requests
 ffmpeg
+libavcodec-extra

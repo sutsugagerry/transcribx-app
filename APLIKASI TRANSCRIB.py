@@ -1683,14 +1683,23 @@ else:
 
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN STRUKTUR OUTPUT:
-                        1. "ringkasan_eksekutif": Array of strings (poin-poin padat).
-                        2. "transkrip_dialog": Array of strings (format: "Pembicara: Isi").
-                        3. "jalannya_diskusi": Array of strings (Narasi detail & lengkap).
-                        4. "keputusan": Array of strings.
-                        5. "rencana_tindak_lanjut": Array of objects (tugas, pic, deadline, prioritas).
-                        6. "hubungan_topik": Array of objects (sumber, target, relasi).
-                        ATURAN MERMAID: Wajib format 'graph LR' dengan tanda kutip ganda pada teks node.
-                        ATURAN MARKMAP (MUTLAK): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat kaya, padat, mendalam, dan bercabang banyak seperti peta konsep profesional menggunakan hirarki nested markdown murni (#, ##, ###, -, dll) hingga sub-poin terkecil agar visualisasinya luas.
+                        - ringkasan_eksekutif: Array of strings (poin-poin padat).
+                        - transkrip_dialog: Array of strings (format: "Pembicara: Isi").
+                        - jalannya_diskusi: Array of strings (Narasi detail & lengkap).
+                        - keputusan: Array of strings.
+                        - rencana_tindak_lanjut: Array of objects (tugas, pic, deadline, prioritas).
+                        - hubungan_topik: Array of objects (sumber, target, relasi).
+                        
+                        ATURAN MERMAID (SANGAT KETAT):
+                        1. WAJIB diawali dengan 'graph LR'.
+                        2. ID Node HARUS 1 kata tanpa spasi (misal: N1, TopikA).
+                        3. Format: N1["Teks Utama"] --> N2["Teks Detail"].
+                        4. DILARANG KERAS menggunakan tanda kutip ganda (") di DALAM teks label. Gunakan petik tunggal (').
+                        
+                        ATURAN MARKMAP (MUTLAK):
+                        Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
+                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin). Buat sangat panjang ke kanan agar visualisasinya lebar memanjang.
+                        
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -1858,10 +1867,19 @@ else:
                         - transkrip_dialog: Lakukan SPEAKER DIARIZATION berformat "Pembicara X: Teks".
                         - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
                         - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan (tugas, pic, deadline, prioritas).
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan (tugas, pic, deadline, prioritas). JIKA KOSONG, buat 1 tugas default.
                         - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                        ATURAN MERMAID: WAJIB format 'graph LR' dengan tanda kutip ganda pada teks node.
-                        ATURAN MARKMAP (MUTLAK): HCLASSES mindmap horizontal left-to-right tree yang kaya, padat, mendalam, dan bercabang luas seperti konsep profesional menggunakan hirarki nested markdown murni (#, ##, ###, -, dll) hingga sub-poin terkecil agar visualisasinya memanjang megah.
+                        
+                        ATURAN MERMAID (SANGAT KETAT):
+                        1. WAJIB diawali dengan 'graph LR'.
+                        2. ID Node HARUS 1 kata tanpa spasi (misal: N1, TopikA).
+                        3. Format: N1["Teks Utama"] --> N2["Teks Detail"].
+                        4. DILARANG KERAS menggunakan tanda kutip ganda (") di DALAM teks label. Gunakan petik tunggal (').
+                        
+                        ATURAN MARKMAP (MUTLAK):
+                        Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
+                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin). Buat sangat panjang ke kanan agar visualisasinya lebar memanjang.
+                        
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload = {
@@ -1872,12 +1890,12 @@ else:
                                 "json_schema": {
                                     "name": "meeting_summary", "strict": False,
                                     "schema": {
-                                        type: "object",
-                                        properties: {
+                                        "type": "object",
+                                        "properties": {
                                             "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
                                             "notulensi_rapat": {
                                                 "type": "object",
-                                                properties: {
+                                                "properties": {
                                                     "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
                                                     "transkrip_dialog": { "type": "array", "items": { "type": "string" } },
                                                     "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
@@ -1938,7 +1956,7 @@ else:
                 st.markdown("**📅 ACTION ITEMS:**")
                 st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
 
-            # Safe Serialization to escape newlines & match template variables securely
+            # Safe Serialization
             clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer

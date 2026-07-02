@@ -2,6 +2,9 @@ streamlit
 streamlit-webrtc
 faster-whisper
 pydub
+import io
+import math
+from pydub import AudioSegment
 pyngrok
 numpy
 librosa

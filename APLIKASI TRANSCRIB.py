@@ -2174,7 +2174,7 @@ else:
         components.html(html_code, height=1500, scrolling=True)
 
     # =====================================================================
-    # TAB 2: FITUR OFFLINE TRANSCRIPTION (DENGAN SMART CHUNKING PYDUB)
+    # TAB 2: FITUR OFFLINE TRANSCRIPTION (DENGAN SMART CHUNKING PYDUB) - PERBAIKAN MERMAID
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
@@ -2482,7 +2482,7 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
-                st.markdown("**Mermaid (Mindmap)**")
+                st.markdown("**Mermaid (Mindmap) - KLIK ZOOM UNTUK MELIHAT DETAIL**")
                 raw_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
                 if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
                     raw_mer = "graph LR\n" + raw_mer
@@ -2516,12 +2516,27 @@ else:
                             width: 100%;
                             height: 100%;
                         }}
+                        .zoom-hint {{
+                            position: absolute;
+                            bottom: 10px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: rgba(0,0,0,0.7);
+                            color: white;
+                            padding: 4px 12px;
+                            border-radius: 20px;
+                            font-size: 11px;
+                            z-index: 50;
+                            pointer-events: none;
+                            opacity: 0.7;
+                        }}
                     </style>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid_Offline', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full</button>
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid_Offline', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full HD</button>
                     <div id="wrapper">
                         <pre class="mermaid">{safe_mer}</pre>
+                        <div class="zoom-hint">🔍 Gunakan scroll untuk zoom / drag untuk geser</div>
                     </div>
                     <script>
                         let panZoomInstance = null;
@@ -2561,7 +2576,7 @@ else:
                             
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
-                            btn.innerHTML = "⏳ MENYIMPAN...";
+                            btn.innerHTML = "⏳ MENYIMPAN HD...";
                             btn.disabled = true;
                             
                             if (panZoomInstance) {{
@@ -2578,11 +2593,13 @@ else:
                                 const originalWidthAttr = svgEl.getAttribute('width');
                                 const originalHeightAttr = svgEl.getAttribute('height');
                                 
+                                // Dapatkan ukuran sebenarnya dari SVG
                                 const bbox = svgEl.getBBox();
-                                const padding = 50;
+                                const padding = 80;
                                 
-                                let trueWidth = Math.max(bbox.width, 600) + (padding * 2);
-                                let trueHeight = Math.max(bbox.height, 400) + (padding * 2);
+                                // Hitung ukuran besar untuk HD
+                                let trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                                let trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px';
                                 container.style.height = trueHeight + 'px';
@@ -2603,11 +2620,12 @@ else:
                                 
                                 setTimeout(() => {{
                                     html2canvas(container, {{ 
-                                        scale: 3,
+                                        scale: 4,
                                         useCORS: true, 
                                         backgroundColor: '#ffffff',
                                         width: trueWidth,
                                         height: trueHeight,
+                                        logging: false,
                                         onclone: function(doc) {{
                                             const clonedSvg = doc.querySelector('svg');
                                             if (clonedSvg) {{

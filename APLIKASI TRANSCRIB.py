@@ -1043,7 +1043,8 @@ else:
         st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
         st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
         
-        html_code = """
+        is_admin_js = "true" if is_admin() else "false"
+        html_code = f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -1058,108 +1059,108 @@ else:
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
             <style>
-                * { box-sizing: border-box; }
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
+                * {{ box-sizing: border-box; }}
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }}
                 
-                .controls-wrapper { 
+                .controls-wrapper {{ 
                     background: #ffffff; border-radius: 20px; padding: 24px; 
                     box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
                     border: 1px solid #e2e8f0; margin-bottom: 24px;
                     display: flex; flex-direction: column; gap: 16px;
-                }
+                }}
                 
-                .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+                .controls-row {{ display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }}
                 
-                .visualizer-container { 
+                .visualizer-container {{ 
                     width: 100%; height: 80px; border-radius: 16px; overflow: hidden; 
                     background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
                     position: relative; box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
-                }
-                #visualizer { width: 100%; height: 100%; display: block; }
+                }}
+                #visualizer {{ width: 100%; height: 100%; display: block; }}
                 
-                .transcript-box { 
+                .transcript-box {{ 
                     background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px 20px; 
                     border-radius: 20px; height: 300px; overflow-y: auto; 
                     box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 16px; 
-                }
+                }}
                 
-                .line-final { 
+                .line-final {{ 
                     margin-bottom: 12px; padding: 12px 16px; background: #ffffff; 
                     border-radius: 12px; border-left: 5px solid #3b82f6; 
                     font-size: 14px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                }
-                .line-interim { 
+                }}
+                .line-interim {{ 
                     margin-bottom: 12px; padding: 12px 16px; background: rgba(255,255,255,0.5); 
                     border-radius: 12px; border-left: 5px solid #94a3b8; 
                     font-size: 14px; opacity: 0.6; font-style: italic; 
-                }
-                .timestamp { font-weight: 700; color: #3b82f6; margin-right: 10px; font-size: 12px; background: #eff6ff; padding: 2px 8px; border-radius: 6px; display: inline-block; }
+                }}
+                .timestamp {{ font-weight: 700; color: #3b82f6; margin-right: 10px; font-size: 12px; background: #eff6ff; padding: 2px 8px; border-radius: 6px; display: inline-block; }}
                 
-                .btn-custom { 
+                .btn-custom {{ 
                     font-family: inherit; color: white; padding: 10px 20px; border: none; 
                     border-radius: 10px; cursor: pointer; font-weight: 600; 
                     transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; 
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-                .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-                .btn-custom:active { transform: translateY(0); }
-                .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b; }
+                }}
+                .btn-custom:hover {{ transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }}
+                .btn-custom:active {{ transform: translateY(0); }}
+                .btn-custom:disabled {{ background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b; }}
                 
-                .btn-start { background: #3b82f6; }
-                .btn-start:hover { background: #2563eb; }
-                .btn-stop { background: #ef4444; }
-                .btn-stop:hover { background: #dc2626; }
-                .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
-                .btn-ai:hover { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
-                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none; } 
-                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-                .btn-green { background: #10b981; }
-                .btn-green:hover { background: #059669; }
+                .btn-start {{ background: #3b82f6; }}
+                .btn-start:hover {{ background: #2563eb; }}
+                .btn-stop {{ background: #ef4444; }}
+                .btn-stop:hover {{ background: #dc2626; }}
+                .btn-ai {{ background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }}
+                .btn-ai:hover {{ background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }}
+                .btn-secondary {{ background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none; }} 
+                .btn-secondary:hover {{ background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+                .btn-green {{ background: #10b981; }}
+                .btn-green:hover {{ background: #059669; }}
                 
-                select.btn-secondary, input.api-input { 
+                select.btn-secondary, input.api-input {{ 
                     outline: none; border: 1px solid #cbd5e1; padding: 10px 14px; 
                     border-radius: 10px; font-family: inherit; font-size: 14px; background: white;
-                }
-                select.btn-secondary:focus, input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-                input.api-input { flex: 1; min-width: 200px; }
+                }}
+                select.btn-secondary:focus, input.api-input:focus {{ border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }}
+                input.api-input {{ flex: 1; min-width: 200px; }}
                 
-                .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }
-                .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; flex-shrink: 0; }
-                .indicator-dot.recording { background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: blink 1s infinite; }
-                @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+                .status-badge {{ display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }}
+                .indicator-dot {{ width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; flex-shrink: 0; }}
+                .indicator-dot.recording {{ background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: blink 1s infinite; }}
+                @keyframes blink {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
                 
-                .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
-                .ai-section .ai-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+                .ai-section {{ background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }}
+                .ai-section .ai-row {{ display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }}
                 
-                #audioContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-                .audio-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }
-                .audio-item audio { height: 36px; flex: 1; min-width: 200px; }
+                #audioContainer {{ display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }}
+                .audio-item {{ display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }}
+                .audio-item audio {{ height: 36px; flex: 1; min-width: 200px; }}
                 
-                .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; position: relative; }
-                .btn-export { cursor: pointer; background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
-                .btn-export:hover { background: #059669; }
+                .cy-container {{ width: 100%; height: 400px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; position: relative; }}
+                .btn-export {{ cursor: pointer; background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }}
+                .btn-export:hover {{ background: #059669; }}
                 
-                .fade-in { animation: fadeIn 0.5s ease; }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .fade-in {{ animation: fadeIn 0.5s ease; }}
+                @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
                 
-                .instruction-box {
+                .instruction-box {{
                     background: #fffbeb; border: 2px solid #f59e0b; padding: 16px; border-radius: 12px;
                     margin-bottom: 16px; font-size: 13px; color: #92400e;
-                }
+                }}
                 
-                .debug-box {
+                .debug-box {{
                     background: #f0fdf4; border: 1px solid #86efac; padding: 10px; border-radius: 8px;
                     margin-top: 10px; font-size: 11px; color: #166534; font-family: monospace;
                     max-height: 150px; overflow-y: auto;
-                }
+                }}
                 
-                @media (max-width: 640px) {
-                    .controls-row { flex-direction: column; align-items: stretch; }
-                    .controls-row > * { width: 100%; }
-                    .status-badge { justify-content: center; }
-                    .ai-section .ai-row { flex-direction: column; }
-                    .ai-section .ai-row > * { width: 100%; }
-                }
+                @media (max-width: 640px) {{
+                    .controls-row {{ flex-direction: column; align-items: stretch; }}
+                    .controls-row > * {{ width: 100%; }}
+                    .status-badge {{ justify-content: center; }}
+                    .ai-section .ai-row {{ flex-direction: column; }}
+                    .ai-section .ai-row > * {{ width: 100%; }}
+                }}
             </style>
         </head>
         <body>
@@ -1231,7 +1232,7 @@ else:
             </div>
 
             <script>
-                (function() {
+                (function() {{
                     'use strict';
 
                     // ======== DOM REFS ========
@@ -1251,11 +1252,13 @@ else:
                     const visualizer = document.getElementById('visualizer');
                     const canvasCtx = visualizer.getContext('2d');
                     const debugInfo = document.getElementById('debugInfo');
+                    
+                    const isAdmin = {is_admin_js};
 
                     // ======== INSIALISASI MERMAID GLOBALLY ========
-                    if (window.mermaid) {
-                        mermaid.initialize({ startOnLoad: false });
-                    }
+                    if (window.mermaid) {{
+                        mermaid.initialize({{ startOnLoad: false }});
+                    }}
 
                     // ======== AI BRAIN VISUALIZER ========
                     const brainCanvas = document.getElementById('aiBrainCanvas');
@@ -1266,7 +1269,7 @@ else:
                     let brainAnimationId;
                     let timeOscillator = 0;
 
-                    function initBrain() {
+                    function initBrain() {{
                         if (!brainCanvas) return;
                         const rect = brainCanvas.parentElement.getBoundingClientRect();
                         brainCanvas.width = rect.width;
@@ -1275,20 +1278,20 @@ else:
                         brainParticles = [];
                         const numParticles = 160;
                         
-                        for(let i=0; i<numParticles; i++) {
+                        for(let i=0; i<numParticles; i++) {{
                             let isCore = Math.random() > 0.95;
-                            brainParticles.push({
+                            brainParticles.push({{
                                 angle: Math.random() * Math.PI * 2,
                                 orbitRadius: Math.random() * 65 + 5, 
                                 speed: Math.random() * 0.015 + 0.002,
                                 baseRadius: isCore ? (Math.random() * 2 + 2) : (Math.random() * 1.5 + 0.5),
                                 isCore: isCore,
                                 x: 0, y: 0
-                            });
-                        }
-                    }
+                            }});
+                        }}
+                    }}
 
-                    function drawBrain() {
+                    function drawBrain() {{
                         if (!brainCanvas) return;
                         brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
                         timeOscillator += 0.02;
@@ -1300,7 +1303,7 @@ else:
                         const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
                         const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
                         
-                        for(let i=0; i<brainParticles.length; i++) {
+                        for(let i=0; i<brainParticles.length; i++) {{
                             let p = brainParticles[i];
                             p.angle += isThinking ? p.speed * 4 : p.speed;
                             let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
@@ -1313,42 +1316,42 @@ else:
                             brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
                             brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
                             
-                            if (isThinking) {
+                            if (isThinking) {{
                                 brainCtx.shadowBlur = p.isCore ? 15 : 5;
                                 brainCtx.shadowColor = "#2dd4bf";
-                            } else {
+                            }} else {{
                                 brainCtx.shadowBlur = 0;
-                            }
+                            }}
                             brainCtx.fill();
-                        }
+                        }}
                         
-                        for(let i=0; i<brainParticles.length; i++) {
+                        for(let i=0; i<brainParticles.length; i++) {{
                             let p = brainParticles[i];
-                            for(let j=i+1; j<brainParticles.length; j++) {
+                            for(let j=i+1; j<brainParticles.length; j++) {{
                                 let p2 = brainParticles[j];
                                 let dx = p.x - p2.x;
                                 let dy = p.y - p2.y;
                                 let dist = Math.sqrt(dx*dx + dy*dy);
                                 
-                                if(dist < maxDistance) {
+                                if(dist < maxDistance) {{
                                     brainCtx.beginPath();
                                     brainCtx.moveTo(p.x, p.y);
                                     brainCtx.lineTo(p2.x, p2.y);
                                     let opacity = 1 - (dist / maxDistance);
                                     let alpha = isThinking ? opacity * 0.7 : opacity * 0.2;
-                                    brainCtx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
+                                    brainCtx.strokeStyle = `rgba(148, 163, 184, ${{alpha}})`;
                                     brainCtx.lineWidth = isThinking ? 1.0 : 0.4;
                                     brainCtx.stroke();
-                                }
-                            }
-                        }
+                                }}
+                            }}
+                        }}
                         brainAnimationId = requestAnimationFrame(drawBrain);
-                    }
+                    }}
 
-                    if (brainCanvas) {
-                        setTimeout(() => { initBrain(); drawBrain(); }, 500);
+                    if (brainCanvas) {{
+                        setTimeout(() => {{ initBrain(); drawBrain(); }}, 500);
                         window.addEventListener('resize', initBrain);
-                    }
+                    }}
 
                     // ======== STATE MANAGEMENT ========
                     let isRecording = false;
@@ -1364,25 +1367,25 @@ else:
                     let currentInterimDiv = null;
                     let lastFinalText = "";
 
-                    function updateDebug(msg) {
+                    function updateDebug(msg) {{
                         debugInfo.style.display = 'block';
                         const time = new Date().toLocaleTimeString();
                         debugInfo.innerHTML += '<br><span style="color:#64748b;">' + time + '</span> ' + msg;
                         debugInfo.scrollTop = debugInfo.scrollHeight;
-                    }
+                    }}
 
-                    function initSpeechRecognition() {
+                    function initSpeechRecognition() {{
                         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                        if (!SpeechRecognition) {
+                        if (!SpeechRecognition) {{
                             status.innerText = "❌ Browser tidak mendukung Speech API";
                             return null;
-                        }
+                        }}
                         const rec = new SpeechRecognition();
                         rec.continuous = true;
                         rec.interimResults = true;
                         rec.lang = langSelect.value;
 
-                        rec.onstart = function() {
+                        rec.onstart = function() {{
                             isRecording = true;
                             status.innerText = "🎤 Menangkap audio... (Pastikan volume speaker nyala!)";
                             indicator.className = 'indicator-dot recording';
@@ -1390,29 +1393,29 @@ else:
                             stopBtn.disabled = false;
                             const placeholder = document.getElementById('placeholder');
                             if (placeholder) placeholder.style.display = 'none';
-                        };
+                        }};
 
-                        rec.onerror = function(event) {
+                        rec.onerror = function(event) {{
                             if (event.error === 'no-speech' || event.error === 'aborted') return;
                             status.innerText = "⚠️ Speech Error: " + event.error;
-                        };
+                        }};
 
-                        rec.onend = function() {
-                            if (isRecording) {
-                                setTimeout(() => { try { rec.start(); } catch(e) {} }, 200);
-                            }
-                        };
+                        rec.onend = function() {{
+                            if (isRecording) {{
+                                setTimeout(() => {{ try {{ rec.start(); }} catch(e) {{}} }}, 200);
+                            }}
+                        }};
 
-                        rec.onresult = function(event) {
+                        rec.onresult = function(event) {{
                             let interimTranscript = '';
                             let finalTranscript = '';
-                            for (let i = event.resultIndex; i < event.results.length; i++) {
+                            for (let i = event.resultIndex; i < event.results.length; i++) {{
                                 const result = event.results[i];
                                 if (result.isFinal) finalTranscript += result[0].transcript + ' ';
                                 else interimTranscript += result[0].transcript;
-                            }
+                            }}
 
-                            if (finalTranscript.trim()) {
+                            if (finalTranscript.trim()) {{
                                 const cleanFinal = finalTranscript.trim();
                                 if (cleanFinal === lastFinalText.trim()) return;
                                 lastFinalText = cleanFinal;
@@ -1420,32 +1423,32 @@ else:
                                 const now = new Date();
                                 const timeStr = '[' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0') + ']';
                                 
-                                if (currentInterimDiv) {
+                                if (currentInterimDiv) {{
                                     currentInterimDiv.className = 'line-final';
                                     currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
                                     currentInterimDiv = null;
-                                } else {
+                                }} else {{
                                     const line = document.createElement('div');
                                     line.className = 'line-final';
                                     line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
                                     transcriptBox.appendChild(line);
-                                }
+                                }}
                                 transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                            } else if (interimTranscript.trim()) {
-                                if (!currentInterimDiv) {
+                            }} else if (interimTranscript.trim()) {{
+                                if (!currentInterimDiv) {{
                                     currentInterimDiv = document.createElement('div');
                                     currentInterimDiv.className = 'line-interim';
                                     transcriptBox.appendChild(currentInterimDiv);
-                                }
+                                }}
                                 currentInterimDiv.textContent = '💬 ' + interimTranscript;
                                 transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                            }
-                        };
+                            }}
+                        }};
                         return rec;
-                    }
+                    }}
 
-                    function setupVisualizer(stream) {
-                        try {
+                    function setupVisualizer(stream) {{
+                        try {{
                             const audioTracks = stream.getAudioTracks();
                             if (audioTracks.length === 0) return;
                             const audioOnlyStream = new MediaStream(audioTracks);
@@ -1454,82 +1457,82 @@ else:
                             analyser.fftSize = 256;
                             dataArray = new Uint8Array(analyser.frequencyBinCount);
                             source.connect(analyser);
-                        } catch(e) { console.error(e); }
-                    }
+                        }} catch(e) {{ console.error(e); }}
+                    }}
 
-                    function drawVisualizer() {
+                    function drawVisualizer() {{
                         if (!isVisualizerActive) return;
                         const width = visualizer.width;
                         const height = visualizer.height;
                         canvasCtx.clearRect(0, 0, width, height);
                         
-                        if (analyser && dataArray) {
+                        if (analyser && dataArray) {{
                             analyser.getByteFrequencyData(dataArray);
                             const bufferLength = analyser.frequencyBinCount;
                             const barWidth = (width / bufferLength) * 2.5;
                             let x = 0;
-                            for (let i = 0; i < bufferLength; i++) {
+                            for (let i = 0; i < bufferLength; i++) {{
                                 const barHeight = dataArray[i] / 2;
                                 canvasCtx.fillStyle = 'rgb(' + Math.min(barHeight + 100, 255) + ',158,11)';
                                 const y = (height / 2) - (barHeight / 2);
                                 canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
                                 x += barWidth + 1;
-                            }
-                        }
+                            }}
+                        }}
                         drawVisual = requestAnimationFrame(drawVisualizer);
-                    }
+                    }}
 
-                    function setupMediaRecorder(stream) {
+                    function setupMediaRecorder(stream) {{
                         audioChunks = [];
-                        let options = { mimeType: 'video/webm;codecs=vp9,opus' };
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
+                        let options = {{ mimeType: 'video/webm;codecs=vp9,opus' }};
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = {{ mimeType: 'video/webm' }};
                         
-                        try {
+                        try {{
                             mediaRecorder = new MediaRecorder(stream, options.mimeType ? options : undefined);
-                        } catch(e) {
+                        }} catch(e) {{
                             mediaRecorder = new MediaRecorder(stream);
-                        }
+                        }}
                         
-                        mediaRecorder.ondataavailable = function(e) {
+                        mediaRecorder.ondataavailable = function(e) {{
                             if (e.data && e.data.size > 0) audioChunks.push(e.data);
-                        };
+                        }};
                         
-                        mediaRecorder.onstop = function() {
-                            if (audioChunks.length > 0) {
+                        mediaRecorder.onstop = function() {{
+                            if (audioChunks.length > 0) {{
                                 const mimeType = mediaRecorder.mimeType || 'video/webm';
-                                const blob = new Blob(audioChunks, { type: mimeType });
+                                const blob = new Blob(audioChunks, {{ type: mimeType }});
                                 const audioUrl = URL.createObjectURL(blob);
                                 const audioItem = document.createElement('div');
                                 audioItem.className = 'audio-item fade-in';
                                 audioItem.innerHTML = `
-                                    <audio controls src="${audioUrl}" preload="auto" style="flex:1; min-width:200px;"></audio>
-                                    <a href="${audioUrl}" download="Capture_${Date.now()}.webm" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; text-decoration:none;">💾 Download</a>
+                                    <audio controls src="${{audioUrl}}" preload="auto" style="flex:1; min-width:200px;"></audio>
+                                    <a href="${{audioUrl}}" download="Capture_${{Date.now()}}.webm" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; text-decoration:none;">💾 Download</a>
                                 `;
                                 document.getElementById('audioPlaceholder')?.remove();
                                 audioContainer.appendChild(audioItem);
-                            }
-                        };
-                    }
+                            }}
+                        }};
+                    }}
 
-                    startBtn.onclick = async function() {
-                        try {
+                    startBtn.onclick = async function() {{
+                        try {{
                             lastFinalText = ""; currentInterimDiv = null; audioChunks = [];
                             transcriptBox.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Rapat/Tab sedang berjalan.</div>';
-                            await navigator.mediaDevices.getUserMedia({ audio: true });
+                            await navigator.mediaDevices.getUserMedia({{ audio: true }});
 
                             if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                             if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
                             
-                            displayStream = await navigator.mediaDevices.getDisplayMedia({ 
-                                video: { width: 640, height: 480, frameRate: 1 },
-                                audio: { echoCancellation: false, noiseSuppression: false }
-                            });
+                            displayStream = await navigator.mediaDevices.getDisplayMedia({{ 
+                                video: {{ width: 640, height: 480, frameRate: 1 }},
+                                audio: {{ echoCancellation: false, noiseSuppression: false }}
+                            }});
                             
-                            if (displayStream.getAudioTracks().length === 0) {
+                            if (displayStream.getAudioTracks().length === 0) {{
                                 status.innerText = "⚠️ CENTANG 'Share tab audio'!";
                                 displayStream.getVideoTracks().forEach(t => t.stop());
                                 return;
-                            }
+                            }}
                             
                             setupMediaRecorder(displayStream);
                             mediaRecorder.start(1000);
@@ -1539,81 +1542,80 @@ else:
                             recognition = initSpeechRecognition();
                             if (recognition) recognition.start();
                             
-                            displayStream.getVideoTracks()[0].addEventListener('ended', () => { if (isRecording) stopBtn.click(); });
+                            displayStream.getVideoTracks()[0].addEventListener('ended', () => {{ if (isRecording) stopBtn.click(); }});
                             resizeVisualizer();
-                        } catch(err) {
+                        }} catch(err) {{
                             status.innerText = "❌ Gagal: " + err.message;
-                        }
-                    };
+                        }}
+                    }};
 
-                    stopBtn.onclick = function() {
+                    stopBtn.onclick = function() {{
                         isRecording = false; isVisualizerActive = false;
                         if (drawVisual) cancelAnimationFrame(drawVisual);
-                        if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+                        if (recognition) {{ try {{ recognition.stop(); }} catch(e) {{}} recognition = null; }}
                         if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-                        if (displayStream) { displayStream.getTracks().forEach(t => t.stop()); displayStream = null; }
+                        if (displayStream) {{ displayStream.getTracks().forEach(t => t.stop()); displayStream = null; }}
                         
                         status.innerText = "⏸️ Stopped - Cek Arsip Rekaman ↓";
                         indicator.className = 'indicator-dot';
                         startBtn.disabled = false; stopBtn.disabled = true; langSelect.disabled = false;
-                    };
+                    }};
 
-                    function resizeVisualizer() {
+                    function resizeVisualizer() {{
                         visualizer.width = visualizer.parentElement.clientWidth || 600;
                         visualizer.height = 80;
-                    }
+                    }}
                     window.addEventListener('resize', resizeVisualizer);
 
-                    copyBtn.onclick = function() {
+                    copyBtn.onclick = function() {{
                         const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) { alert('Belum ada teks!'); return; }
+                        if (lines.length === 0) {{ alert('Belum ada teks!'); return; }}
                         const text = Array.from(lines).map(line => line.innerText).join('\\n');
-                        navigator.clipboard.writeText(text).then(() => {
+                        navigator.clipboard.writeText(text).then(() => {{
                             copyBtn.innerText = '✅ Copied!';
                             setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
-                        });
-                    };
+                        }});
+                    }};
 
-                    downloadTxtBtn.onclick = function() {
+                    downloadTxtBtn.onclick = function() {{
                         const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) { alert('Belum ada teks!'); return; }
+                        if (lines.length === 0) {{ alert('Belum ada teks!'); return; }}
                         const text = Array.from(lines).map(line => line.innerText).join('\\n');
-                        const blob = new Blob([text], { type: 'text/plain' });
+                        const blob = new Blob([text], {{ type: 'text/plain' }});
                         const a = document.createElement('a');
                         a.href = URL.createObjectURL(blob);
                         a.download = 'Transkrip_Live_' + Date.now() + '.txt';
                         a.click();
-                    };
+                    }};
 
-                    clearBtn.onclick = function() {
+                    clearBtn.onclick = function() {{
                         transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
                         lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = "";
-                    };
+                    }};
 
-                    function getTranscriptText() {
+                    function getTranscriptText() {{
                         return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
-                    }
+                    }}
 
-                    window.dlCyLive = function() {
-                        if (window.cyInstance) {
+                    window.dlCyLive = function() {{
+                        if (window.cyInstance) {{
                             const a = document.createElement('a'); 
-                            a.href = window.cyInstance.png({full: true, scale: 4, bg: 'white'}); 
+                            a.href = window.cyInstance.png({{full: true, scale: 4, bg: 'white'}}); 
                             a.download = 'Cytoscape_Live.png'; a.click();
-                        }
-                    };
+                        }}
+                    }};
 
-                    // --- REVISI MERMAID LIVE (ANTI KEPOTONG & JERNIH) ---
-                    window.dlMermaidLive = function() {
+                    window.dlMermaidLive = function() {{
                         const container = document.getElementById('mermaidLiveWrapper');
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMermaidLive');
                         const originalText = btn.innerHTML;
-                        if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
+                        if (btn) {{ btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }}
 
-                        if (window.panZoomLive) { window.panZoomLive.destroy(); window.panZoomLive = null; }
+                        if (window.panZoomLive) {{ window.panZoomLive.destroy(); window.panZoomLive = null; }}
 
-                        setTimeout(() => {
+                        setTimeout(() => {{
                             const origBodyOverflow = document.body.style.overflow;
                             document.body.style.overflow = 'visible';
                             
@@ -1626,12 +1628,12 @@ else:
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                             svgEl.style.maxWidth = 'none';
-                            svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
+                            svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
                             svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
-                            setTimeout(() => {
-                                html2canvas(container, { scale: 4, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
-                                .then(canvas => {
+                            setTimeout(() => {{
+                                html2canvas(container, {{ scale: 4, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                .then(canvas => {{
                                     document.body.style.overflow = origBodyOverflow;
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
@@ -1639,20 +1641,20 @@ else:
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                     
                                     svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                    window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
+                                    window.panZoomLive = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
                                     
                                     const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-                                }).catch(() => { 
+                                    if (btn) {{ btn.innerHTML = originalText; btn.disabled = false; }}
+                                }}).catch(() => {{ 
                                     document.body.style.overflow = origBodyOverflow;
-                                    if (btn) { btn.innerHTML = originalText; btn.disabled = false; } 
-                                });
-                            }, 800);
-                        }, 100);
-                    };
+                                    if (btn) {{ btn.innerHTML = originalText; btn.disabled = false; }} 
+                                }});
+                            }}, 800);
+                        }}, 100);
+                    }};
 
-                    window.dlMarkmapLive = function() {
+                    window.dlMarkmapLive = function() {{
                         const container = document.getElementById('markmapLiveWrapper');
                         const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         const g = svgEl.querySelector('g'); if (!g) return;
@@ -1669,25 +1671,25 @@ else:
                         svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
                         svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                         
-                        setTimeout(() => {
-                            html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
-                            .then(canvas => {
+                        setTimeout(() => {{
+                            html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                            .then(canvas => {{
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 svgEl.style.width = '100%'; svgEl.style.height = '100%';
                                 const link = document.createElement('a'); link.download = 'Markmap_Live.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                            });
-                        }, 600);
-                    };
+                            }});
+                        }}, 600);
+                    }};
 
-                    aiBtn.onclick = async function() {
+                    aiBtn.onclick = async function() {{
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
-                        if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
+                        if (!apiKey || !transcript) {{ alert('API Key atau Transkrip kosong!'); return; }}
                         
                         isThinking = true;
-                        if (brainText) { brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }
+                        if (brainText) {{ brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }}
                         aiBtn.innerHTML = '⏳ Memproses...'; aiBtn.disabled = true;
 
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
@@ -1699,75 +1701,84 @@ else:
                         - rencana_tindak_lanjut: Array of objects (tugas, pic, deadline, prioritas).
                         - hubungan_topik: Array of objects (sumber, target, relasi).
                         
-                        ATURAN MERMAID (SANGAT KETAT):
+                        ATURAN JSON:
+                        - JIKA ADA DATA YANG KOSONG ATAU TIDAK DITEMUKAN, ISI DENGAN ARRAY KOSONG [] ATAU STRING KOSONG "". JANGAN MENGHILANGKAN KEY APAPUN DARI STRUKTUR JSON.
+                        
+                        ATURAN MERMAID (SANGAT KETAT AGAR TIDAK ERROR):
                         1. WAJIB diawali dengan 'graph LR'.
-                        2. ID Node HARUS 1 kata tanpa spasi (misal: N1, TopikA).
-                        3. Format: N1["Teks Utama"] --> N2["Teks Detail"].
-                        4. DILARANG KERAS menggunakan tanda kutip ganda (") di DALAM teks label. Gunakan petik tunggal (').
+                        2. BENTUK NODE WAJIB MENGGUNAKAN TANDA KUTIP GANDA. Contoh yang benar: N1["Teks Label"] --> N2["Teks Label Lain"]
+                        3. ID Node HARUS SATU KATA tanpa spasi (misal: N1, TopikA).
+                        4. JANGAN ADA KARAKTER KUTIP GANDA ("), KURUNG (), ATAU TITIK KOMA (;) DI DALAM TEKS LABEL.
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
                         Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin). Buat sangat panjang ke kanan agar visualisasinya lebar memanjang.
                         
-                        Transkrip Rapat: "${transcript}"`;
+                        Transkrip Rapat: "${{transcript}}"`;
 
-                        const payload = {
-                            // --- REVISI SINTAKS JAVASCRIPT ---
-                            "model": "gemini/gemini-2.5-flash",
-                            "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
-                            "response_format": {
+                        const payload = {{
+                            "model": isAdmin ? "gemini/gemini-2.5-flash" : "gpt-4o-mini",
+                            "messages": [{{ "role": "user", "content": prompt }}], "temperature": 0.2,
+                            "response_format": {{
                                 "type": "json_schema",
-                                "json_schema": {
+                                "json_schema": {{
                                     "name": "meeting_summary", "strict": false,
-                                    "schema": {
+                                    "schema": {{
                                         "type": "object",
-                                        "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                            "notulensi_rapat": {
+                                        "properties": {{
+                                            "ringkasan_eksekutif": {{ "type": "array", "items": {{ "type": "string" }} }},
+                                            "notulensi_rapat": {{
                                                 "type": "object",
-                                                "properties": {
-                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
-                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
-                                                }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
-                                            },
-                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": false
-                                    }
-                                }
-                            }
-                        };
+                                                "properties": {{
+                                                    "agenda": {{ "type": "string" }}, "peserta": {{ "type": "array", "items": {{ "type": "string" }} }},
+                                                    "jalannya_diskusi": {{ "type": "array", "items": {{ "type": "string" }} }}, "keputusan": {{ "type": "array", "items": {{ "type": "string" }} }},
+                                                    "rencana_tindak_lanjut": {{ "type": "array", "items": {{ "type": "object", "properties": {{ "tugas": {{ "type": "string" }}, "pic": {{ "type": "string" }}, "deadline": {{ "type": "string" }}, "prioritas": {{ "type": "string" }} }}, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false }} }},
+                                                    "hubungan_topik": {{ "type": "array", "items": {{ "type": "object", "properties": {{ "sumber": {{ "type": "string" }}, "target": {{ "type": "string" }}, "relasi": {{ "type": "string" }} }}, "required": ["sumber", "target", "relasi"], "additionalProperties": false }} }}
+                                                }}, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
+                                            }},
+                                            "visual_mindmap": {{ "type": "string" }}, "markmap_code": {{ "type": "string" }}
+                                        }}, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": false
+                                    }}
+                                }}
+                            }}
+                        }};
 
-                        try {
-                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
-                                method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+                        try {{
+                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {{
+                                method: "POST", headers: {{ "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" }},
                                 body: JSON.stringify(payload)
-                            });
+                            }});
                             
-                            if(response.status === 524) {
+                            if(response.status === 524) {{
                                 aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">⏳ Error 524: Waktu tunggu habis (Timeout). Teks terlalu panjang atau server sibuk.</div>';
                                 return;
-                            }
+                            }}
                             
-                            if(!response.ok) {
+                            if(!response.ok) {{
                                 aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">❌ Gagal terhubung ke AI (HTTP ' + response.status + '). Cek API Key Anda.</div>';
                                 return;
-                            }
+                            }}
                             
                             const resJson = await response.json();
                             const data = JSON.parse(resJson.choices[0].message.content);
                             
-                            let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
-                                `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
+                            const notulensi = data?.notulensi_rapat || {{}};
+                            const rencana = notulensi.rencana_tindak_lanjut || [];
+                            const ringkasan = data?.ringkasan_eksekutif || [];
+                            const diskusi = notulensi.jalannya_diskusi || [];
+                            const keputusan = notulensi.keputusan || [];
+                            const hubungan = notulensi.hubungan_topik || [];
+                            
+                            let taskRows = rencana.map(t => 
+                                `<tr class="text-xs border-b"><td class="p-2 border-r">${{t?.tugas || '-'}}</td><td class="p-2 border-r">${{t?.pic || '-'}}</td><td class="p-2 border-r">${{t?.deadline || '-'}}</td><td class="p-2 font-bold">${{t?.prioritas || '-'}}</td></tr>`
                             ).join('');
                             
                             aiContent.innerHTML = `
                                 <div class="fade-in mt-6 mb-10">
-                                    <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
-                                    <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
-                                    <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
-                                    <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
+                                    <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${{ringkasan.map(r => '<li>' + r + '</li>').join('')}}</ul></div></div>
+                                    <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${{diskusi.map(d => '<li class="mb-2">- ' + d + '</li>').join('')}}</ul></div></div>
+                                    <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${{keputusan.map(k => '<li>' + k + '</li>').join('')}}</ul></div>
+                                    <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${{taskRows}}</tbody></table></div>
                                     <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:400px;"></div></div></div>
@@ -1776,47 +1787,51 @@ else:
                                     <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                 </div>`;
 
-                            setTimeout(() => {
+                            setTimeout(() => {{
                                 const nodesSet = new Set(); const cyElements = [];
-                                (data.notulensi_rapat.hubungan_topik || []).forEach(rel => {
-                                    if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
-                                    if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
-                                    cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
-                                });
-                                window.cyInstance = cytoscape({
+                                hubungan.forEach(rel => {{
+                                    if (!nodesSet.has(rel.sumber)) {{ nodesSet.add(rel.sumber); cyElements.push({{ data: {{ id: rel.sumber, label: rel.sumber }} }}); }}
+                                    if (!nodesSet.has(rel.target)) {{ nodesSet.add(rel.target); cyElements.push({{ data: {{ id: rel.target, label: rel.target }} }}); }}
+                                    cyElements.push({{ data: {{ source: rel.sumber, target: rel.target, label: rel.relasi }} }});
+                                }});
+                                window.cyInstance = cytoscape({{
                                     container: document.getElementById('cyLiveContainer'), elements: cyElements,
-                                    style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '11px', 'text-valign': 'top' } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '9px' } }],
-                                    layout: { name: 'cose', padding: 20 }
-                                });
-                            }, 100);
+                                    style: [{{ selector: 'node', style: {{ 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '11px', 'text-valign': 'top' }} }}, {{ selector: 'edge', style: {{ 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '9px' }} }}],
+                                    layout: {{ name: 'cose', padding: 20 }}
+                                }});
+                            }}, 100);
 
-                            // --- REVISI AWAL MERMAID LIVE ---
-                            setTimeout(() => {
-                                let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
-                                if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) rawMer = `graph LR\n` + rawMer;
+                            setTimeout(() => {{
+                                let rawMer = (data?.visual_mindmap || "graph LR\\nError[\"Gagal memuat visual\"]").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
+                                if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) rawMer = `graph LR\\n` + rawMer;
                                 const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
-                                mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
-                                    const svg = mDiv.querySelector('svg');
-                                    if (svg) { 
-                                        svg.style.maxWidth = 'none'; 
-                                        svg.style.width = '100%'; 
-                                        svg.style.height = '100%'; 
-                                        window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }); 
-                                    }
-                                });
-                            }, 100);
+                                
+                                try {{
+                                    mermaid.parse(rawMer).then(() => {{
+                                        mermaid.run({{ querySelector: '#mermaidLive' }}).then(() => {{
+                                            const svg = mDiv.querySelector('svg');
+                                            if (svg) {{ 
+                                                svg.style.maxWidth = 'none'; 
+                                                svg.style.width = '100%'; 
+                                                svg.style.height = '100%'; 
+                                                window.panZoomLive = svgPanZoom(svg, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }}); 
+                                            }}
+                                        }});
+                                    }}).catch(e => {{ mDiv.innerHTML = "<div style='color:red; padding:20px;'>⚠️ AI memberikan format Mermaid yang invalid. Silakan coba generate ulang.<br><br>Error: "+e.message+"</div>"; }});
+                                }} catch(err) {{}}
+                            }}, 100);
 
-                            setTimeout(() => {
-                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                const { Transformer, Markmap } = window.markmap;
-                                const { root } = new Transformer().transform(rawMm);
+                            setTimeout(() => {{
+                                let rawMm = (data?.markmap_code || "# Error").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                const {{ Transformer, Markmap }} = window.markmap;
+                                const {{ root }} = new Transformer().transform(rawMm);
                                 Markmap.create('#markmapLive', null, root);
-                            }, 100);
+                            }}, 100);
 
-                        } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
-                        finally { aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; }
-                    };
-                })();
+                        }} catch(err) {{ aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }}
+                        finally {{ aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; }}
+                    }};
+                }})();
             </script>
         </body>
         </html>
@@ -1896,14 +1911,15 @@ else:
                         - transkrip_dialog: Lakukan SPEAKER DIARIZATION berformat "Pembicara X: Teks".
                         - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
                         - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan (tugas, pic, deadline, prioritas). JIKA KOSONG, buat 1 tugas default.
+                        - rencana_tindak_lanjut: Ekstrak tabel penugasan (tugas, pic, deadline, prioritas). 
                         - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                        - PENTING: JIKA ADA DATA YANG KOSONG ATAU TIDAK DITEMUKAN, ISI DENGAN ARRAY KOSONG [] ATAU STRING KOSONG "". JANGAN MENGHILANGKAN KEY APAPUN DARI STRUKTUR JSON.
                         
-                        ATURAN MERMAID (SANGAT KETAT):
+                        ATURAN MERMAID (SANGAT KETAT AGAR TIDAK ERROR):
                         1. WAJIB diawali dengan 'graph LR'.
-                        2. ID Node HARUS 1 kata tanpa spasi (misal: N1, TopikA).
-                        3. Format: N1["Teks Utama"] --> N2["Teks Detail"].
-                        4. DILARANG KERAS menggunakan tanda kutip ganda (") di DALAM teks label. Gunakan petik tunggal (').
+                        2. BENTUK NODE WAJIB MENGGUNAKAN TANDA KUTIP GANDA. Contoh yang benar: N1["Teks Label"] --> N2["Teks Label Lain"]
+                        3. ID Node HARUS SATU KATA tanpa spasi (misal: N1, TopikA).
+                        4. JANGAN ADA KARAKTER KUTIP GANDA ("), KURUNG (), ATAU TITIK KOMA (;) DI DALAM TEKS LABEL.
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
@@ -1911,9 +1927,8 @@ else:
                         
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
-                        # REVISI MODEL 4O-MINI
                         payload = {
-                            "model": "gemini/gemini-2.5-flash",
+                            "model": "gpt-4o-mini" if not is_admin() else "gemini/gemini-2.5-flash",
                             "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",
@@ -1940,7 +1955,6 @@ else:
                             }
                         }
 
-                        # REVISI ERROR HANDLING 524
                         try:
                             res = requests.post(
                                 "https://litellm.koboi2026.biz.id/v1/chat/completions", 
@@ -1970,27 +1984,39 @@ else:
 
         if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
+            
+            # --- PROTEKSI DI SINI MENGGUNAKAN .GET() ---
+            notulensi = data.get('notulensi_rapat', {})
+            agenda = notulensi.get('agenda', '-')
+            peserta = notulensi.get('peserta', [])
+            dialog = notulensi.get('transkrip_dialog', [])
+            diskusi = notulensi.get('jalannya_diskusi', [])
+            keputusan = notulensi.get('keputusan', [])
+            tindak_lanjut = notulensi.get('rencana_tindak_lanjut', [])
+            hubungan_topik = notulensi.get('hubungan_topik', [])
+            ringkasan = data.get('ringkasan_eksekutif', [])
+
             st.markdown("---")
             
             col_t1, col_t2 = st.columns([3, 1])
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            txt_report = f"NOTULENSI RAPAT\\n====================\\n\\nRingkasan:\\n" + "\\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
+            txt_report = f"NOTULENSI RAPAT\\n====================\\n\\nRingkasan:\\n" + "\\n".join([f"- {r}" for r in ringkasan])
             with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
                 st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
-                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>"
+                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in ringkasan]) + "</ul></div>"
                 st.markdown(rx_html, unsafe_allow_html=True)
                 
                 colA, colB = st.columns(2)
-                colA.markdown(f"**📌 AGENDA:** {data['notulensi_rapat']['agenda']}")
-                colB.markdown(f"**👥 PESERTA:** {', '.join(data['notulensi_rapat']['peserta'])}")
+                colA.markdown(f"**📌 AGENDA:** {agenda}")
+                colB.markdown(f"**👥 PESERTA:** {', '.join(peserta)}")
                 
-                if 'transkrip_dialog' in data['notulensi_rapat']:
+                if dialog:
                     st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
                     dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #cbd5e1; max-height:350px; overflow-y:auto;'>"
-                    for line in data['notulensi_rapat'].get('transkrip_dialog', []):
+                    for line in dialog:
                         if ":" in line:
                             spk, txt = line.split(":", 1)
                             dialog_html += f"<div style='margin-bottom:12px;'><span style='font-size:12px; font-weight:bold; color:#475569;'>{spk.strip()}</span><div style='background-color:#e0f2fe; padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:#1e293b; margin-top:2px;'>{txt.strip()}</div></div>"
@@ -1998,10 +2024,10 @@ else:
                     st.markdown(dialog_html + "</div>", unsafe_allow_html=True)
 
                 st.markdown("**🗣️ JALANNYA DISKUSI:**")
-                st.markdown("<div style='background-color:#fff; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;'><ul>" + "".join([f"<li style='margin-bottom:6px;'>- {d}</li>" for d in data['notulensi_rapat'].get('jalannya_diskusi', [])]) + "</ul></div>", unsafe_allow_html=True)
+                st.markdown("<div style='background-color:#fff; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;'><ul>" + "".join([f"<li style='margin-bottom:6px;'>- {d}</li>" for d in diskusi]) + "</ul></div>", unsafe_allow_html=True)
                 
                 st.markdown("**📅 ACTION ITEMS:**")
-                st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
+                st.table(pd.DataFrame(tindak_lanjut))
 
             # Safe Serialization
             clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
@@ -2010,7 +2036,7 @@ else:
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
-            hubungan_json = json.dumps(data['notulensi_rapat']['hubungan_topik'])
+            hubungan_json = json.dumps(hubungan_topik)
 
             st.markdown("### 🕸️ Visualisasi Terintegrasi")
             col_v1, col_v2 = st.columns(2)
@@ -2037,7 +2063,6 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
-                # --- REVISI MERMAID OFFLINE (ANTI KEPOTONG & SUPER HD) ---
                 st.markdown("**Mermaid (Mindmap)**")
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
@@ -2053,13 +2078,18 @@ else:
                     <script>
                         document.getElementById('merContainer').textContent = {mer_json_str};
                         mermaid.initialize({{ startOnLoad: false }});
-                        mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
-                            const svgEl = document.querySelector('.mermaid svg');
-                            if (svgEl) {{
-                                svgEl.style.maxWidth = 'none'; svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
-                            }}
-                        }});
+                        
+                        try {{
+                            mermaid.parse({mer_json_str}).then(() => {{
+                                mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
+                                    const svgEl = document.querySelector('.mermaid svg');
+                                    if (svgEl) {{
+                                        svgEl.style.maxWidth = 'none'; svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                        window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
+                                    }}
+                                }});
+                            }}).catch(e => {{ document.getElementById('wrapper').innerHTML = "<div style='color:red; padding:20px;'>⚠️ AI memberikan format Mermaid yang invalid. Silakan coba generate ulang.<br><br>Error: "+e.message+"</div>"; }});
+                        }} catch(err) {{}}
 
                         window.downloadMermaidImage = function(wrapperId, title) {{
                             const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg');
@@ -2070,7 +2100,6 @@ else:
                             if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
                             
                             setTimeout(() => {{
-                                // TRIK AGAR GAMBAR TIDAK TERPOTONG IFRAME STREAMLIT
                                 const origBodyOverflow = document.body.style.overflow;
                                 document.body.style.overflow = 'visible';
                                 
@@ -2087,7 +2116,6 @@ else:
                                 svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
                                 setTimeout(() => {{
-                                    // SCALE 4 UNTUK RESOLUSI SUPER HD SAMA SEPERTI LIVE TRANSKRIP
                                     html2canvas(container, {{ scale: 4, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                     .then(canvas => {{
                                         document.body.style.overflow = origBodyOverflow;

@@ -1836,7 +1836,12 @@ else:
         </body>
         </html>
         """
-        components.html(html_code, height=1600, scrolling=True)
+        components.html(
+    html_code, 
+    height=1600, 
+    scrolling=True, 
+    allow="camera; microphone; display-capture;"
+)
 
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION (DENGAN SMART CHUNKING PYDUB)

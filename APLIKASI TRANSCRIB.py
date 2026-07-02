@@ -62,9 +62,9 @@ footer {visibility: hidden;}
     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
 }
 @keyframes pulse-border-admin {
-    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 167, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 158, 167, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 167, 0); }
 }
 .profile-card {
     border-radius: 16px;
@@ -1262,7 +1262,7 @@ else:
                     let brainParticles = [];
                     let isThinking = false;
                     let brainAnimationId;
-                    let timeOscillator = 0; // Untuk efek nafas/mengambang pusat
+                    let timeOscillator = 0;
 
                     function initBrain() {
                         if (!brainCanvas) return;
@@ -1271,13 +1271,12 @@ else:
                         brainCanvas.height = 180;
                         
                         brainParticles = [];
-                        const numParticles = 160; // Padat seperti Obsidian Graph
+                        const numParticles = 160;
                         
                         for(let i=0; i<numParticles; i++) {
                             let isCore = Math.random() > 0.95;
                             brainParticles.push({
                                 angle: Math.random() * Math.PI * 2,
-                                // Jarak ngumpul dari tengah: radius 5 sampai 70
                                 orbitRadius: Math.random() * 65 + 5, 
                                 speed: Math.random() * 0.015 + 0.002,
                                 baseRadius: isCore ? (Math.random() * 2 + 2) : (Math.random() * 1.5 + 0.5),
@@ -1293,30 +1292,24 @@ else:
                         
                         timeOscillator += 0.02;
                         
-                        // Titik pusat gumpalan otak (mengambang pelan)
                         const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
                         const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
                         
-                        const maxDistance = isThinking ? 40 : 25; // Makin jauh koneksinya saat mikir
+                        const maxDistance = isThinking ? 40 : 25;
                         const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
                         const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
                         
-                        // 1. Update Posisi agar Terus Membentuk Bola
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             
-                            // Putar perlahan. Kalo mikir putar lebih cepat
                             p.angle += isThinking ? p.speed * 4 : p.speed;
                             
-                            // Efek nafas (radius membesar/mengecil)
                             let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
                             let currentRadius = p.orbitRadius + breath;
                             
-                            // Hitung koordinat berdasarkan orbit pusat (Elips agar memenuhi layar)
                             p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
                             p.y = cy + Math.sin(p.angle) * currentRadius;
                             
-                            // Gambar Titik
                             brainCtx.beginPath();
                             brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
                             brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
@@ -1330,7 +1323,6 @@ else:
                             brainCtx.fill();
                         }
                         
-                        // 2. Gambar Cabang (Sinapsis) Antar Titik yang Berdekatan
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             for(let j=i+1; j<brainParticles.length; j++) {
@@ -1933,11 +1925,10 @@ else:
                         if (!apiKey) { alert('Masukkan API Key!'); return; }
                         if (!transcript) { alert('Transkrip kosong!'); return; }
                         
-                        // 🔴 AKTIFKAN ANIMASI BRAIN (OBSIDIAN GRAPH STYLE)
                         isThinking = true;
                         if (brainText) {
                             brainText.innerText = "PROCESSING NEURAL DATA...";
-                            brainText.style.color = "#d8b4fe"; // glowing purple
+                            brainText.style.color = "#d8b4fe";
                             brainText.style.textShadow = "0 0 15px #c084fc";
                         }
                         
@@ -2126,7 +2117,6 @@ else:
                                     mermaidDiv.textContent = rawMer; 
                                     mermaidDiv.removeAttribute('data-processed'); 
                                     
-                                    // Matikan overflow bawaan agar pan-zoom jalan mulus
                                     document.getElementById('mermaidLiveWrapper').style.overflow = 'hidden';
 
                                     try {
@@ -2167,7 +2157,6 @@ else:
                             aiBtn.innerHTML = '✨ Generate AI Summary';
                             aiBtn.disabled = false;
                             
-                            // 🔴 MATIKAN ANIMASI BRAIN SAAT SELESAI
                             isThinking = false;
                             if (brainText) {
                                 brainText.innerText = "NEURAL NETWORK IDLE";
@@ -2209,10 +2198,8 @@ else:
                     else:
                         with st.spinner("⏳ Membaca dan memproses file audio..."):
                             try:
-                                # 1. Load audio menggunakan pydub
                                 audio = AudioSegment.from_file(uploaded_file)
                                 
-                                # 2. Tentukan ukuran chunk (contoh: 10 menit = 600.000 ms)
                                 chunk_length_ms = 10 * 60 * 1000 
                                 total_chunks = math.ceil(len(audio) / chunk_length_ms)
                                 
@@ -2223,7 +2210,6 @@ else:
                                 url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                 headers = {"Authorization": f"Bearer {llm_key}"}
 
-                                # 3. Looping untuk memotong dan mengirim audio
                                 success_transcription = True
                                 for i in range(total_chunks):
                                     status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
@@ -2232,7 +2218,6 @@ else:
                                     end_time = min((i + 1) * chunk_length_ms, len(audio))
                                     audio_chunk = audio[start_time:end_time]
                                     
-                                    # Export chunk ke dalam memori (BytesIO) agar tidak memakan storage lokal
                                     chunk_buffer = io.BytesIO()
                                     audio_chunk.export(chunk_buffer, format="mp3")
                                     chunk_buffer.name = f"chunk_{i}.mp3"
@@ -2253,12 +2238,10 @@ else:
                                         
                                     progress_bar.progress((i + 1) / total_chunks)
                                 
-                                # 4. Proses pasca-transkripsi
                                 if success_transcription and full_transcript.strip():
                                     status_text.success("✅ Seluruh audio berhasil digabungkan!")
                                     st.session_state["offline_transcript"] = full_transcript.strip()
                                     
-                                    # Update kuota hanya jika bukan admin
                                     if not is_admin():
                                         st.session_state["user_kuota_upload"] -= 1
                                         db.collection("users").document(st.session_state["user_uid"]).update({
@@ -2504,38 +2487,65 @@ else:
                 if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
                     raw_mer = "graph LR\n" + raw_mer
                 
-                # Sanitasi karakter HTML sebelum dimasukkan ke komponen
                 safe_mer = raw_mer.replace("<", "&lt;").replace(">", "&gt;")
                 
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
                     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-                    <!-- Tambahan script untuk Pan & Zoom -->
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+                    <style>
+                        #wrapper {{
+                            width: 100%;
+                            height: 400px;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                            overflow: hidden;
+                            background: #ffffff;
+                            position: relative;
+                        }}
+                        #wrapper svg {{
+                            width: 100%;
+                            height: 100%;
+                        }}
+                        .mermaid {{
+                            background: transparent;
+                            border: none;
+                            margin: 0;
+                            font-family: inherit;
+                            width: 100%;
+                            height: 100%;
+                        }}
+                    </style>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
-                    <!-- overflow:hidden ditambahkan agar tidak bentrok dengan pan-zoom -->
-                    <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
-                        <pre class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit; width:100%; height:100%;">{safe_mer}</pre>
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid_Offline', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full</button>
+                    <div id="wrapper">
+                        <pre class="mermaid">{safe_mer}</pre>
                     </div>
                     <script>
+                        let panZoomInstance = null;
+                        
                         mermaid.initialize({{ startOnLoad: false }});
                         
-                        // Render Mermaid lalu tempelkan kontrol Pan & Zoom
                         mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
                             const svgEl = document.querySelector('.mermaid svg');
                             if (svgEl) {{
-                                svgEl.style.maxWidth = 'none'; // Matikan max-width bawaan
+                                svgEl.style.maxWidth = 'none';
                                 svgEl.style.width = '100%';
                                 svgEl.style.height = '100%';
-                                window.panZoom = svgPanZoom(svgEl, {{
+                                
+                                if (svgEl.hasAttribute('viewBox')) {{
+                                    svgEl.removeAttribute('viewBox');
+                                }}
+                                
+                                panZoomInstance = svgPanZoom(svgEl, {{
                                     zoomEnabled: true,
-                                    controlIconsEnabled: true, // Memunculkan tombol +/- di pojok
+                                    controlIconsEnabled: true,
                                     fit: true,
                                     center: true,
-                                    minZoom: 0.1
+                                    minZoom: 0.1,
+                                    maxZoom: 10
                                 }});
                             }}
                         }});
@@ -2547,12 +2557,12 @@ else:
                             
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
-                            btn.innerHTML = "⏳ MENYIMPAN..."; 
+                            btn.innerHTML = "⏳ MENYIMPAN...";
                             btn.disabled = true;
                             
-                            if (window.panZoom) {{
-                                window.panZoom.destroy();
-                                window.panZoom = null;
+                            if (panZoomInstance) {{
+                                panZoomInstance.destroy();
+                                panZoomInstance = null;
                             }}
                             
                             setTimeout(() => {{
@@ -2560,84 +2570,95 @@ else:
                                 const originalHeight = container.style.height;
                                 const originalOverflow = container.style.overflow;
                                 
-                                const originalWAttr = svgEl.getAttribute('width');
-                                const originalHAttr = svgEl.getAttribute('height');
                                 const originalViewBox = svgEl.getAttribute('viewBox');
                                 
-                                // ✅ PERBAIKAN 1: Cari <g> element yang sebenarnya punya konten diagram
-                                const gElement = svgEl.querySelector('g');
-                                if (!gElement) {{
-                                    btn.innerHTML = originalText; 
-                                    btn.disabled = false;
-                                    return;
-                                }}
+                                const bbox = svgEl.getBBox();
+                                const padding = 50;
                                 
-                                const originalGTransform = gElement.getAttribute('transform');
-                                gElement.setAttribute('transform', 'translate(0,0) scale(1)');
+                                let trueWidth = Math.max(bbox.width, 400) + (padding * 2);
+                                let trueHeight = Math.max(bbox.height, 300) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px';
+                                container.style.height = trueHeight + 'px';
+                                container.style.overflow = 'visible';
+                                
+                                svgEl.removeAttribute('viewBox');
+                                svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
+                                svgEl.style.width = '100%';
+                                svgEl.style.height = '100%';
                                 
                                 setTimeout(() => {{
-                                    // ✅ PERBAIKAN 2: Gunakan gElement.getBBox() bukan svgEl.getBBox()
-                                    const bbox = gElement.getBBox();
-                                    const padding = 50;
-                                    const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                                    const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                                    
-                                    container.style.width = trueWidth + 'px';
-                                    container.style.height = trueHeight + 'px';
-                                    container.style.overflow = 'visible';
-                                    
-                                    svgEl.removeAttribute('width');
-                                    svgEl.removeAttribute('height');
-                                    svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                                    svgEl.style.width = '100%';
-                                    svgEl.style.height = '100%';
-                                    
-                                    setTimeout(() => {{
-                                        html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
-                                        .then(canvas => {{
-                                            container.style.width = originalWidth; 
-                                            container.style.height = originalHeight; 
-                                            container.style.overflow = originalOverflow;
-                                            
-                                            if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                            if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                            if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                            
-                                            gElement.setAttribute('transform', originalGTransform || '');
-                                            
-                                            window.panZoom = svgPanZoom(svgEl, {{
-                                                zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
-                                            }});
-                                            
-                                            const link = document.createElement('a'); 
-                                            link.download = 'Mermaid_' + title + '.png'; 
-                                            link.href = canvas.toDataURL('image/png', 1.0); 
-                                            link.click();
-                                            
-                                            btn.innerHTML = originalText; 
-                                            btn.disabled = false;
-                                        }})
-                                        .catch(err => {{
-                                            container.style.width = originalWidth; 
-                                            container.style.height = originalHeight; 
-                                            container.style.overflow = originalOverflow;
-                                            
-                                            if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                            if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                            if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                            
-                                            gElement.setAttribute('transform', originalGTransform || '');
-                                            
-                                            window.panZoom = svgPanZoom(svgEl, {{
-                                                zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
-                                            }});
-                                            
-                                            btn.innerHTML = "❌ GAGAL"; 
-                                            setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                                    html2canvas(container, {{ 
+                                        scale: 2, 
+                                        useCORS: true, 
+                                        backgroundColor: '#ffffff',
+                                        width: trueWidth,
+                                        height: trueHeight,
+                                        onclone: function(doc) {{
+                                            const clonedSvg = doc.querySelector('svg');
+                                            if (clonedSvg) {{
+                                                clonedSvg.style.width = '100%';
+                                                clonedSvg.style.height = '100%';
+                                            }}
+                                        }}
+                                    }})
+                                    .then(canvas => {{
+                                        container.style.width = originalWidth || '100%';
+                                        container.style.height = originalHeight || '400px';
+                                        container.style.overflow = originalOverflow || 'hidden';
+                                        
+                                        if (originalViewBox) {{
+                                            svgEl.setAttribute('viewBox', originalViewBox);
+                                        }} else {{
+                                            svgEl.removeAttribute('viewBox');
+                                        }}
+                                        
+                                        panZoomInstance = svgPanZoom(svgEl, {{
+                                            zoomEnabled: true,
+                                            controlIconsEnabled: true,
+                                            fit: true,
+                                            center: true,
+                                            minZoom: 0.1,
+                                            maxZoom: 10
                                         }});
-                                    }}, 600);
-                                }}, 100);
-                            }}, 100);
+                                        
+                                        const link = document.createElement('a');
+                                        link.download = 'Mermaid_' + title + '.png';
+                                        link.href = canvas.toDataURL('image/png', 1.0);
+                                        link.click();
+                                        
+                                        btn.innerHTML = originalText;
+                                        btn.disabled = false;
+                                    }})
+                                    .catch(err => {{
+                                        console.error('html2canvas error:', err);
+                                        container.style.width = originalWidth || '100%';
+                                        container.style.height = originalHeight || '400px';
+                                        container.style.overflow = originalOverflow || 'hidden';
+                                        
+                                        if (originalViewBox) {{
+                                            svgEl.setAttribute('viewBox', originalViewBox);
+                                        }} else {{
+                                            svgEl.removeAttribute('viewBox');
+                                        }}
+                                        
+                                        panZoomInstance = svgPanZoom(svgEl, {{
+                                            zoomEnabled: true,
+                                            controlIconsEnabled: true,
+                                            fit: true,
+                                            center: true,
+                                            minZoom: 0.1,
+                                            maxZoom: 10
+                                        }});
+                                        
+                                        btn.innerHTML = "❌ GAGAL";
+                                        setTimeout(() => {{
+                                            btn.innerHTML = originalText;
+                                            btn.disabled = false;
+                                        }}, 2000);
+                                    }});
+                                }}, 500);
+                            }}, 200);
                         }};
                     </script>
                 </body></html>
@@ -2721,4 +2742,3 @@ else:
 
             with st.expander("Lihat Source Code Markdown"):
                 st.code(raw_markmap, language="markdown")
-

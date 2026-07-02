@@ -2090,7 +2090,6 @@ else:
         </body>
         </html>
         """
-        
         components.html(html_code, height=1500, scrolling=True)
 
     # =====================================================================

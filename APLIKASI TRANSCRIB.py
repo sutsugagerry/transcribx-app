@@ -62,9 +62,9 @@ footer {visibility: hidden;}
     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
 }
 @keyframes pulse-border-admin {
-    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 167, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 158, 167, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 167, 0); }
 }
 .profile-card {
     border-radius: 16px;
@@ -1039,7 +1039,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI (OBSIDIAN GRAPH STYLE)
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI (OBSIDIAN GRAPH STYLE) - PERBAIKAN
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
@@ -1169,7 +1169,7 @@ else:
             <div class="instruction-box">
                 <strong>📺 CARA SCREEN CAPTURE:</strong><br>
                 1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b>.<br>
-                2. Pastikan <b>VOLUME SPEAKER LAPTOP ANDA NYALA</b> (Tidak di-Mute). Karena fitur ini "mendengar" suara dari speaker Anda.<br>
+                2. Pastikan <b>VOLUME SPEAKER LAPTOP ANDA NYALA</b> (Tidak di-Mute).<br>
                 3. Klik <b>"Start Capture"</b>, izinkan akses Microphone jika diminta.<br>
                 4. Pilih tab/window <b>Zoom</b> atau <b>YouTube</b>.<br>
                 5. <b>CENTANG "Share tab audio"</b> lalu klik Share.
@@ -1262,7 +1262,7 @@ else:
                     let brainParticles = [];
                     let isThinking = false;
                     let brainAnimationId;
-                    let timeOscillator = 0; // Untuk efek nafas/mengambang pusat
+                    let timeOscillator = 0;
 
                     function initBrain() {
                         if (!brainCanvas) return;
@@ -1271,13 +1271,12 @@ else:
                         brainCanvas.height = 180;
                         
                         brainParticles = [];
-                        const numParticles = 160; // Padat seperti Obsidian Graph
+                        const numParticles = 160;
                         
                         for(let i=0; i<numParticles; i++) {
                             let isCore = Math.random() > 0.95;
                             brainParticles.push({
                                 angle: Math.random() * Math.PI * 2,
-                                // Jarak ngumpul dari tengah: radius 5 sampai 70
                                 orbitRadius: Math.random() * 65 + 5, 
                                 speed: Math.random() * 0.015 + 0.002,
                                 baseRadius: isCore ? (Math.random() * 2 + 2) : (Math.random() * 1.5 + 0.5),
@@ -1293,30 +1292,24 @@ else:
                         
                         timeOscillator += 0.02;
                         
-                        // Titik pusat gumpalan otak (mengambang pelan)
                         const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
                         const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
                         
-                        const maxDistance = isThinking ? 40 : 25; // Makin jauh koneksinya saat mikir
+                        const maxDistance = isThinking ? 40 : 25;
                         const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
                         const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
                         
-                        // 1. Update Posisi agar Terus Membentuk Bola
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             
-                            // Putar perlahan. Kalo mikir putar lebih cepat
                             p.angle += isThinking ? p.speed * 4 : p.speed;
                             
-                            // Efek nafas (radius membesar/mengecil)
                             let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
                             let currentRadius = p.orbitRadius + breath;
                             
-                            // Hitung koordinat berdasarkan orbit pusat (Elips agar memenuhi layar)
                             p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
                             p.y = cy + Math.sin(p.angle) * currentRadius;
                             
-                            // Gambar Titik
                             brainCtx.beginPath();
                             brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
                             brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
@@ -1330,7 +1323,6 @@ else:
                             brainCtx.fill();
                         }
                         
-                        // 2. Gambar Cabang (Sinapsis) Antar Titik yang Berdekatan
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             for(let j=i+1; j<brainParticles.length; j++) {
@@ -1825,48 +1817,65 @@ else:
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
                         
-                        const controls = svgEl.querySelector('#svg-pan-zoom-controls');
-                        if (controls) controls.style.display = 'none';
+                        const btn = document.getElementById('dlBtnMermaidLive');
+                        const originalText = btn ? btn.innerHTML : "📸 PNG";
+                        if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
 
-                        const viewport = svgEl.querySelector('.svg-pan-zoom_viewport') || svgEl.querySelector('g');
-                        const originalWidth = container.style.width;
-                        const originalHeight = container.style.height;
-                        const originalOverflow = container.style.overflow;
-                        const originalTransform = viewport.getAttribute('transform');
-                        const originalViewBox = svgEl.getAttribute('viewBox');
-                        
-                        viewport.setAttribute('transform', 'matrix(1,0,0,1,0,0)');
-                        const bbox = viewport.getBBox();
-                        const padding = 50;
-                        const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                        
-                        container.style.width = trueWidth + 'px';
-                        container.style.height = trueHeight + 'px';
-                        container.style.overflow = 'visible';
-                        
-                        svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                        svgEl.style.width = '100%';
-                        svgEl.style.height = '100%';
-                        
+                        if (window.panZoomLive) {
+                            window.panZoomLive.destroy();
+                            window.panZoomLive = null;
+                        }
+
                         setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
-                            .then(canvas => {
-                                container.style.width = originalWidth; 
-                                container.style.height = originalHeight; 
-                                container.style.overflow = originalOverflow;
-                                viewport.setAttribute('transform', originalTransform || '');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                if (controls) controls.style.display = '';
-                                
-                                if(window.panZoomLive) window.panZoomLive.resize();
-                                
-                                const link = document.createElement('a'); 
-                                link.download = 'Mermaid_Live.png'; 
-                                link.href = canvas.toDataURL('image/png', 1.0); 
-                                link.click();
-                            });
-                        }, 600);
+                            const originalWidth = container.style.width;
+                            const originalHeight = container.style.height;
+                            const originalOverflow = container.style.overflow;
+                            
+                            const originalWAttr = svgEl.getAttribute('width');
+                            const originalHAttr = svgEl.getAttribute('height');
+                            const originalViewBox = svgEl.getAttribute('viewBox');
+                            
+                            const bbox = svgEl.getBBox();
+                            const padding = 50;
+                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
+                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                            
+                            container.style.width = trueWidth + 'px';
+                            container.style.height = trueHeight + 'px';
+                            container.style.overflow = 'visible';
+                            
+                            svgEl.removeAttribute('width');
+                            svgEl.removeAttribute('height');
+                            svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
+                            svgEl.style.width = '100%';
+                            svgEl.style.height = '100%';
+                            
+                            setTimeout(() => {
+                                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                                .then(canvas => {
+                                    container.style.width = originalWidth; 
+                                    container.style.height = originalHeight; 
+                                    container.style.overflow = originalOverflow;
+                                    
+                                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
+                                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                    
+                                    window.panZoomLive = svgPanZoom(svgEl, {
+                                        zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
+                                    });
+                                    
+                                    const link = document.createElement('a'); 
+                                    link.download = 'Mermaid_Live.png'; 
+                                    link.href = canvas.toDataURL('image/png', 1.0); 
+                                    link.click();
+                                    
+                                    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+                                }).catch(err => {
+                                    if (btn) { btn.innerHTML = "❌ GAGAL"; setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000); }
+                                });
+                            }, 600);
+                        }, 100);
                     };
 
                     window.dlMarkmapLive = function() {
@@ -1916,11 +1925,10 @@ else:
                         if (!apiKey) { alert('Masukkan API Key!'); return; }
                         if (!transcript) { alert('Transkrip kosong!'); return; }
                         
-                        // 🔴 AKTIFKAN ANIMASI BRAIN (OBSIDIAN GRAPH STYLE)
                         isThinking = true;
                         if (brainText) {
                             brainText.innerText = "PROCESSING NEURAL DATA...";
-                            brainText.style.color = "#d8b4fe"; // glowing purple
+                            brainText.style.color = "#d8b4fe";
                             brainText.style.textShadow = "0 0 15px #c084fc";
                         }
                         
@@ -2060,7 +2068,7 @@ else:
                                             <div>
                                                 <p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
                                                 <div class="relative bg-white border border-slate-200 rounded-xl p-4">
-                                                    <button onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white font-bold px-3 py-1 rounded shadow cursor-pointer text-xs">📸 PNG</button>
+                                                    <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white font-bold px-3 py-1 rounded shadow cursor-pointer text-xs">📸 PNG</button>
                                                     <div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden; background:#ffffff;">
                                                         <pre id="mermaidLive" class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit;"></pre>
                                                     </div>
@@ -2109,7 +2117,6 @@ else:
                                     mermaidDiv.textContent = rawMer; 
                                     mermaidDiv.removeAttribute('data-processed'); 
                                     
-                                    // Matikan overflow bawaan agar pan-zoom jalan mulus
                                     document.getElementById('mermaidLiveWrapper').style.overflow = 'hidden';
 
                                     try {
@@ -2150,7 +2157,6 @@ else:
                             aiBtn.innerHTML = '✨ Generate AI Summary';
                             aiBtn.disabled = false;
                             
-                            // 🔴 MATIKAN ANIMASI BRAIN SAAT SELESAI
                             isThinking = false;
                             if (brainText) {
                                 brainText.innerText = "NEURAL NETWORK IDLE";
@@ -2192,10 +2198,8 @@ else:
                     else:
                         with st.spinner("⏳ Membaca dan memproses file audio..."):
                             try:
-                                # 1. Load audio menggunakan pydub
                                 audio = AudioSegment.from_file(uploaded_file)
                                 
-                                # 2. Tentukan ukuran chunk (contoh: 10 menit = 600.000 ms)
                                 chunk_length_ms = 10 * 60 * 1000 
                                 total_chunks = math.ceil(len(audio) / chunk_length_ms)
                                 
@@ -2206,7 +2210,6 @@ else:
                                 url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                 headers = {"Authorization": f"Bearer {llm_key}"}
 
-                                # 3. Looping untuk memotong dan mengirim audio
                                 success_transcription = True
                                 for i in range(total_chunks):
                                     status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
@@ -2215,7 +2218,6 @@ else:
                                     end_time = min((i + 1) * chunk_length_ms, len(audio))
                                     audio_chunk = audio[start_time:end_time]
                                     
-                                    # Export chunk ke dalam memori (BytesIO) agar tidak memakan storage lokal
                                     chunk_buffer = io.BytesIO()
                                     audio_chunk.export(chunk_buffer, format="mp3")
                                     chunk_buffer.name = f"chunk_{i}.mp3"
@@ -2236,12 +2238,10 @@ else:
                                         
                                     progress_bar.progress((i + 1) / total_chunks)
                                 
-                                # 4. Proses pasca-transkripsi
                                 if success_transcription and full_transcript.strip():
                                     status_text.success("✅ Seluruh audio berhasil digabungkan!")
                                     st.session_state["offline_transcript"] = full_transcript.strip()
                                     
-                                    # Update kuota hanya jika bukan admin
                                     if not is_admin():
                                         st.session_state["user_kuota_upload"] -= 1
                                         db.collection("users").document(st.session_state["user_uid"]).update({
@@ -2482,12 +2482,11 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
-                st.markdown("**Mermaid (Mindmap)**")
+                st.markdown("**Mermaid (Mindmap) - KLIK ZOOM UNTUK MELIHAT DETAIL**")
                 raw_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
                 if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
                     raw_mer = "graph LR\n" + raw_mer
                 
-                # Sanitasi karakter HTML sebelum dimasukkan ke komponen
                 safe_mer = raw_mer.replace("<", "&lt;").replace(">", "&gt;")
                 
                 mer_html = f"""
@@ -2495,13 +2494,53 @@ else:
                     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+                    <style>
+                        #wrapper {{
+                            width: 100%;
+                            height: 400px;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                            overflow: hidden;
+                            background: #ffffff;
+                            position: relative;
+                        }}
+                        #wrapper svg {{
+                            width: 100%;
+                            height: 100%;
+                        }}
+                        .mermaid {{
+                            background: transparent;
+                            border: none;
+                            margin: 0;
+                            font-family: inherit;
+                            width: 100%;
+                            height: 100%;
+                        }}
+                        .zoom-hint {{
+                            position: absolute;
+                            bottom: 10px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: rgba(0,0,0,0.6);
+                            color: white;
+                            padding: 4px 12px;
+                            border-radius: 20px;
+                            font-size: 10px;
+                            z-index: 50;
+                            pointer-events: none;
+                            opacity: 0.6;
+                        }}
+                    </style>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
-                    <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
-                        <pre class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit; width:100%; height:100%;">{safe_mer}</pre>
+                    <button id="dlBtn" onclick="saveMermaidAsPNG('wrapper', 'Mermaid_Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full HD</button>
+                    <div id="wrapper">
+                        <pre class="mermaid">{safe_mer}</pre>
+                        <div class="zoom-hint">🔍 Scroll untuk zoom • Drag untuk geser</div>
                     </div>
                     <script>
+                        let panZoomInstance = null;
+                        
                         mermaid.initialize({{ startOnLoad: false }});
                         
                         mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
@@ -2510,78 +2549,91 @@ else:
                                 svgEl.style.maxWidth = 'none';
                                 svgEl.style.width = '100%';
                                 svgEl.style.height = '100%';
-                                window.panZoom = svgPanZoom(svgEl, {{
+                                
+                                if (svgEl.hasAttribute('viewBox')) {{
+                                    svgEl.removeAttribute('viewBox');
+                                }}
+                                
+                                panZoomInstance = svgPanZoom(svgEl, {{
                                     zoomEnabled: true,
                                     controlIconsEnabled: true,
                                     fit: true,
                                     center: true,
-                                    minZoom: 0.1
+                                    minZoom: 0.1,
+                                    maxZoom: 10
                                 }});
                             }}
                         }});
 
-                        window.downloadMermaidImage = function(wrapperId, title, event) {{
-                            const container = document.getElementById(wrapperId);
+                        function saveMermaidAsPNG(containerId, title) {{
+                            const container = document.getElementById(containerId);
                             const svgEl = container.querySelector('svg');
-                            if (!svgEl) return;
+                            if (!svgEl) {{
+                                alert('Gambar belum siap!');
+                                return;
+                            }}
                             
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
-                            btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
+                            btn.innerHTML = "⏳ MENYIMPAN...";
+                            btn.disabled = true;
                             
-                            const controls = svgEl.querySelector('#svg-pan-zoom-controls');
-                            if (controls) controls.style.display = 'none';
-                            
-                            const viewport = svgEl.querySelector('.svg-pan-zoom_viewport') || svgEl.querySelector('g');
-                            const originalWidth = container.style.width;
-                            const originalHeight = container.style.height;
-                            const originalOverflow = container.style.overflow;
-                            const originalTransform = viewport.getAttribute('transform');
-                            const originalViewBox = svgEl.getAttribute('viewBox');
-                            
-                            viewport.setAttribute('transform', 'matrix(1,0,0,1,0,0)');
-                            const bbox = viewport.getBBox();
+                            // Ambil ukuran sebenarnya dari SVG
+                            const bbox = svgEl.getBBox();
                             const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                            const width = bbox.width + (padding * 2);
+                            const height = bbox.height + (padding * 2);
                             
-                            container.style.width = trueWidth + 'px';
-                            container.style.height = trueHeight + 'px';
-                            container.style.overflow = 'visible';
+                            // Clone SVG untuk di-capture
+                            const clone = container.cloneNode(true);
+                            clone.style.position = 'fixed';
+                            clone.style.top = '-9999px';
+                            clone.style.left = '-9999px';
+                            clone.style.width = width + 'px';
+                            clone.style.height = height + 'px';
+                            clone.style.overflow = 'visible';
+                            clone.style.background = '#f8fafc';
+                            clone.style.zIndex = '-1';
+                            document.body.appendChild(clone);
                             
-                            svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                            svgEl.style.width = '100%';
-                            svgEl.style.height = '100%';
+                            // Setup viewBox pada clone
+                            const cloneSvg = clone.querySelector('svg');
+                            if (cloneSvg) {{
+                                cloneSvg.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{width}} ${{height}}`);
+                                cloneSvg.style.width = '100%';
+                                cloneSvg.style.height = '100%';
+                            }}
                             
+                            // Tunggu rendering
                             setTimeout(() => {{
-                                html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
-                                .then(canvas => {{
-                                    container.style.width = originalWidth; 
-                                    container.style.height = originalHeight; 
-                                    container.style.overflow = originalOverflow;
-                                    viewport.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    if (controls) controls.style.display = '';
-                                    
-                                    if (window.panZoom) window.panZoom.resize();
-                                    
-                                    const link = document.createElement('a'); 
-                                    link.download = 'Mermaid_' + title + '.png'; 
-                                    link.href = canvas.toDataURL('image/png', 1.0); 
+                                html2canvas(clone, {{
+                                    scale: 3,
+                                    useCORS: true,
+                                    backgroundColor: '#f8fafc',
+                                    width: width,
+                                    height: height
+                                }}).then(canvas => {{
+                                    // Download
+                                    const link = document.createElement('a');
+                                    link.download = title.replace(/\\s+/g, '_') + '.png';
+                                    link.href = canvas.toDataURL('image/png', 1.0);
                                     link.click();
                                     
-                                    btn.innerHTML = originalText; btn.disabled = false;
+                                    // Cleanup
+                                    document.body.removeChild(clone);
+                                    btn.innerHTML = originalText;
+                                    btn.disabled = false;
                                 }}).catch(err => {{
-                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                    viewport.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    if (controls) controls.style.display = '';
-                                    if (window.panZoom) window.panZoom.resize();
-                                    
-                                    btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                                    console.error(err);
+                                    document.body.removeChild(clone);
+                                    btn.innerHTML = "❌ GAGAL";
+                                    setTimeout(() => {{
+                                        btn.innerHTML = originalText;
+                                        btn.disabled = false;
+                                    }}, 2000);
                                 }});
-                            }}, 600);
-                        }};
+                            }}, 300);
+                        }}
                     </script>
                 </body></html>
                 """

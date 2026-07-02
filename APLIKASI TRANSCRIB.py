@@ -2541,111 +2541,104 @@ else:
                         }});
 
                         window.downloadMermaidImage = function(wrapperId, title, event) {
-                        const container = document.getElementById(wrapperId);
-                        const svgEl = container.querySelector('svg');
-                        if (!svgEl) return;
-                        
-                        const btn = document.getElementById('dlBtn');
-                        const originalText = btn.innerHTML;
-                        btn.innerHTML = "⏳ MENYIMPAN HD..."; btn.disabled = true;
-                        
-                        // 1. Matikan sementara pan-zoom
-                        if (window.panZoom) {
-                            window.panZoom.destroy();
-                            window.panZoom = null;
-                        }
-                        
-                        // Beri jeda 300ms agar DOM ter-reset dari sisa-sisa atribut pan-zoom
-                        setTimeout(() => {
-                            const originalWidth = container.style.width;
-                            const originalHeight = container.style.height;
-                            const originalOverflow = container.style.overflow;
-                            
-                            const originalWAttr = svgEl.getAttribute('width');
-                            const originalHAttr = svgEl.getAttribute('height');
-                            const originalViewBox = svgEl.getAttribute('viewBox');
-                            const originalStyle = svgEl.getAttribute('style'); // Simpan style asli
-                            
-                            // 2. Cari grup <g> utama dan paksa transform kembali 1:1
-                            const innerG = svgEl.querySelector('g');
-                            const originalTransform = innerG ? innerG.getAttribute('transform') : null;
-                            if (innerG) {
-                                innerG.setAttribute('transform', 'translate(0,0) scale(1)');
-                            }
-                            
-                            // 3. PAKSA Mermaid melepaskan batasan ukurannya!
-                            svgEl.style.setProperty('max-width', 'none', 'important');
-                            svgEl.style.setProperty('width', '100%', 'important');
-                            svgEl.style.setProperty('height', '100%', 'important');
-                            
-                            // 4. Hitung Bounding Box (bbox) yang sebenarnya
-                            const bbox = svgEl.getBBox();
-                            const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                            
-                            container.style.width = trueWidth + 'px';
-                            container.style.height = trueHeight + 'px';
-                            container.style.overflow = 'visible';
-                            
-                            svgEl.removeAttribute('width');
-                            svgEl.removeAttribute('height');
-                            svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                            
-                            // Beri waktu 800ms agar browser sempat "menggambar" ukuran barunya sebelum di-screenshot
-                            setTimeout(() => {
-                                html2canvas(container, { 
-                                    scale: 3, // Diubah jadi scale 3 agar HD seperti Markmap
-                                    useCORS: true, 
-                                    backgroundColor: '#ffffff', 
-                                    width: trueWidth, 
-                                    height: trueHeight 
-                                })
-                                .then(canvas => {
-                                    // KEMBALIKAN SEMULA KE KONDISI AWAL
-                                    container.style.width = originalWidth; 
-                                    container.style.height = originalHeight; 
-                                    container.style.overflow = originalOverflow;
-                                    
-                                    if (originalStyle) svgEl.setAttribute('style', originalStyle);
-                                    else svgEl.removeAttribute('style');
-                                    
-                                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    
-                                    if (innerG) {
-                                        if (originalTransform) innerG.setAttribute('transform', originalTransform);
-                                        else innerG.removeAttribute('transform');
-                                    }
-                                    
-                                    // Nyalakan pan-zoom kembali
-                                    window.panZoom = svgPanZoom(svgEl, {
-                                        zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
-                                    });
-                                    
-                                    const link = document.createElement('a'); 
-                                    link.download = 'Mermaid_' + title + '_HD.png'; 
-                                    link.href = canvas.toDataURL('image/png', 1.0); 
-                                    link.click();
-                                    
-                                    btn.innerHTML = originalText; btn.disabled = false;
-                                }).catch(err => {
-                                    console.error("html2canvas error:", err);
-                                    
-                                    // Jika gagal, tetap normalkan tampilan UI-nya
-                                    container.style.width = originalWidth; 
-                                    container.style.height = originalHeight; 
-                                    container.style.overflow = originalOverflow;
-                                    if (originalStyle) svgEl.setAttribute('style', originalStyle);
-                                    if (innerG && originalTransform) innerG.setAttribute('transform', originalTransform);
-                                    
-                                    btn.innerHTML = "❌ GAGAL"; 
-                                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
-                                });
-                            }, 800);
-                        }, 300);
-                    };
+    const container = document.getElementById(wrapperId);
+    const svgEl = container.querySelector('svg');
+    if (!svgEl) return;
+    
+    const btn = document.getElementById('dlBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "⏳ MENYIMPAN..."; 
+    btn.disabled = true;
+    
+    if (window.panZoom) {
+        window.panZoom.destroy();
+        window.panZoom = null;
+    }
+    
+    setTimeout(() => {
+        const originalWidth = container.style.width;
+        const originalHeight = container.style.height;
+        const originalOverflow = container.style.overflow;
+        
+        const originalWAttr = svgEl.getAttribute('width');
+        const originalHAttr = svgEl.getAttribute('height');
+        const originalViewBox = svgEl.getAttribute('viewBox');
+        
+        // ✅ PERBAIKAN 1: Cari <g> element yang sebenarnya punya konten diagram
+        const gElement = svgEl.querySelector('g');
+        if (!gElement) {
+            btn.innerHTML = originalText; 
+            btn.disabled = false;
+            return;
+        }
+        
+        const originalGTransform = gElement.getAttribute('transform');
+        gElement.setAttribute('transform', 'translate(0,0) scale(1)');
+        
+        setTimeout(() => {
+            // ✅ PERBAIKAN 2: Gunakan gElement.getBBox() bukan svgEl.getBBox()
+            const bbox = gElement.getBBox();
+            const padding = 50;
+            const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
+            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+            
+            container.style.width = trueWidth + 'px';
+            container.style.height = trueHeight + 'px';
+            container.style.overflow = 'visible';
+            
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
+            svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
+            svgEl.style.width = '100%';
+            svgEl.style.height = '100%';
+            
+            setTimeout(() => {
+                html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                .then(canvas => {{
+                    container.style.width = originalWidth; 
+                    container.style.height = originalHeight; 
+                    container.style.overflow = originalOverflow;
+                    
+                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
+                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
+                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                    
+                    gElement.setAttribute('transform', originalGTransform || '');
+                    
+                    window.panZoom = svgPanZoom(svgEl, {{
+                        zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
+                    }});
+                    
+                    const link = document.createElement('a'); 
+                    link.download = 'Mermaid_' + title + '.png'; 
+                    link.href = canvas.toDataURL('image/png', 1.0); 
+                    link.click();
+                    
+                    btn.innerHTML = originalText; 
+                    btn.disabled = false;
+                }})
+                .catch(err => {{
+                    container.style.width = originalWidth; 
+                    container.style.height = originalHeight; 
+                    container.style.overflow = originalOverflow;
+                    
+                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
+                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
+                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                    
+                    gElement.setAttribute('transform', originalGTransform || '');
+                    
+                    window.panZoom = svgPanZoom(svgEl, {{
+                        zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
+                    }});
+                    
+                    btn.innerHTML = "❌ GAGAL"; 
+                    setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                }});
+            }}, 600);
+        }}, 100);
+    }}, 100);
+};
                     </script>
                 </body></html>
                 """

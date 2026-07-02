@@ -1602,6 +1602,7 @@ else:
                         }
                     };
 
+                    // --- REVISI MERMAID LIVE (ANTI KEPOTONG & JERNIH) ---
                     window.dlMermaidLive = function() {
                         const container = document.getElementById('mermaidLiveWrapper');
                         const svgEl = container.querySelector('svg');
@@ -1625,7 +1626,7 @@ else:
                             svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {
-                                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                                html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                                 .then(canvas => {
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
@@ -1661,7 +1662,7 @@ else:
                         svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                         
                         setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                            html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                             .then(canvas => {
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 g.setAttribute('transform', originalTransform || '');
@@ -1703,26 +1704,27 @@ else:
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            model: "gemini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
-                            response_format: {
-                                type: "json_schema",
-                                json_schema: {
-                                    name: "meeting_summary", strict: true,
-                                    schema: {
-                                        type: "object",
-                                        properties: {
-                                            ringkasan_eksekutif: { type: "array", items: { type: "string" } },
-                                            notulensi_rapat: {
-                                                type: "object",
-                                                properties: {
-                                                    agenda: { type: "string" }, peserta: { type: "array", items: { type: "string" } },
-                                                    jalannya_diskusi: { type: "array", items: { type: "string" } }, keputusan: { type: "array", items: { type: "string" } },
-                                                    rencana_tindak_lanjut: { type: "array", items: { type: "object", properties: { tugas: { type: "string" }, pic: { type: "string" }, deadline: { type: "string" }, prioritas: { type: "string" } }, required: ["tugas", "pic", "deadline", "prioritas"], additionalProperties: false } },
-                                                    hubungan_topik: { type: "array", items: { type: "object", properties: { sumber: { type: "string" }, target: { type: "string" }, relasi: { type: "string" } }, required: ["sumber", "target", "relasi"], additionalProperties: false } }
-                                                }, required: ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], additionalProperties: false
+                            "model": "gpt-4o-mini" if !document.querySelector('.profile-card.admin') else "gemini/gemini-2.5-flash",
+                            "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
+                            "response_format": {
+                                "type": "json_schema",
+                                "json_schema": {
+                                    "name": "meeting_summary", "strict": false,
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
+                                            "notulensi_rapat": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
+                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
+                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": false } },
+                                                    "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": false } }
+                                                }, "required": ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], "additionalProperties": false
                                             },
-                                            visual_mindmap: { type: "string" }, markmap_code: { type: "string" }
-                                        }, required: ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], additionalProperties: false
+                                            "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
+                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], "additionalProperties": false
                                     }
                                 }
                             }
@@ -1733,7 +1735,19 @@ else:
                                 method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
                                 body: JSON.stringify(payload)
                             });
-                            const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
+                            
+                            if(response.status === 524) {
+                                aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">⏳ Error 524: Waktu tunggu habis (Timeout). Teks terlalu panjang atau server sibuk.</div>';
+                                return;
+                            }
+                            
+                            if(!response.ok) {
+                                aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">❌ Gagal terhubung ke AI (HTTP ' + response.status + '). Cek API Key Anda.</div>';
+                                return;
+                            }
+                            
+                            const resJson = await response.json();
+                            const data = JSON.parse(resJson.choices[0].message.content);
                             
                             let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
                                 `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
@@ -1748,7 +1762,7 @@ else:
                                     <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:400px;"></div></div></div>
-                                        <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl p-2"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden;"><pre id="mermaidLive" class="mermaid"></pre></div></div></div>
+                                        <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl p-2"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden; background:#ffffff;"><pre id="mermaidLive" class="mermaid" style="background:transparent; margin:0; width:100%; height:100%;"></pre></div></div></div>
                                     </div>
                                     <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                 </div>`;
@@ -1767,13 +1781,19 @@ else:
                                 });
                             }, 100);
 
+                            // --- REVISI AWAL MERMAID LIVE ---
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
                                 if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) rawMer = `graph LR\n` + rawMer;
                                 const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
                                 mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
                                     const svg = mDiv.querySelector('svg');
-                                    if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true }); }
+                                    if (svg) { 
+                                        svg.style.maxWidth = 'none'; 
+                                        svg.style.width = '100%'; 
+                                        svg.style.height = '100%'; 
+                                        window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }); 
+                                    }
                                 });
                             }, 100);
 
@@ -1882,8 +1902,9 @@ else:
                         
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
+                        # REVISI MODEL 4O-MINI
                         payload = {
-                            "model": "gemini/gemini-2.5-flash",
+                            "model": "gpt-4o-mini" if not is_admin() else "gemini/gemini-2.5-flash",
                             "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",
@@ -1910,16 +1931,33 @@ else:
                             }
                         }
 
+                        # REVISI ERROR HANDLING 524
                         try:
-                            res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                            res = requests.post(
+                                "https://litellm.koboi2026.biz.id/v1/chat/completions", 
+                                headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, 
+                                json=payload,
+                                timeout=120
+                            )
                             if res.status_code == 200:
                                 st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
                                 if not is_admin():
                                     st.session_state["user_kuota_ai"] -= 1
                                     db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
                                 st.success("✅ Analisis AI Selesai!")
-                            else: st.error(f"Error AI: {res.text}")
-                        except Exception as e: st.error(f"Koneksi LLM Gagal: {str(e)}")
+                            elif res.status_code == 524:
+                                st.error("⏳ Error 524: Waktu tunggu habis (Timeout). Teks transkrip terlalu panjang atau AI sedang kelebihan beban. Cobalah potong sebagian teks transkrip sebelum menekan Generate.")
+                            else:
+                                try:
+                                    error_json = res.json()
+                                    st.error(f"❌ Error AI: {error_json.get('error', 'Gagal memproses')}")
+                                except:
+                                    st.error(f"❌ Server AI mengalami kendala (HTTP {res.status_code}). Silakan coba beberapa saat lagi.")
+                                    
+                        except requests.exceptions.Timeout:
+                            st.error("⏳ Permintaan ke server AI memakan waktu terlalu lama (Timeout). Kurangi panjang teks transkrip.")
+                        except Exception as e: 
+                            st.error(f"❌ Koneksi LLM Gagal: {str(e)}")
 
         if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
@@ -1990,6 +2028,7 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
+                # --- REVISI MERMAID OFFLINE (ANTI KEPOTONG & JERNIH) ---
                 st.markdown("**Mermaid (Mindmap)**")
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
@@ -1998,7 +2037,7 @@ else:
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:12px;">📸 PNG HD</button>
                     <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
                         <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; width:100%; height:100%;"></pre>
                     </div>
@@ -2026,7 +2065,8 @@ else:
                                 const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
                                 const bbox = svgEl.getBBox(); const padding = 50;
-                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2); 
+                                const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                                 svgEl.style.maxWidth = 'none';
@@ -2034,7 +2074,7 @@ else:
                                 svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
                                 setTimeout(() => {{
-                                    html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                    html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                     .then(canvas => {{
                                         container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                         if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');

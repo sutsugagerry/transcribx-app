@@ -1703,7 +1703,7 @@ else:
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            model: "openai/gpt-5-mini", messages: [{ role: "user", content: prompt }], temperature: 0.2,
+                            model: "gemini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
                             response_format: {
                                 type: "json_schema",
                                 json_schema: {
@@ -1883,7 +1883,7 @@ else:
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload = {
-                            "model": "openai/gpt-5-mini" if not is_admin() else "gemini/gemini-2.5-flash",
+                            "model": "gemini/gemini-2.5-flash",
                             "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",

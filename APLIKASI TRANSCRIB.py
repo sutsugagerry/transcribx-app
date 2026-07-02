@@ -1153,6 +1153,12 @@ else:
                     max-height: 150px; overflow-y: auto;
                 }
                 
+                /* Kustom tombol zoom mermaid */
+                .zoom-controls { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+                .zoom-btn { background-color: #a8a29e; color: white; border: none; font-weight: 900; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 14px; text-align: center; opacity: 0.9; transition: 0.2s; }
+                .zoom-btn:hover { background-color: #78716c; opacity: 1; }
+                .zoom-btn-text { font-size: 11px; padding: 4px 6px; }
+
                 @media (max-width: 640px) {
                     .controls-row { flex-direction: column; align-items: stretch; }
                     .controls-row > * { width: 100%; }
@@ -1254,7 +1260,7 @@ else:
 
                     // ======== INSIALISASI MERMAID GLOBALLY ========
                     if (window.mermaid) {
-                        mermaid.initialize({ startOnLoad: false });
+                        mermaid.initialize({ startOnLoad: false, theme: 'default' });
                     }
 
                     // ======== AI BRAIN VISUALIZER ========
@@ -1608,15 +1614,14 @@ else:
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMermaidLive');
-                        if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
+                        if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
 
                         if (window.panZoomLive) { window.panZoomLive.destroy(); window.panZoomLive = null; }
 
                         setTimeout(() => {
                             const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
-                            const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                             
-                            // Ambil ukuran sesungguhnya dan reset transform
+                            // Reset transform
                             const firstG = svgEl.querySelector('g');
                             if (firstG) firstG.removeAttribute('transform');
                             
@@ -1625,19 +1630,19 @@ else:
                             const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                            svgEl.style.maxWidth = 'none';
                             svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                             .then(canvas => {
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 
-                                svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
+                                svgEl.removeAttribute('width');
+                                svgEl.removeAttribute('height');
+                                svgEl.style.maxWidth = '100%';
+                                svgEl.style.width = '100%'; 
+                                svgEl.style.height = '100%';
+                                
+                                window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: false, fit: true, center: true, minZoom: 0.1 });
                                 
                                 const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
@@ -1665,14 +1670,12 @@ else:
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                             svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                             .then(canvas => {
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                svgEl.style.width = '100%'; svgEl.style.height = '100%';
                                 
                                 const link = document.createElement('a'); link.download = 'Markmap_Live.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
@@ -1754,10 +1757,25 @@ else:
                                     <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
                                     <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:400px;"></div></div></div>
-                                        <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl p-2"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden;"><pre id="mermaidLive" class="mermaid"></pre></div></div></div>
+                                        <div><p class="font-bold text-sm mb-2">Cytoscape.js</p>
+                                            <div class="relative bg-white border rounded-xl p-2">
+                                                <button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                                <div id="cyLiveContainer" style="width:100%; height:380px;"></div>
+                                            </div>
+                                        </div>
+                                        <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
+                                            <div class="relative bg-white border rounded-xl overflow-hidden" style="height:396px;" id="mermaidLiveWrapper">
+                                                <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                                <pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre>
+                                                <div class="zoom-controls">
+                                                    <button class="zoom-btn" onclick="if(window.panZoomLive) window.panZoomLive.zoomIn()">➕</button>
+                                                    <button class="zoom-btn zoom-btn-text" onclick="if(window.panZoomLive) { window.panZoomLive.resetZoom(); window.panZoomLive.center(); }">RESET</button>
+                                                    <button class="zoom-btn" onclick="if(window.panZoomLive) window.panZoomLive.zoomOut()">➖</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                 </div>`;
 
                             setTimeout(() => {
@@ -1774,17 +1792,25 @@ else:
                                 });
                             }, 100);
 
-                            // SANITASI MERMAID
+                            // SANITASI MERMAID (Mencegah Syntax Error & Crop)
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
                                 if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('mindmap')) rawMer = `graph LR\n` + rawMer;
-                                // Hilangkan tanda kutip ganda yang bikin Mermaid hancur
+                                
+                                // Sapu bersih tanda kutip ganda yang bikin Error 
                                 rawMer = rawMer.replace(/"/g, "'"); 
                                 
                                 const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
                                 mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
                                     const svg = mDiv.querySelector('svg');
-                                    if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true }); }
+                                    if (svg) { 
+                                        svg.removeAttribute('height');
+                                        svg.removeAttribute('width');
+                                        svg.style.maxWidth = '100%';
+                                        svg.style.width = '100%'; 
+                                        svg.style.height = '100%'; 
+                                        window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: false, fit: true, center: true, minZoom: 0.1 }); 
+                                    }
                                 });
                             }, 100);
 
@@ -1972,7 +1998,7 @@ else:
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
             
-            clean_mer = clean_mer.replace('"', "'") # Ini kunci anti-syntax error-nya!
+            clean_mer = clean_mer.replace('"', "'") # Sapu bersih kutip ganda python
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
@@ -1986,7 +2012,7 @@ else:
                 cytoscape_html = f"""
                 <!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
+                    <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
                     <div id="cy" style="width:100%; height:400px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px;"></div>
                     <script>
                         const rawData = {hubungan_json}; const cyElements = []; const nodesSet = new Set();
@@ -2009,20 +2035,37 @@ else:
                     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+                    <style>
+                        .zoom-controls {{ position: absolute; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }}
+                        .zoom-btn {{ background-color: #a8a29e; color: white; border: none; font-weight: 900; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 14px; text-align: center; opacity: 0.9; transition: 0.2s; }}
+                        .zoom-btn:hover {{ background-color: #78716c; opacity: 1; }}
+                        .zoom-btn-text {{ font-size: 11px; padding: 4px 6px; }}
+                    </style>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
-                    <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
-                        <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; width:100%; height:100%;"></pre>
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
+                    
+                    <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff; position:relative;">
+                        <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center;"></pre>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="if(window.panZoom) window.panZoom.zoomIn()">➕</button>
+                            <button class="zoom-btn zoom-btn-text" onclick="if(window.panZoom) {{ window.panZoom.resetZoom(); window.panZoom.center(); }}">RESET</button>
+                            <button class="zoom-btn" onclick="if(window.panZoom) window.panZoom.zoomOut()">➖</button>
+                        </div>
                     </div>
+                    
                     <script>
                         document.getElementById('merContainer').textContent = {mer_json_str};
-                        mermaid.initialize({{ startOnLoad: false }});
+                        mermaid.initialize({{ startOnLoad: false, theme: 'default' }});
                         mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
                             const svgEl = document.querySelector('.mermaid svg');
                             if (svgEl) {{
-                                svgEl.style.maxWidth = 'none'; svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
+                                svgEl.removeAttribute('height'); // Matikan pemotongan bawaan
+                                svgEl.removeAttribute('width');
+                                svgEl.style.maxWidth = '100%';
+                                svgEl.style.width = '100%'; 
+                                svgEl.style.height = '100%';
+                                window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: false, fit: true, center: true, minZoom: 0.1 }});
                             }}
                         }});
 
@@ -2031,35 +2074,35 @@ else:
                             const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg');
                             if (!svgEl) return;
                             const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
-                            btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
+                            btn.innerHTML = "⏳..."; btn.disabled = true;
                             
                             if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
                             
                             setTimeout(() => {{
                                 const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
-                                const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
-                                // Bersihkan sisa transformasi panzoom agar ukuran asli terbaca
+                                // Bersihkan sisa transformasi panzoom agar ukuran asli terbaca utuh
                                 const firstG = svgEl.querySelector('g');
                                 if (firstG) firstG.removeAttribute('transform');
                                 
                                 const bbox = svgEl.getBBox(); const padding = 60;
-                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); 
+                                const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                                svgEl.style.maxWidth = 'none';
                                 svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                                svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
                                 html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                 .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                     
-                                    svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                    window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
+                                    svgEl.removeAttribute('width');
+                                    svgEl.removeAttribute('height');
+                                    svgEl.style.maxWidth = '100%';
+                                    svgEl.style.width = '100%'; 
+                                    svgEl.style.height = '100%';
+                                    
+                                    window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: false, fit: true, center: true, minZoom: 0.1 }});
                                     
                                     const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
@@ -2080,7 +2123,7 @@ else:
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             </head>
             <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG HD</button>
+                <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button>
                 <div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
                     <svg id="markmap" style="width:100%; height:100%;"></svg>
                 </div>
@@ -2094,7 +2137,7 @@ else:
                     window.downloadMarkmapImage = function(wrapperId, title) {{
                         const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
-                        btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
+                        btn.innerHTML = "⏳..."; btn.disabled = true;
                         try {{
                             const g = svgEl.querySelector('g'); if (!g) throw new Error("G missing");
                             const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
@@ -2108,14 +2151,12 @@ else:
                                 
                                 container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                                 svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                                svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
                                 html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                 .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    svgEl.style.width = '100%'; svgEl.style.height = '100%';
                                     
                                     const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();

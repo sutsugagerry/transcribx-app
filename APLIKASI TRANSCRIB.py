@@ -1713,7 +1713,7 @@ else:
 
                         const payload = {
                             // --- REVISI SINTAKS JAVASCRIPT ---
-                            "model": document.querySelector('.profile-card.admin') ? "gemini/gemini-2.5-flash" : "gpt-4o-mini",
+                            "model": "gemini/gemini-2.5-flash",
                             "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",
@@ -1913,7 +1913,7 @@ else:
 
                         # REVISI MODEL 4O-MINI
                         payload = {
-                            "model": "gpt-4o-mini" if not is_admin() else "gemini/gemini-2.5-flash",
+                            "model": "gemini/gemini-2.5-flash",
                             "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",

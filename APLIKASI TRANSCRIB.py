@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 import time
 import io
 import math
-import re
 from pydub import AudioSegment
 
 # Konfigurasi Halaman
@@ -1255,7 +1254,7 @@ else:
 
                     // ======== INSIALISASI MERMAID GLOBALLY ========
                     if (window.mermaid) {
-                        mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+                        mermaid.initialize({ startOnLoad: false });
                     }
 
                     // ======== AI BRAIN VISUALIZER ========
@@ -1512,7 +1511,6 @@ else:
                         };
                     }
 
-                    // ======== START CAPTURE TETAP SEPERTI ASLINYA 100% ========
                     startBtn.onclick = async function() {
                         try {
                             lastFinalText = ""; currentInterimDiv = null; audioChunks = [];
@@ -1604,45 +1602,27 @@ else:
                         }
                     };
 
-                    // ==========================================
-                    // PERBAIKAN MERMAID & DOWNLOADER DI LIVE TAB
-                    // ==========================================
                     window.dlMermaidLive = function() {
                         const container = document.getElementById('mermaidLiveWrapper');
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMermaidLive');
-                        const originalBtnText = btn.innerHTML;
                         if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
 
-                        // MATIKAN PAN-ZOOM AGAR KEMBALI KE UKURAN ASLI SEBELUM CAPTURE
                         if (window.panZoomLive) { window.panZoomLive.destroy(); window.panZoomLive = null; }
 
                         setTimeout(() => {
-                            const originalWidth = container.style.width; 
-                            const originalHeight = container.style.height; 
-                            const originalOverflow = container.style.overflow;
-                            const originalWAttr = svgEl.getAttribute('width'); 
-                            const originalHAttr = svgEl.getAttribute('height'); 
-                            const originalViewBox = svgEl.getAttribute('viewBox');
+                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                            const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                             
-                            const g = svgEl.querySelector('g');
-                            const originalTransform = g ? g.getAttribute('transform') : null;
-                            if(g) g.setAttribute('transform', 'translate(0,0) scale(1)');
-                            
-                            const bbox = g ? g.getBBox() : svgEl.getBBox(); 
-                            const padding = 50;
+                            const bbox = svgEl.getBBox(); const padding = 50;
                             const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
                             
-                            container.style.width = trueWidth + 'px'; 
-                            container.style.height = trueHeight + 'px'; 
-                            container.style.overflow = 'visible';
-                            
-                            svgEl.removeAttribute('style'); 
+                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                            svgEl.style.maxWidth = 'none';
                             svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                            svgEl.style.width = trueWidth + 'px'; 
-                            svgEl.style.height = trueHeight + 'px';
+                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {
                                 html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
@@ -1651,17 +1631,14 @@ else:
                                     if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
                                     if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
                                     if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                     
                                     svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                    
-                                    // NYALAKAN KEMBALI PAN-ZOOM
                                     window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
                                     
                                     const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                    if (btn) { btn.innerHTML = originalBtnText; btn.disabled = false; }
-                                }).catch(() => { if (btn) { btn.innerHTML = originalBtnText; btn.disabled = false; } });
+                                    if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
                             }, 600);
                         }, 100);
                     };
@@ -1671,10 +1648,6 @@ else:
                         const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         const g = svgEl.querySelector('g'); if (!g) return;
                         
-                        const btn = document.getElementById('dlBtnMarkmapLive');
-                        const originalBtnText = btn ? btn.innerHTML : "📸 PNG HD";
-                        if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
-
                         const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                         const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
                         
@@ -1694,10 +1667,8 @@ else:
                                 g.setAttribute('transform', originalTransform || '');
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                
                                 const link = document.createElement('a'); link.download = 'Markmap_Live.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                if (btn) { btn.innerHTML = originalBtnText; btn.disabled = false; }
                             });
                         }, 600);
                     };
@@ -1707,16 +1678,8 @@ else:
                         if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                         
                         isThinking = true;
-                        if (brainText) { brainText.innerText = "SEDANG MEMBUAT NOTULEN AI..."; brainText.style.color = "#d8b4fe"; }
-                        aiBtn.innerHTML = '⏳ Sedang Memproses...'; aiBtn.disabled = true;
-
-                        aiContent.innerHTML = `
-                            <div class="mt-6 p-8 border-2 border-dashed border-blue-300 rounded-2xl bg-blue-50 text-center animate-pulse fade-in">
-                                <div class="text-4xl mb-3">🤖🧠</div>
-                                <h3 class="text-lg font-bold text-blue-800">AI Sedang Merangkum Rapat...</h3>
-                                <p class="text-sm text-blue-600 mt-2">Mohon tunggu, proses ini membutuhkan waktu beberapa saat tergantung pada panjang transkrip.</p>
-                            </div>
-                        `;
+                        if (brainText) { brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }
+                        aiBtn.innerHTML = '⏳ Memproses...'; aiBtn.disabled = true;
 
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
                         ATURAN STRUKTUR OUTPUT:
@@ -1740,8 +1703,7 @@ else:
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            model: "gemini/gemini-2.5-flash",
-                            messages: [{ role: "user", content: prompt }], temperature: 0.2,
+                            model: "emini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
                             response_format: {
                                 type: "json_schema",
                                 json_schema: {
@@ -1771,24 +1733,7 @@ else:
                                 method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
                                 body: JSON.stringify(payload)
                             });
-                            
-                            const rawResponse = await response.text();
-                            const jsonResponse = JSON.parse(rawResponse);
-                            
-                            if (jsonResponse.error) {
-                                throw new Error(jsonResponse.error.message || "LiteLLM API menolak koneksi.");
-                            }
-                            
-                            if (!jsonResponse.choices || !jsonResponse.choices[0]) {
-                                throw new Error("Format respons API tidak sesuai atau AI gagal menjawab.");
-                            }
-
-                            let contentStr = jsonResponse.choices[0].message.content;
-                            if (contentStr.startsWith("```json")) {
-                                contentStr = contentStr.replace(/```json/g, "").replace(/```/g, "").trim();
-                            }
-                            
-                            const data = JSON.parse(contentStr);
+                            const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
                             
                             let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
                                 `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
@@ -1805,7 +1750,7 @@ else:
                                         <div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:400px;"></div></div></div>
                                         <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl p-2"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG</button><div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow:hidden;"><pre id="mermaidLive" class="mermaid"></pre></div></div></div>
                                     </div>
-                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMarkmapLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                 </div>`;
 
                             setTimeout(() => {
@@ -1823,21 +1768,12 @@ else:
                             }, 100);
 
                             setTimeout(() => {
-                                // SANITASI MERMAID AGAR TIDAK SYNTAX ERROR
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
-                                rawMer = rawMer.replace(/"/g, "'"); // Hapus semua kutip ganda
-                                
-                                if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) {
-                                    rawMer = 'graph LR\n' + rawMer;
-                                }
-                                
+                                if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) rawMer = `graph LR\n` + rawMer;
                                 const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
                                 mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
                                     const svg = mDiv.querySelector('svg');
                                     if (svg) { svg.style.width = '100%'; svg.style.height = '100%'; window.panZoomLive = svgPanZoom(svg, { zoomEnabled: true, controlIconsEnabled: true, fit: true }); }
-                                }).catch(e => {
-                                    console.error("Mermaid Render Error:", e);
-                                    mDiv.innerHTML = "<div style='color:red; padding:10px;'>Gagal merender grafik Mermaid karena karakter ilegal dari AI.</div>";
                                 });
                             }, 100);
 
@@ -1848,11 +1784,8 @@ else:
                                 Markmap.create('#markmapLive', null, root);
                             }, 100);
 
-                        } catch(err) { 
-                            aiContent.innerHTML = '<div class="p-4 border border-red-300 bg-red-50 text-red-700 rounded-xl mt-4 font-bold">⚠️ Gagal memproses data AI: <br><span class="font-normal">' + err.message + '</span></div>'; 
-                        } finally { 
-                            aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; 
-                        }
+                        } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
+                        finally { aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; }
                     };
                 })();
             </script>
@@ -1891,7 +1824,7 @@ else:
                                 progress_bar = st.progress(0)
                                 status_text = st.empty()
                                 
-                                url = "[https://litellm.koboi2026.biz.id/v1/audio/transcriptions](https://litellm.koboi2026.biz.id/v1/audio/transcriptions)"
+                                url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                 headers = {"Authorization": f"Bearer {llm_key}"}
 
                                 success_transcription = True
@@ -1978,13 +1911,9 @@ else:
                         }
 
                         try:
-                            res = requests.post("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
+                            res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                             if res.status_code == 200:
-                                ai_resp = res.json()["choices"][0]["message"]["content"]
-                                ai_resp = re.sub(r"^```json", "", ai_resp, flags=re.IGNORECASE)
-                                ai_resp = re.sub(r"```$", "", ai_resp).strip()
-                                
-                                st.session_state["offline_summary"] = json.loads(ai_resp)
+                                st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
                                 if not is_admin():
                                     st.session_state["user_kuota_ai"] -= 1
                                     db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
@@ -1999,7 +1928,7 @@ else:
             col_t1, col_t2 = st.columns([3, 1])
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            txt_report = f"NOTULENSI RAPAT\n====================\n\nRingkasan:\n" + "\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
+            txt_report = f"NOTULENSI RAPAT\\n====================\\n\\nRingkasan:\\n" + "\\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
             with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):
@@ -2027,8 +1956,8 @@ else:
                 st.markdown("**📅 ACTION ITEMS:**")
                 st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
 
-            # Safe Serialization & Sanitasi Ganda untuk Mermaid Offline
-            clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").replace('"', "'").strip()
+            # Safe Serialization
+            clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
             
@@ -2042,7 +1971,7 @@ else:
             with col_v1:
                 st.markdown("**Cytoscape.js Network**")
                 cytoscape_html = f"""
-                <!DOCTYPE html><html><head><script src="[https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js](https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js)"></script></head>
+                <!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
                     <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
                     <div id="cy" style="width:100%; height:400px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px;"></div>
@@ -2064,9 +1993,9 @@ else:
                 st.markdown("**Mermaid (Mindmap)**")
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
-                    <script src="[https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js](https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js)"></script>
-                    <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js)"></script>
-                    <script src="[https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js](https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js)"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
                     <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG Full</button>
@@ -2075,43 +2004,32 @@ else:
                     </div>
                     <script>
                         document.getElementById('merContainer').textContent = {mer_json_str};
-                        mermaid.initialize({{ startOnLoad: false, securityLevel: 'loose' }});
+                        mermaid.initialize({{ startOnLoad: false }});
                         mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
                             const svgEl = document.querySelector('.mermaid svg');
                             if (svgEl) {{
                                 svgEl.style.maxWidth = 'none'; svgEl.style.width = '100%'; svgEl.style.height = '100%';
                                 window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
                             }}
-                        }}).catch(e => {{
-                            document.getElementById('wrapper').innerHTML = "<div style='padding:20px; color:red;'>Gagal merender Mermaid. Syntax Error dari LLM.</div>";
                         }});
 
-                        // ==========================================
-                        // PERBAIKAN DOWNLOADER DI OFFLINE TAB
-                        // ==========================================
                         window.downloadMermaidImage = function(wrapperId, title) {{
                             const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg');
                             if (!svgEl) return;
                             const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
                             
-                            // MATIKAN PAN-ZOOM AGAR KEMBALI KE UKURAN ASLI SEBELUM CAPTURE
                             if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
                             
                             setTimeout(() => {{
                                 const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                                 const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
-                                const g = svgEl.querySelector('g');
-                                const originalTransform = g ? g.getAttribute('transform') : null;
-                                if(g) g.setAttribute('transform', 'translate(0,0) scale(1)');
-
-                                const bbox = g ? g.getBBox() : svgEl.getBBox(); 
-                                const padding = 50;
+                                const bbox = svgEl.getBBox(); const padding = 50;
                                 const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                                svgEl.removeAttribute('style');
+                                svgEl.style.maxWidth = 'none';
                                 svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
                                 svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
@@ -2122,11 +2040,8 @@ else:
                                         if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
                                         if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
                                         if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                        if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                         
                                         svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                        
-                                        // NYALAKAN LAGI PAN-ZOOM SETELAH DOWNLOAD
                                         window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
                                         
                                         const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
@@ -2143,10 +2058,10 @@ else:
             st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
             markmap_html = f"""
             <!DOCTYPE html><html><head>
-                <script src="[https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js](https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js)"></script>
-                <script src="[https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js)"></script>
-                <script src="[https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js](https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js)"></script>
-                <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js)"></script>
+                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             </head>
             <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
                 <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📸 PNG HD</button>

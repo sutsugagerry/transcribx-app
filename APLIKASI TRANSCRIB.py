@@ -7,7 +7,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
 import time
-import re
 import io
 import math
 from pydub import AudioSegment
@@ -22,7 +21,7 @@ custom_css = """
 <style>
 /* Menyembunyikan elemen bawaan Streamlit */
 #MainMenu {visibility: hidden;}
-header {background-color: transparent;} /* Hapus visibility: hidden; */
+header {background-color: transparent;}
 footer {visibility: hidden;}
 
 /* Menyembunyikan Toolbar Streamlit */
@@ -48,7 +47,8 @@ footer {visibility: hidden;}
 .metric-card::before {
     content: "";
     position: absolute;
-    top: 0; left: 0; width: 6px; height: 100%;
+    top: 0; left: 0;
+    width: 6px; height: 100%;
 }
 .metric-total::before { background-color: #8b5cf6; }
 .metric-aktif::before { background-color: #10b981; }
@@ -62,9 +62,9 @@ footer {visibility: hidden;}
     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
 }
 @keyframes pulse-border-admin {
-    0% { box-shadow: 0 0 0 0 rgba(245, 158, 167, 0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(245, 158, 167, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(245, 158, 167, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
 }
 .profile-card {
     border-radius: 16px;
@@ -190,7 +190,9 @@ def get_active_users_count():
 def reset_user_kuota(uid, paket):
     if paket in PAKET_LANGGANAN and paket != "NON-AKTIF":
         db.collection("users").document(uid).update({
-            "kuota_ai": PAKET_LANGGANAN[paket]["ai_limit"], "kuota_upload": PAKET_LANGGANAN[paket]["upload_limit"], "reset_kuota_terakhir": datetime.now().isoformat()
+            "kuota_ai": PAKET_LANGGANAN[paket]["ai_limit"],
+            "kuota_upload": PAKET_LANGGANAN[paket]["upload_limit"],
+            "reset_kuota_terakhir": datetime.now().isoformat()
         })
         return True
     return False
@@ -545,8 +547,8 @@ if not st.session_state["logged_in"]:
         
         with st.form("login_form"):
             st.markdown("""
-                <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
-                <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
+            <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
+            <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
             """, unsafe_allow_html=True)
             
             email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
@@ -881,7 +883,8 @@ else:
                                 col_e1, col_e2 = st.columns([3, 1])
                                 with col_e1:
                                     new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"], 
-                                                             index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0, label_visibility="collapsed")
+                                                           index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0,
+                                                           label_visibility="collapsed")
                                 with col_e2:
                                     btn_update_paket = st.form_submit_button("💾 Simpan", type="primary", use_container_width=True)
                                 
@@ -920,7 +923,7 @@ else:
                                             t_baru = max(t_akhir, sekarang) + timedelta(days=hari_tambahan)
                                         except: t_baru = sekarang + timedelta(days=hari_tambahan)
                                     else: t_baru = sekarang + timedelta(days=hari_tambahan)
-                                        
+                                    
                                     db.collection("users").document(uid).update({"status_subscription": "aktif", "tanggal_berakhir": t_baru.isoformat()})
                                     st.success(f"✅ Masa aktif {selected_email} ditambah {hari_tambahan} hari!")
                                     time.sleep(1)
@@ -1039,7 +1042,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI (OBSIDIAN GRAPH STYLE) - PERBAIKAN
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI (OBSIDIAN GRAPH STYLE)
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
@@ -1169,12 +1172,12 @@ else:
             <div class="instruction-box">
                 <strong>📺 CARA SCREEN CAPTURE:</strong><br>
                 1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b>.<br>
-                2. Pastikan <b>VOLUME SPEAKER LAPTOP ANDA NYALA</b> (Tidak di-Mute).<br>
+                2. Pastikan <b>VOLUME SPEAKER LAPTOP ANDA NYALA</b> (Tidak di-Mute). Karena fitur ini "mendengar" suara dari speaker Anda.<br>
                 3. Klik <b>"Start Capture"</b>, izinkan akses Microphone jika diminta.<br>
                 4. Pilih tab/window <b>Zoom</b> atau <b>YouTube</b>.<br>
                 5. <b>CENTANG "Share tab audio"</b> lalu klik Share.
             </div>
-        
+            
             <div class="controls-wrapper">
                 <div class="controls-row">
                     <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
@@ -1262,7 +1265,7 @@ else:
                     let brainParticles = [];
                     let isThinking = false;
                     let brainAnimationId;
-                    let timeOscillator = 0;
+                    let timeOscillator = 0; // Untuk efek nafas/mengambang pusat
 
                     function initBrain() {
                         if (!brainCanvas) return;
@@ -1271,7 +1274,7 @@ else:
                         brainCanvas.height = 180;
                         
                         brainParticles = [];
-                        const numParticles = 160;
+                        const numParticles = 160; // Padat seperti Obsidian Graph
                         
                         for(let i=0; i<numParticles; i++) {
                             let isCore = Math.random() > 0.95;
@@ -1292,24 +1295,30 @@ else:
                         
                         timeOscillator += 0.02;
                         
+                        // Titik pusat gumpalan otak (mengambang pelan)
                         const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
                         const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
                         
-                        const maxDistance = isThinking ? 40 : 25;
+                        const maxDistance = isThinking ? 40 : 25; // Makin jauh koneksinya saat mikir
                         const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
                         const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
                         
+                        // 1. Update Posisi agar Terus Membentuk Bola
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             
+                            // Putar perlahan. Kalo mikir putar lebih cepat
                             p.angle += isThinking ? p.speed * 4 : p.speed;
                             
+                            // Efek nafas (radius membesar/mengecil)
                             let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
                             let currentRadius = p.orbitRadius + breath;
                             
+                            // Hitung koordinat berdasarkan orbit pusat (Elips agar memenuhi layar)
                             p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
                             p.y = cy + Math.sin(p.angle) * currentRadius;
                             
+                            // Gambar Titik
                             brainCtx.beginPath();
                             brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
                             brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
@@ -1323,6 +1332,7 @@ else:
                             brainCtx.fill();
                         }
                         
+                        // 2. Gambar Cabang (Sinapsis) Antar Titik yang Berdekatan
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
                             for(let j=i+1; j<brainParticles.length; j++) {
@@ -1844,11 +1854,11 @@ else:
                             container.style.height = trueHeight + 'px';
                             container.style.overflow = 'visible';
                             
-                            svgEl.removeAttribute('width');
-                            svgEl.removeAttribute('height');
+                            // PERBAIKAN MERMAID EXPORT
+                            svgEl.style.maxWidth = 'none';
                             svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
-                            svgEl.style.width = '100%';
-                            svgEl.style.height = '100%';
+                            svgEl.style.width = trueWidth + 'px';
+                            svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {
                                 html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
@@ -1925,10 +1935,11 @@ else:
                         if (!apiKey) { alert('Masukkan API Key!'); return; }
                         if (!transcript) { alert('Transkrip kosong!'); return; }
                         
+                        // 🔴 AKTIFKAN ANIMASI BRAIN (OBSIDIAN GRAPH STYLE)
                         isThinking = true;
                         if (brainText) {
                             brainText.innerText = "PROCESSING NEURAL DATA...";
-                            brainText.style.color = "#d8b4fe";
+                            brainText.style.color = "#d8b4fe"; // glowing purple
                             brainText.style.textShadow = "0 0 15px #c084fc";
                         }
                         
@@ -1937,7 +1948,6 @@ else:
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi & Visual...</p></div>';
 
                         const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-
                         ATURAN STRUKTUR OUTPUT:
                         1. "ringkasan_eksekutif": Array of strings (poin-poin padat).
                         2. "transkrip_dialog": Array of strings (format: "Pembicara: Isi").
@@ -1945,17 +1955,14 @@ else:
                         4. "keputusan": Array of strings.
                         5. "rencana_tindak_lanjut": Array of objects (tugas, pic, deadline, prioritas).
                         6. "hubungan_topik": Array of objects (sumber, target, relasi).
-
                         ATURAN MERMAID (WAJIB DIIKUTI!):
                         - Gunakan format 'graph LR'.
                         - Gunakan format Node ID dengan kutip ganda dan kurung siku untuk kotak: A["Teks Node 1"] --> B["Teks Node 2"].
                         - Pastikan alur logical, dari kiri ke kanan (LR).
                         - Jangan gunakan spasi pada ID Node (Gunakan underscore jika perlu, misal: A_1).
                         - Struktur harus hierarkis: Parent["Topik Utama"] --> Child["Detail 1"] --> Sub["Detail 2"].
-
                         ATURAN MARKMAP:
                         - Gunakan markdown murni dengan nesting yang rapi menggunakan bullet points (#, -, dll).
-
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -2110,13 +2117,15 @@ else:
 
                                 setTimeout(() => {
                                     let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
+                                    // PERBAIKAN SYNTAX ERROR (Gunakan Template Literal)
                                     if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) { 
-                                        rawMer = "graph LR\n" + rawMer; 
+                                        rawMer = `graph LR\n` + rawMer; 
                                     }
                                     const mermaidDiv = document.getElementById('mermaidLive');
                                     mermaidDiv.textContent = rawMer; 
                                     mermaidDiv.removeAttribute('data-processed'); 
                                     
+                                    // Matikan overflow bawaan agar pan-zoom jalan mulus
                                     document.getElementById('mermaidLiveWrapper').style.overflow = 'hidden';
 
                                     try {
@@ -2157,6 +2166,7 @@ else:
                             aiBtn.innerHTML = '✨ Generate AI Summary';
                             aiBtn.disabled = false;
                             
+                            // 🔴 MATIKAN ANIMASI BRAIN SAAT SELESAI
                             isThinking = false;
                             if (brainText) {
                                 brainText.innerText = "NEURAL NETWORK IDLE";
@@ -2198,8 +2208,10 @@ else:
                     else:
                         with st.spinner("⏳ Membaca dan memproses file audio..."):
                             try:
+                                # 1. Load audio menggunakan pydub
                                 audio = AudioSegment.from_file(uploaded_file)
                                 
+                                # 2. Tentukan ukuran chunk (contoh: 10 menit = 600.000 ms)
                                 chunk_length_ms = 10 * 60 * 1000 
                                 total_chunks = math.ceil(len(audio) / chunk_length_ms)
                                 
@@ -2210,6 +2222,7 @@ else:
                                 url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                 headers = {"Authorization": f"Bearer {llm_key}"}
 
+                                # 3. Looping untuk memotong dan mengirim audio
                                 success_transcription = True
                                 for i in range(total_chunks):
                                     status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
@@ -2218,6 +2231,7 @@ else:
                                     end_time = min((i + 1) * chunk_length_ms, len(audio))
                                     audio_chunk = audio[start_time:end_time]
                                     
+                                    # Export chunk ke dalam memori (BytesIO) agar tidak memakan storage lokal
                                     chunk_buffer = io.BytesIO()
                                     audio_chunk.export(chunk_buffer, format="mp3")
                                     chunk_buffer.name = f"chunk_{i}.mp3"
@@ -2238,10 +2252,12 @@ else:
                                         
                                     progress_bar.progress((i + 1) / total_chunks)
                                 
+                                # 4. Proses pasca-transkripsi
                                 if success_transcription and full_transcript.strip():
                                     status_text.success("✅ Seluruh audio berhasil digabungkan!")
                                     st.session_state["offline_transcript"] = full_transcript.strip()
                                     
+                                    # Update kuota hanya jika bukan admin
                                     if not is_admin():
                                         st.session_state["user_kuota_upload"] -= 1
                                         db.collection("users").document(st.session_state["user_uid"]).update({
@@ -2279,8 +2295,8 @@ else:
                                 - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
                                 ATURAN MARKMAP: Gunakan kode murni markdown.
                                 ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
-                                Transkrip Rapat: "{st.session_state['offline_transcript']}" """
-
+                                Transkrip Rapat: "{st.session_state['offline_transcript']}"
+"""
                                 payload = {
                                     "model": "openai/gpt-5-mini", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                                     "response_format": {
@@ -2326,15 +2342,15 @@ else:
                     else:
                         with st.spinner("⏳ AI sedang memproses JSON Notulensi & Visual..."):
                             prompt = f"""Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                            ATURAN JSON NOTULENSI:
-                            - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                            - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
-                            - keputusan: Array of strings. Kesimpulan utama.
-                            - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
-                            - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                            ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
-                            ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
-                            Transkrip Rapat: "{st.session_state['offline_transcript']}" """
+                                ATURAN JSON NOTULENSI:
+                                - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
+                                - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
+                                - keputusan: Array of strings. Kesimpulan utama.
+                                - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
+                                - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                                ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
+                                ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
+                                Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                             payload = {
                                 "model": "gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
@@ -2424,7 +2440,7 @@ else:
                             if speaker not in speaker_color_map:
                                 speaker_color_map[speaker] = colors[color_index % len(colors)]
                                 color_index += 1
-                                
+                            
                             bg_color = speaker_color_map[speaker]
                             
                             dialog_html += f"""
@@ -2457,7 +2473,7 @@ else:
                 st.table(df_tasks)
 
             st.markdown("### 🕸️ Visualisasi")
-
+            
             col_v1, col_v2 = st.columns(2)
             with col_v1:
                 st.markdown("**Cytoscape.js**")
@@ -2482,11 +2498,12 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
-                st.markdown("**Mermaid (Mindmap) - KLIK ZOOM UNTUK MELIHAT DETAIL**")
+                st.markdown("**Mermaid (Mindmap)**")
                 raw_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
                 if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
                     raw_mer = "graph LR\n" + raw_mer
                 
+                # Sanitasi karakter HTML sebelum dimasukkan ke komponen
                 safe_mer = raw_mer.replace("<", "&lt;").replace(">", "&gt;")
                 
                 mer_html = f"""
@@ -2494,146 +2511,100 @@ else:
                     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-                    <style>
-                        #wrapper {{
-                            width: 100%;
-                            height: 400px;
-                            border: 1px solid #e2e8f0;
-                            border-radius: 8px;
-                            overflow: hidden;
-                            background: #ffffff;
-                            position: relative;
-                        }}
-                        #wrapper svg {{
-                            width: 100%;
-                            height: 100%;
-                        }}
-                        .mermaid {{
-                            background: transparent;
-                            border: none;
-                            margin: 0;
-                            font-family: inherit;
-                            width: 100%;
-                            height: 100%;
-                        }}
-                        .zoom-hint {{
-                            position: absolute;
-                            bottom: 10px;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            background: rgba(0,0,0,0.6);
-                            color: white;
-                            padding: 4px 12px;
-                            border-radius: 20px;
-                            font-size: 10px;
-                            z-index: 50;
-                            pointer-events: none;
-                            opacity: 0.6;
-                        }}
-                    </style>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                    <button id="dlBtn" onclick="saveMermaidAsPNG('wrapper', 'Mermaid_Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full HD</button>
-                    <div id="wrapper">
-                        <pre class="mermaid">{safe_mer}</pre>
-                        <div class="zoom-hint">🔍 Scroll untuk zoom • Drag untuk geser</div>
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
+                    <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff;">
+                        <pre class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit; width:100%; height:100%;">{safe_mer}</pre>
                     </div>
                     <script>
-                        let panZoomInstance = null;
-                        
                         mermaid.initialize({{ startOnLoad: false }});
                         
+                        // Render Mermaid lalu tempelkan kontrol Pan & Zoom
                         mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
                             const svgEl = document.querySelector('.mermaid svg');
                             if (svgEl) {{
-                                svgEl.style.maxWidth = 'none';
+                                svgEl.style.maxWidth = 'none'; // Matikan max-width bawaan
                                 svgEl.style.width = '100%';
                                 svgEl.style.height = '100%';
-                                
-                                if (svgEl.hasAttribute('viewBox')) {{
-                                    svgEl.removeAttribute('viewBox');
-                                }}
-                                
-                                panZoomInstance = svgPanZoom(svgEl, {{
+                                window.panZoom = svgPanZoom(svgEl, {{
                                     zoomEnabled: true,
-                                    controlIconsEnabled: true,
+                                    controlIconsEnabled: true, // Memunculkan tombol +/- di pojok
                                     fit: true,
                                     center: true,
-                                    minZoom: 0.1,
-                                    maxZoom: 10
+                                    minZoom: 0.1
                                 }});
                             }}
                         }});
 
-                        function saveMermaidAsPNG(containerId, title) {{
-                            const container = document.getElementById(containerId);
+                        window.downloadMermaidImage = function(wrapperId, title, event) {{
+                            const container = document.getElementById(wrapperId);
                             const svgEl = container.querySelector('svg');
-                            if (!svgEl) {{
-                                alert('Gambar belum siap!');
-                                return;
-                            }}
+                            if (!svgEl) return;
                             
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
-                            btn.innerHTML = "⏳ MENYIMPAN...";
-                            btn.disabled = true;
+                            btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true;
                             
-                            // Ambil ukuran sebenarnya dari SVG
-                            const bbox = svgEl.getBBox();
-                            const padding = 50;
-                            const width = bbox.width + (padding * 2);
-                            const height = bbox.height + (padding * 2);
-                            
-                            // Clone SVG untuk di-capture
-                            const clone = container.cloneNode(true);
-                            clone.style.position = 'fixed';
-                            clone.style.top = '-9999px';
-                            clone.style.left = '-9999px';
-                            clone.style.width = width + 'px';
-                            clone.style.height = height + 'px';
-                            clone.style.overflow = 'visible';
-                            clone.style.background = '#f8fafc';
-                            clone.style.zIndex = '-1';
-                            document.body.appendChild(clone);
-                            
-                            // Setup viewBox pada clone
-                            const cloneSvg = clone.querySelector('svg');
-                            if (cloneSvg) {{
-                                cloneSvg.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{width}} ${{height}}`);
-                                cloneSvg.style.width = '100%';
-                                cloneSvg.style.height = '100%';
+                            // 1. Matikan sementara pan-zoom
+                            if (window.panZoom) {{
+                                window.panZoom.destroy();
+                                window.panZoom = null;
                             }}
                             
-                            // Tunggu rendering
                             setTimeout(() => {{
-                                html2canvas(clone, {{
-                                    scale: 3,
-                                    useCORS: true,
-                                    backgroundColor: '#f8fafc',
-                                    width: width,
-                                    height: height
-                                }}).then(canvas => {{
-                                    // Download
-                                    const link = document.createElement('a');
-                                    link.download = title.replace(/\\s+/g, '_') + '.png';
-                                    link.href = canvas.toDataURL('image/png', 1.0);
-                                    link.click();
-                                    
-                                    // Cleanup
-                                    document.body.removeChild(clone);
-                                    btn.innerHTML = originalText;
-                                    btn.disabled = false;
-                                }}).catch(err => {{
-                                    console.error(err);
-                                    document.body.removeChild(clone);
-                                    btn.innerHTML = "❌ GAGAL";
-                                    setTimeout(() => {{
-                                        btn.innerHTML = originalText;
-                                        btn.disabled = false;
-                                    }}, 2000);
-                                }});
-                            }}, 300);
-                        }}
+                                const originalWidth = container.style.width;
+                                const originalHeight = container.style.height;
+                                const originalOverflow = container.style.overflow;
+                                
+                                const originalWAttr = svgEl.getAttribute('width');
+                                const originalHAttr = svgEl.getAttribute('height');
+                                const originalViewBox = svgEl.getAttribute('viewBox');
+                                
+                                const bbox = svgEl.getBBox();
+                                const padding = 50;
+                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
+                                const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px';
+                                container.style.height = trueHeight + 'px';
+                                container.style.overflow = 'visible';
+                                
+                                // PERBAIKAN MERMAID EXPORT
+                                svgEl.style.maxWidth = 'none';
+                                svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
+                                svgEl.style.width = trueWidth + 'px';
+                                svgEl.style.height = trueHeight + 'px';
+                                
+                                setTimeout(() => {{
+                                    html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                    .then(canvas => {{
+                                        // Kembalikan semula
+                                        container.style.width = originalWidth; 
+                                        container.style.height = originalHeight; 
+                                        container.style.overflow = originalOverflow;
+                                        
+                                        if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
+                                        if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
+                                        if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                        
+                                        // Nyalakan pan-zoom kembali
+                                        window.panZoom = svgPanZoom(svgEl, {{
+                                            zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true, minZoom: 0.1
+                                        }});
+                                        
+                                        const link = document.createElement('a'); 
+                                        link.download = 'Mermaid_' + title + '.png'; 
+                                        link.href = canvas.toDataURL('image/png', 1.0); 
+                                        link.click();
+                                        
+                                        btn.innerHTML = originalText; btn.disabled = false;
+                                    }}).catch(err => {{
+                                        btn.innerHTML = "❌ GAGAL"; setTimeout(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}, 2000);
+                                    }});
+                                }}, 600);
+                            }}, 100);
+                        }};
                     </script>
                 </body></html>
                 """

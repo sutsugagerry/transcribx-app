@@ -1894,7 +1894,7 @@ else:
                         - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
                         - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
                         ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
-                        ATURAN MERMAID: WAJIB format 'graph LR'.
+                        ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
@@ -2009,7 +2009,7 @@ else:
                                                 <div class="relative bg-white border border-slate-200 rounded-xl p-4">
                                                     <button onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white font-bold px-3 py-1 rounded shadow cursor-pointer text-xs">📸 PNG</button>
                                                     <div id="mermaidLiveWrapper" style="width:100%; height:380px; overflow-x:auto; background:#ffffff;">
-                                                        <div id="mermaidLive" class="mermaid"></div>
+                                                        <pre id="mermaidLive" class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit;"></pre>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2053,8 +2053,13 @@ else:
                                         rawMer = "graph LR\\n" + rawMer; 
                                     }
                                     const mermaidDiv = document.getElementById('mermaidLive');
-                                    mermaidDiv.innerHTML = rawMer;
-                                    mermaid.init(undefined, mermaidDiv);
+                                    mermaidDiv.textContent = rawMer; 
+                                    mermaidDiv.removeAttribute('data-processed'); 
+                                    try {
+                                        mermaid.init(undefined, mermaidDiv);
+                                    } catch(err) {
+                                        console.error("Mermaid Render Error:", err);
+                                    }
                                 }, 100);
 
                                 setTimeout(() => {
@@ -2180,7 +2185,7 @@ else:
                                 - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
                                 - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
                                 ATURAN MARKMAP: Gunakan kode murni markdown.
-                                ATURAN MERMAID: WAJIB format 'graph LR'.
+                                ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
                                 Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                                 payload = {
@@ -2235,7 +2240,7 @@ else:
                             - rencana_tindak_lanjut: Ekstrak tabel penugasan. JIKA TIDAK ADA TUGAS spesifik, WAJIB BUAT 1 TUGAS DEFAULT.
                             - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
                             ATURAN MARKMAP (PENTING!): Gunakan kode murni markdown dengan struktur lengkap.
-                            ATURAN MERMAID: WAJIB format 'graph LR'.
+                            ATURAN MERMAID: WAJIB format 'graph LR'. Buat ID Node tanpa spasi/karakter khusus, dan SELALU gunakan tanda kutip ganda untuk teks node (Contoh: A["Teks Node 1"] --> B["Teks Node 2"]).
                             Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                             payload = {
@@ -2389,6 +2394,9 @@ else:
                 if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
                     raw_mer = "graph LR\\n" + raw_mer
                 
+                # Sanitasi karakter HTML sebelum dimasukkan ke komponen
+                safe_mer = raw_mer.replace("<", "&lt;").replace(">", "&gt;")
+                
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
                     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
@@ -2397,7 +2405,7 @@ else:
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
                     <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
                     <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow-x:auto; background:#ffffff; padding:20px;">
-                        <div class="mermaid">{raw_mer}</div>
+                        <pre class="mermaid" style="background:transparent; border:none; margin:0; font-family:inherit;">{safe_mer}</pre>
                     </div>
                     <script>
                         mermaid.initialize({{startOnLoad: true}});

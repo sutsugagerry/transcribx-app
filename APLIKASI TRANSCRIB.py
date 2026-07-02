@@ -237,26 +237,23 @@ if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] 
 # HALAMAN LOGIN (UI DENGAN ANIMASI NODE, GERMIC KARTUN BESAR & JUDUL KUNING LUCU)
 # =====================================================================
 if not st.session_state["logged_in"]:
-    # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun (Warna Kuning Lucu), dan perbesar GERMIC
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
     
-    /* Membuat layer bawaan Streamlit menjadi transparan */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background: transparent !important;
     }
     [data-testid="stSidebar"] { display: none; }
     
-    /* --- STYLING FORM LOGIN (DARK GLASSMORPHISM) --- */
     div[data-testid="stForm"] {
-        background: rgba(15, 23, 42, 0.4) !important; /* Biru tua transparan */
+        background: rgba(15, 23, 42, 0.4) !important;
         backdrop-filter: blur(16px) saturate(180%);
         -webkit-backdrop-filter: blur(16px) saturate(180%);
         padding: 40px 35px !important;
         border-radius: 24px !important;
         box-shadow: 0 0 30px rgba(56, 189, 248, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(56, 189, 248, 0.3) !important; /* Glow border cyan tipis */
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
         transition: all 0.3s ease-in-out;
     }
     div[data-testid="stForm"]:hover {
@@ -264,14 +261,12 @@ if not st.session_state["logged_in"]:
         border: 1px solid rgba(56, 189, 248, 0.6) !important;
     }
     
-    /* Mengubah warna text label agar terang */
     div[data-testid="stForm"] p, div[data-testid="stForm"] label {
         color: #e2e8f0 !important;
         font-weight: 600 !important;
         letter-spacing: 0.5px;
     }
     
-    /* Mempercantik Input Box */
     div[data-baseweb="input"] {
         background-color: rgba(30, 41, 59, 0.7) !important;
         border-radius: 12px !important;
@@ -281,14 +276,9 @@ if not st.session_state["logged_in"]:
         border-color: #38bdf8 !important;
         box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
     }
-    div[data-baseweb="input"] input {
-        color: #ffffff !important;
-    }
-    div[data-baseweb="input"] input::placeholder {
-        color: #64748b !important;
-    }
+    div[data-baseweb="input"] input { color: #ffffff !important; }
+    div[data-baseweb="input"] input::placeholder { color: #64748b !important; }
     
-    /* Mempercantik Tombol Login menjadi Glow & Gradasi */
     div[data-testid="stForm"] button[type="submit"] {
         background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%) !important;
         color: white !important;
@@ -307,7 +297,6 @@ if not st.session_state["logged_in"]:
         background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%) !important;
     }
     
-    /* Styling Title & Subtitle */
     .login-title {
         font-family: 'Balsamiq Sans', cursive; 
         color: #FFD166; 
@@ -324,7 +313,6 @@ if not st.session_state["logged_in"]:
         text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
     }
     
-    /* Animasi GERMIC */
     @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
     @keyframes signal-login { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
     @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -341,7 +329,7 @@ if not st.session_state["logged_in"]:
     .animate-pulse-login { animation: pulse-login 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
     """, unsafe_allow_html=True)
-    # 2. Injeksi Javascript murni untuk animasi Jalur Listrik, Core Jantung, & Mouse Tracking
+    
     components.html("""
     <script>
         const parentWindow = window.parent;
@@ -368,37 +356,20 @@ if not st.session_state["logged_in"]:
         }
 
         const ctx = canvas.getContext('2d');
-        let w, h;
-        let points = [];
-        let edges = [];
-        let sparks = [];
-        let time = 0;
-        let maxLayer = 6;
-        
-        // Kordinat Core
+        let w, h, points = [], edges = [], sparks = [], time = 0, maxLayer = 6;
         let coreX, coreY;
 
         function resize() {
             w = canvas.width = parentWindow.innerWidth;
             h = canvas.height = parentWindow.innerHeight;
-            
-            // Geser core ke atas (25% dari tinggi layar) agar pas di belakang robot GERMIC
             coreX = w / 2;
             coreY = h * 0.25; 
-            
             initNetwork();
         }
 
-        // --- FUNGSI MEMBUAT JALUR (PATH) MENUJU CORE ---
         function initNetwork() {
-            points = [];
-            edges = [];
-            sparks = [];
-
-            // Titik 0: Core Jantung
+            points = []; edges = []; sparks = [];
             points.push({ x: coreX, y: coreY, layer: 0 });
-
-            // Membuat titik-titik yang menyebar ke luar
             for(let l = 1; l <= maxLayer; l++) {
                 let radius = l * (Math.max(w, h) / 1.8) / maxLayer;
                 let count = l * 12; 
@@ -411,8 +382,6 @@ if not st.session_state["logged_in"]:
                     });
                 }
             }
-
-            // Menyambungkan setiap titik ke titik terdekat di layer sebelumnya
             for(let i = 1; i < points.length; i++) {
                 let p = points[i];
                 let targets = points.filter(t => t.layer === p.layer - 1);
@@ -425,7 +394,6 @@ if not st.session_state["logged_in"]:
             }
         }
 
-        // --- CLASS UNTUK SINAR LISTRIK YANG BERJALAN ---
         class Spark {
             constructor(startNode) {
                 this.currentNode = startNode;
@@ -470,12 +438,10 @@ if not st.session_state["logged_in"]:
         parentWindow.addEventListener('resize', resize);
         resize();
 
-        // --- ANIMASI UTAMA ---
         function animate() {
             ctx.clearRect(0, 0, w, h);
             time += 0.05;
 
-            // 1. Gambar Jalur/Kabel Statis (Redup)
             ctx.lineWidth = 1;
             edges.forEach(e => {
                 ctx.beginPath();
@@ -485,7 +451,6 @@ if not st.session_state["logged_in"]:
                 ctx.stroke();
             });
 
-            // 2. Spawn Sinar Listrik Baru dari Pinggir Layar
             if (Math.random() < 0.3) {
                 let outerNodes = points.filter(p => p.layer === maxLayer || p.layer === maxLayer - 1);
                 if(outerNodes.length > 0) {
@@ -494,20 +459,14 @@ if not st.session_state["logged_in"]:
                 }
             }
 
-            // 3. Update & Gambar Sinar Listrik yang Berjalan
             for (let i = sparks.length - 1; i >= 0; i--) {
                 let s = sparks[i];
-                if (s.update()) {
-                    sparks.splice(i, 1);
-                } else {
-                    s.draw();
-                }
+                if (s.update()) sparks.splice(i, 1);
+                else s.draw();
             }
 
-            // 4. Gambar Core (Jantung yang Berdetak / Menyala)
             let pulse = Math.sin(time) * 8; 
             
-            // Cahaya luar jantung (Glow) berpusat di coreX, coreY
             ctx.beginPath();
             ctx.arc(coreX, coreY, 35 + pulse, 0, Math.PI * 2);
             let grad = ctx.createRadialGradient(coreX, coreY, 5, coreX, coreY, 45 + pulse);
@@ -517,7 +476,6 @@ if not st.session_state["logged_in"]:
             ctx.fillStyle = grad;
             ctx.fill();
             
-            // Inti padat jantung berpusat di coreX, coreY
             ctx.beginPath();
             ctx.arc(coreX, coreY, 12 + (pulse/3), 0, Math.PI * 2);
             ctx.fillStyle = '#fffbeb';
@@ -531,7 +489,6 @@ if not st.session_state["logged_in"]:
 
         animate();
 
-        // --- Logika GERMIC Melirik Mengikuti Mouse (Tetap Dipertahankan) ---
         parentWindow.addEventListener('mousemove', (e) => {
             const face = parentDoc.getElementById('germic-login-face');
             if (face) {
@@ -539,10 +496,8 @@ if not st.session_state["logged_in"]:
                 const rect = face.getBoundingClientRect();
                 const mouseX = e.clientX - (rect.left + rect.width / 2); 
                 const mouseY = e.clientY - (rect.top + rect.height / 2);
-                
                 const moveX = Math.max(Math.min(mouseX / 30, limit), -limit);
                 const moveY = Math.max(Math.min(mouseY / 30, limit), -limit);
-                
                 face.style.transform = `translate(${moveX}px, ${moveY}px)`;
                 face.style.transition = "transform 0.1s ease-out";
             }
@@ -550,14 +505,12 @@ if not st.session_state["logged_in"]:
     </script>
     """, height=0, width=0)
 
-    # 3. Struktur Form Login
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.write("")
         st.write("")
         st.write("")
         
-        # Injeksi GERMIC dengan ID khusus pada wajahnya agar bisa dilacak JS
         title_html = """
         <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 10px;'>
             <div class="germic-login-wrapper">
@@ -571,7 +524,6 @@ if not st.session_state["logged_in"]:
                     <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
                     <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
                     <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
-                    <!-- Menambahkan id="germic-login-face" untuk pelacakan mouse -->
                     <g id="germic-login-face">
                         <rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
                         <rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
@@ -584,14 +536,11 @@ if not st.session_state["logged_in"]:
         """
         st.markdown(title_html, unsafe_allow_html=True)
         
-        
         with st.form("login_form"):
-            # Pindahkan teks sambutan ke sini
             st.markdown("""
                 <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
                 <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
             """, unsafe_allow_html=True)
-            
             
             email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
             pass_login = st.text_input("Password", type="password", placeholder="••••••••")
@@ -632,7 +581,6 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA
 # =====================================================================
 else:
-    # TARUH KODE PENGHAPUS DI SINI!
     components.html("""
     <script>
         const canvas = window.parent.document.getElementById('node-bg-canvas');
@@ -640,7 +588,6 @@ else:
     </script>
     """, height=0)
 
-    # Setelah itu baru lanjut ke baris st.markdown berikutnya
     st.markdown("""
     <style>
     .stApp {
@@ -652,114 +599,7 @@ else:
     }
     </style>
     """, unsafe_allow_html=True)
-   # 1. Injeksi CSS agar Streamlit transparan, ubah Font ke gaya Doodle/Kartun (Warna Kuning Lucu), dan perbesar GERMIC
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
     
-    /* Membuat layer bawaan Streamlit menjadi transparan */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background: transparent !important;
-    }
-    [data-testid="stSidebar"] { display: none; }
-    
-    /* --- STYLING FORM LOGIN (DARK GLASSMORPHISM) --- */
-    div[data-testid="stForm"] {
-        background: rgba(15, 23, 42, 0.4) !important; /* Biru tua transparan */
-        backdrop-filter: blur(16px) saturate(180%);
-        -webkit-backdrop-filter: blur(16px) saturate(180%);
-        padding: 40px 35px !important;
-        border-radius: 24px !important;
-        box-shadow: 0 0 30px rgba(56, 189, 248, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(56, 189, 248, 0.3) !important; /* Glow border cyan tipis */
-        transition: all 0.3s ease-in-out;
-    }
-    div[data-testid="stForm"]:hover {
-        box-shadow: 0 0 50px rgba(56, 189, 248, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(56, 189, 248, 0.6) !important;
-    }
-    
-    /* Mengubah warna text label agar terang */
-    div[data-testid="stForm"] p, div[data-testid="stForm"] label {
-        color: #e2e8f0 !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.5px;
-    }
-    
-    /* Mempercantik Input Box */
-    div[data-baseweb="input"] {
-        background-color: rgba(30, 41, 59, 0.7) !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(100, 116, 139, 0.5) !important;
-    }
-    div[data-baseweb="input"]:focus-within {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
-    }
-    div[data-baseweb="input"] input {
-        color: #ffffff !important;
-    }
-    div[data-baseweb="input"] input::placeholder {
-        color: #64748b !important;
-    }
-    
-    /* Mempercantik Tombol Login menjadi Glow & Gradasi */
-    div[data-testid="stForm"] button[type="submit"] {
-        background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        font-weight: 800 !important;
-        letter-spacing: 1px;
-        padding: 0.75rem 1rem !important;
-        box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.5) !important;
-        transition: all 0.3s ease !important;
-        margin-top: 15px;
-    }
-    div[data-testid="stForm"] button[type="submit"]:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px -5px rgba(14, 165, 233, 0.7) !important;
-        background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%) !important;
-    }
-    
-    /* Styling Title & Subtitle */
-    .login-title {
-        font-family: 'Balsamiq Sans', cursive; 
-        color: #FFD166; 
-        font-weight: 700;
-        font-size: 4.5rem;
-        text-shadow: 3px 3px 0px #FF9F1C, 0px 5px 15px rgba(0, 0, 0, 0.6); 
-        margin: 0;
-        line-height: 1;
-    }
-    .login-subtitle {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1.1rem;
-        margin-bottom: 40px;
-        text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
-    }
-    
-    /* Animasi GERMIC */
-    @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
-    @keyframes signal-login { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-    @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    
-    .germic-login-wrapper {
-        width: 140px; 
-        height: 140px; 
-        animation: float-login 4s ease-in-out infinite;
-        margin-right: 20px;
-        filter: drop-shadow(0px 6px 15px rgba(0,0,0,0.5));
-    }
-    .signal-wave-login { transform-origin: 50px 12px; animation: signal-login 2s infinite; }
-    .signal-wave-2-login { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal-login 2s infinite; }
-    .animate-pulse-login { animation: pulse-login 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # =====================================================================
-    # AREA SIDEBAR
-    # =====================================================================
     with st.sidebar:
         st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
 
@@ -864,16 +704,11 @@ else:
         tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
         tab_admin, tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3]
         
-        # =====================================================================
-        # TAB ADMIN PANEL 
-        # =====================================================================
         with tab_admin:
             st.markdown("### 👑 Dashboard Admin: Enterprise Control Center")
-            
             with st.spinner("Memuat metrik & menyegarkan data klien..."):
                 users_ref = db.collection("users").stream()
                 users_list = []
-                
                 for doc in users_ref:
                     user_info = doc.to_dict()
                     email_user = user_info.get("email", "-")
@@ -899,7 +734,6 @@ else:
                         else: sisa_hari_display = "Kadaluarsa"
                     
                     last_login_display = last_login[:19] if isinstance(last_login, str) and len(last_login) > 19 and last_login not in ["Belum pernah login", "Tidak diketahui"] else last_login
-
                     users_list.append({
                         "Email": email_user, "Status": status_user.split()[0], "Paket": paket_user, "Sisa AI": sisa_ai, "Sisa Upload": sisa_up,
                         "Sisa Hari": sisa_hari_display, "Last Login": last_login_display, "Login Count": login_count, "UID": doc.id, "UID_Short": doc.id[:8] + "..."
@@ -912,7 +746,6 @@ else:
             active_now = get_active_users_count()
 
             col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-            
             def build_metric_card(title, value, subtext, icon, type_class):
                 return f"""
                 <div class="metric-card metric-{type_class}">
@@ -926,7 +759,6 @@ else:
                     </div>
                 </div>
                 """
-            
             with col_m1: st.markdown(build_metric_card("Total Users", total_users, f"↑ {active_now} online", "👥", "total"), unsafe_allow_html=True)
             with col_m2: st.markdown(build_metric_card("Klien Aktif", total_aktif, "Paket Berjalan", "✅", "aktif"), unsafe_allow_html=True)
             with col_m3: st.markdown(build_metric_card("Non-Aktif", total_nonaktif, "Perlu Follow-up", "❌", "nonaktif"), unsafe_allow_html=True)
@@ -980,7 +812,6 @@ else:
                 else: st.info("Belum ada data paket klien.")
 
             st.markdown("---")
-            
             st.markdown("### 📋 Tabel Manajemen Klien")
             col_search1, col_search2, col_search3 = st.columns([3, 2, 2])
             with col_search1: search_query = st.text_input("🔍 Cari email atau paket...", placeholder="Ketik untuk filter...")
@@ -1015,9 +846,7 @@ else:
             else: st.info("🔍 Tidak ada user yang sesuai dengan filter.")
 
             st.markdown("---")
-            
             st.markdown("### 🛠️ Action Center (Kelola & Edit Klien)")
-            
             user_options = [u['Email'] for u in filtered_users if u['Status'] != 'admin']
             if user_options:
                 with st.container(border=True):
@@ -1203,7 +1032,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE - SCREEN CAPTURE (FIXED)
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
@@ -1329,7 +1158,6 @@ else:
             </style>
         </head>
         <body>
-            <!-- INSTRUCTION BOX -->
             <div class="instruction-box">
                 <strong>📺 CARA SCREEN CAPTURE:</strong><br>
                 1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b>.<br>
@@ -1339,7 +1167,6 @@ else:
                 5. <b>CENTANG "Share tab audio"</b> lalu klik Share.
             </div>
         
-            <!-- MAIN CONTROLS -->
             <div class="controls-wrapper">
                 <div class="controls-row">
                     <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
@@ -1359,12 +1186,16 @@ else:
                     <canvas id="visualizer"></canvas>
                 </div>
                 
-                <!-- DEBUG INFO -->
                 <div id="debugInfo" class="debug-box" style="display:none;">
                     <strong>🔍 Debug Log:</strong>
                 </div>
                 
                 <div class="ai-section">
+                    <div id="aiBrainContainer" style="width: 100%; height: 120px; background: #0f172a; border-radius: 12px; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); border: 1px solid #1e293b;">
+                        <canvas id="aiBrainCanvas"></canvas>
+                        <div id="aiBrainText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #64748b; font-size: 12px; font-weight: 800; pointer-events: none; letter-spacing: 4px; z-index: 10; text-align: center;">NEURAL CORE IDLE</div>
+                    </div>
+                    
                     <div class="ai-row">
                         <span style="font-size: 13px; font-weight: 700; color: #475569; white-space:nowrap;">🔑 API Key:</span>
                         <input type="password" id="apiKeyInput" class="api-input" placeholder="Masukkan API Key LiteLLM / Gemini..." style="flex:1; min-width:150px;">
@@ -1373,24 +1204,20 @@ else:
                 </div>
             </div>
 
-            <!-- TRANSCRIPT CONTROLS -->
             <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
                 <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
                 <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
                 <button id="downloadTxtBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px;">📝 Save TXT</button>
             </div>
 
-            <!-- TRANSCRIPT BOX -->
             <div id="transcriptBox" class="transcript-box">
                 <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
                     🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
                 </div>
             </div>
 
-            <!-- AI CONTENT AREA -->
             <div id="aiContent" class="w-full"></div>
             
-            <!-- AUDIO ARCHIVE -->
             <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
                 <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
                 <div id="audioContainer">
@@ -1420,14 +1247,85 @@ else:
                     const canvasCtx = visualizer.getContext('2d');
                     const debugInfo = document.getElementById('debugInfo');
 
+                    // ======== AI BRAIN VISUALIZER ========
+                    const brainCanvas = document.getElementById('aiBrainCanvas');
+                    const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
+                    const brainText = document.getElementById('aiBrainText');
+                    let brainParticles = [];
+                    let isThinking = false;
+
+                    function initBrain() {
+                        if (!brainCanvas) return;
+                        brainCanvas.width = brainCanvas.parentElement.clientWidth;
+                        brainCanvas.height = brainCanvas.parentElement.clientHeight;
+                        brainParticles = [];
+                        for(let i=0; i<60; i++) {
+                            brainParticles.push({
+                                x: Math.random() * brainCanvas.width,
+                                y: Math.random() * brainCanvas.height,
+                                vx: (Math.random() - 0.5) * 0.8,
+                                vy: (Math.random() - 0.5) * 0.8,
+                                size: Math.random() * 2 + 0.5
+                            });
+                        }
+                    }
+
+                    function drawBrain() {
+                        if (!brainCanvas) return;
+                        brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
+                        
+                        let connectionDist = isThinking ? 100 : 60;
+                        let speed = isThinking ? 6 : 1;
+                        let r = isThinking ? 168 : 56;
+                        let g = isThinking ? 85  : 189;
+                        let b = isThinking ? 247 : 248;
+
+                        for(let i=0; i<brainParticles.length; i++) {
+                            let p = brainParticles[i];
+                            p.x += p.vx * speed;
+                            p.y += p.vy * speed;
+
+                            if(p.x < 0 || p.x > brainCanvas.width) p.vx *= -1;
+                            if(p.y < 0 || p.y > brainCanvas.height) p.vy *= -1;
+
+                            brainCtx.beginPath();
+                            brainCtx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                            brainCtx.fillStyle = `rgba(${r},${g},${b}, 0.8)`;
+                            brainCtx.fill();
+
+                            for(let j=i+1; j<brainParticles.length; j++) {
+                                let p2 = brainParticles[j];
+                                let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                                if(dist < connectionDist) {
+                                    brainCtx.beginPath();
+                                    brainCtx.moveTo(p.x, p.y);
+                                    brainCtx.lineTo(p2.x, p2.y);
+                                    brainCtx.strokeStyle = `rgba(${r},${g},${b}, ${1 - dist/connectionDist})`;
+                                    brainCtx.lineWidth = isThinking ? 1.5 : 0.5;
+                                    brainCtx.stroke();
+                                }
+                            }
+                        }
+                        requestAnimationFrame(drawBrain);
+                    }
+
+                    if (brainCanvas) {
+                        // Inisialisasi setelah DOM beres di-render
+                        setTimeout(() => {
+                            initBrain();
+                            drawBrain();
+                        }, 500);
+                        window.addEventListener('resize', initBrain);
+                    }
+
                     // ======== STATE ========
                     let isRecording = false;
-                    let isVisualizerActive = false; // Memisahkan flag visualizer agar tidak nyangkut
+                    let isVisualizerActive = false;
                     let recognition = null;
                     let mediaRecorder = null;
                     let audioChunks = [];
                     let displayStream = null;
-                    let globalAudioCtx = null; // Audio context global
+                    let globalAudioCtx = null;
                     let analyser = null;
                     let dataArray = null;
                     let drawVisual = null;
@@ -1557,7 +1455,6 @@ else:
                     }
 
                     function drawVisualizer() {
-                        // Jika visualizer tidak aktif, hentikan loop
                         if (!isVisualizerActive) return;
                         
                         const width = visualizer.width;
@@ -1584,7 +1481,6 @@ else:
                             }
                         }
                         
-                        // Lanjutkan animasi terus menerus selama flag isVisualizerActive true
                         if (isVisualizerActive) {
                             drawVisual = requestAnimationFrame(drawVisualizer);
                         }
@@ -1677,7 +1573,6 @@ else:
                             
                             updateDebug('=== START CAPTURE ===');
                             
-                            // Minta Izin Mic secara eksplisit dulu untuk memastikan fitur transkrip diizinkan
                             try {
                                 await navigator.mediaDevices.getUserMedia({ audio: true });
                             } catch (micErr) {
@@ -1685,7 +1580,6 @@ else:
                                 updateDebug('Mic permission denied: ' + micErr.message);
                             }
 
-                            // Inisialisasi AudioContext secara sinkron setelah klik tombol 
                             if (!globalAudioCtx) {
                                 globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                             }
@@ -1727,7 +1621,6 @@ else:
                             
                             setupVisualizer(displayStream);
                             
-                            // Nyalakan visualizer loop
                             isVisualizerActive = true;
                             drawVisualizer();
                             
@@ -1764,7 +1657,6 @@ else:
                         updateDebug('=== STOP BUTTON CLICKED ===');
                         isRecording = false;
                         
-                        // Matikan visualizer loop
                         isVisualizerActive = false;
                         if (drawVisual) cancelAnimationFrame(drawVisual);
                         
@@ -1942,6 +1834,14 @@ else:
                         if (!apiKey) { alert('Masukkan API Key!'); return; }
                         if (!transcript) { alert('Transkrip kosong!'); return; }
                         
+                        // 🔴 AKTIFKAN ANIMASI BRAIN
+                        isThinking = true;
+                        if (brainText) {
+                            brainText.innerText = "PROCESSING NEURAL DATA...";
+                            brainText.style.color = "#a855f7";
+                            brainText.style.textShadow = "0 0 12px #c084fc";
+                        }
+                        
                         aiBtn.innerHTML = '⏳ Memproses...';
                         aiBtn.disabled = true;
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi & Visual...</p></div>';
@@ -2014,7 +1914,6 @@ else:
                                 
                                 aiContent.innerHTML = `
                                     <div class="fade-in mt-6 mb-10">
-                                        <!-- RINGKASAN EKSEKUTIF -->
                                         <div class="mb-4">
                                             <p class="font-bold text-sm mb-2">🌟 RINGKASAN EKSEKUTIF:</p>
                                             <div class="bg-blue-50 p-4 rounded-xl text-blue-900 font-bold text-sm">
@@ -2022,7 +1921,6 @@ else:
                                             </div>
                                         </div>
 
-                                        <!-- AGENDA & PESERTA -->
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                             <div>
                                                 <p class="font-bold text-sm">📌 AGENDA / TOPIK:</p>
@@ -2034,7 +1932,6 @@ else:
                                             </div>
                                         </div>
 
-                                        <!-- JALANNYA DISKUSI -->
                                         <div class="mb-4">
                                             <p class="font-bold text-sm mb-2">🗣️ JALANNYA DISKUSI:</p>
                                             <div class="bg-white p-4 rounded-xl border shadow-sm text-sm">
@@ -2042,13 +1939,11 @@ else:
                                             </div>
                                         </div>
 
-                                        <!-- KEPUTUSAN UTAMA -->
                                         <div class="mb-4">
                                             <p class="font-bold text-sm mb-2">✅ KEPUTUSAN / KESIMPULAN UTAMA:</p>
                                             <ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul>
                                         </div>
 
-                                        <!-- TINDAK LANJUT -->
                                         <div class="mb-8">
                                             <p class="font-bold text-sm mb-2">📅 RENCANA TINDAK LANJUT (ACTION ITEMS):</p>
                                             <div class="overflow-x-auto">
@@ -2059,10 +1954,8 @@ else:
                                             </div>
                                         </div>
 
-                                        <!-- AREA VISUALISASI -->
                                         <h3 class="font-bold text-lg mb-4 text-slate-800 border-b pb-2">🕸️ Visualisasi</h3>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            <!-- Cytoscape -->
                                             <div>
                                                 <p class="font-bold text-sm mb-2">Cytoscape.js</p>
                                                 <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden p-2">
@@ -2071,7 +1964,6 @@ else:
                                                 </div>
                                             </div>
 
-                                            <!-- Mermaid -->
                                             <div>
                                                 <p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
                                                 <div class="relative bg-white border border-slate-200 rounded-xl p-4">
@@ -2083,7 +1975,6 @@ else:
                                             </div>
                                         </div>
 
-                                        <!-- Markmap -->
                                         <div class="mt-4">
                                             <p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p>
                                             <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -2142,6 +2033,14 @@ else:
                         } finally {
                             aiBtn.innerHTML = '✨ Generate AI Summary';
                             aiBtn.disabled = false;
+                            
+                            // 🔴 MATIKAN ANIMASI BRAIN SAAT SELESAI
+                            isThinking = false;
+                            if (brainText) {
+                                brainText.innerText = "NEURAL CORE IDLE";
+                                brainText.style.color = "#64748b";
+                                brainText.style.textShadow = "none";
+                            }
                         }
                     };
 
@@ -2275,7 +2174,6 @@ else:
                                     res = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload)
                                     if res.status_code == 200: 
                                         st.session_state["offline_summary"] = json.loads(res.json()["choices"][0]["message"]["content"])
-                                        # Hapus 4 baris di bawah ini jika ditaruh di dalam logika Admin
                                         st.session_state["user_kuota_ai"] -= 1
                                         db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
                                         st.success(f"✅ AI Summary & Diarization berhasil digenerate! Sisa Kuota AI: {st.session_state['user_kuota_ai']}x")
@@ -2370,42 +2268,41 @@ else:
                 colA, colB = st.columns(2)
                 colA.markdown(f"**📌 AGENDA / TOPIK:**<br>{data['notulensi_rapat']['agenda']}", unsafe_allow_html=True)
                 colB.markdown(f"**👥 PESERTA:**<br>{', '.join(data['notulensi_rapat']['peserta'])}", unsafe_allow_html=True)
-                st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
                 
-                dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border: 1px solid #cbd5e1; margin-bottom:20px; max-height: 350px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);'>"
-                
-                # Membuat efek bubble chat sederhana bergantian warna
-                colors = ["#e0f2fe", "#fef3c7", "#dcfce3", "#f3e8ff", "#ffedd5"]
-                speaker_color_map = {}
-                color_index = 0
-                
-                for line in data['notulensi_rapat'].get('transkrip_dialog', []):
-                    # Mencoba memisahkan nama pembicara dan isi pesannya
-                    if ":" in line:
-                        speaker, text = line.split(":", 1)
-                        speaker = speaker.strip()
-                        text = text.strip()
-                        
-                        # Assign warna unik untuk tiap pembicara
-                        if speaker not in speaker_color_map:
-                            speaker_color_map[speaker] = colors[color_index % len(colors)]
-                            color_index += 1
+                if 'transkrip_dialog' in data['notulensi_rapat']:
+                    st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
+                    dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border: 1px solid #cbd5e1; margin-bottom:20px; max-height: 350px; overflow-y: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);'>"
+                    
+                    colors = ["#e0f2fe", "#fef3c7", "#dcfce3", "#f3e8ff", "#ffedd5"]
+                    speaker_color_map = {}
+                    color_index = 0
+                    
+                    for line in data['notulensi_rapat'].get('transkrip_dialog', []):
+                        if ":" in line:
+                            speaker, text = line.split(":", 1)
+                            speaker = speaker.strip()
+                            text = text.strip()
                             
-                        bg_color = speaker_color_map[speaker]
-                        
-                        dialog_html += f"""
-                        <div style='margin-bottom: 12px; display: flex; flex-direction: column;'>
-                            <span style='font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 4px; margin-left: 4px;'>{speaker}</span>
-                            <div style='background-color: {bg_color}; padding: 12px 16px; border-radius: 0px 15px 15px 15px; display: inline-block; max-width: 90%; color: #1e293b; font-size: 14px; border: 1px solid rgba(0,0,0,0.05);'>
-                                {text}
+                            if speaker not in speaker_color_map:
+                                speaker_color_map[speaker] = colors[color_index % len(colors)]
+                                color_index += 1
+                                
+                            bg_color = speaker_color_map[speaker]
+                            
+                            dialog_html += f"""
+                            <div style='margin-bottom: 12px; display: flex; flex-direction: column;'>
+                                <span style='font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 4px; margin-left: 4px;'>{speaker}</span>
+                                <div style='background-color: {bg_color}; padding: 12px 16px; border-radius: 0px 15px 15px 15px; display: inline-block; max-width: 90%; color: #1e293b; font-size: 14px; border: 1px solid rgba(0,0,0,0.05);'>
+                                    {text}
+                                </div>
                             </div>
-                        </div>
-                        """
-                    else:
-                        dialog_html += f"<div style='margin-bottom: 8px; color: #64748b; font-style: italic; font-size: 13px;'>{line}</div>"
-                        
-                dialog_html += "</div>"
-                st.markdown(dialog_html, unsafe_allow_html=True)
+                            """
+                        else:
+                            dialog_html += f"<div style='margin-bottom: 8px; color: #64748b; font-style: italic; font-size: 13px;'>{line}</div>"
+                            
+                    dialog_html += "</div>"
+                    st.markdown(dialog_html, unsafe_allow_html=True)
+                
                 st.markdown("**🗣️ JALANNYA DISKUSI:**")
                 diskusi_html = "<div style='background-color:#ffffff; padding:15px; border-radius:10px; border: 1px solid #e2e8f0; margin-bottom:15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'><ul style='margin:0; padding-left:20px; line-height: 1.6;'>"
                 for d in data['notulensi_rapat'].get('jalannya_diskusi', []): diskusi_html += f"<li style='margin-bottom:8px;'>{d}</li>"

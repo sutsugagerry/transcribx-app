@@ -1602,6 +1602,7 @@ else:
                         }
                     };
 
+                    // DOWNLOAD MERMAID LIVE (FIXED SCALE & ZOOM)
                     window.dlMermaidLive = function() {
                         const container = document.getElementById('mermaidLiveWrapper');
                         const svgEl = container.querySelector('svg');
@@ -1615,62 +1616,68 @@ else:
                             const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                             const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                             
-                            const bbox = svgEl.getBBox(); const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                            // Ambil ukuran sesungguhnya dan reset transform
+                            const firstG = svgEl.querySelector('g');
+                            if (firstG) firstG.removeAttribute('transform');
+                            
+                            const bbox = svgEl.getBBox(); const padding = 60;
+                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                            const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                             svgEl.style.maxWidth = 'none';
                             svgEl.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${trueWidth} ${trueHeight}`);
                             svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
-                            setTimeout(() => {
-                                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
-                                .then(canvas => {
-                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    
-                                    svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                    window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
-                                    
-                                    const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
-                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                    if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
-                            }, 600);
-                        }, 100);
+                            html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                            .then(canvas => {
+                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
+                                if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
+                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                
+                                svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                window.panZoomLive = svgPanZoom(svgEl, { zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true });
+                                
+                                const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
+                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                            }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
+                        }, 500);
                     };
 
+                    // DOWNLOAD MARKMAP LIVE (FIXED SCALE & ZOOM)
                     window.dlMarkmapLive = function() {
                         const container = document.getElementById('markmapLiveWrapper');
                         const svgEl = container.querySelector('svg'); if (!svgEl) return;
-                        const g = svgEl.querySelector('g'); if (!g) return;
                         
                         const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
-                        const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
+                        const originalViewBox = svgEl.getAttribute('viewBox');
                         
-                        g.setAttribute('transform', 'translate(0,0) scale(1)');
-                        const bbox = g.getBBox(); const padding = 50;
-                        const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                        const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                        
-                        container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                        svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                        svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
+                        const g = svgEl.querySelector('g'); 
+                        const originalTransform = g ? g.getAttribute('transform') : null;
+                        if (g) g.setAttribute('transform', 'translate(0,0) scale(1)');
                         
                         setTimeout(() => {
-                            html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                            const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50;
+                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                            const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                            
+                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
+                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
+                            
+                            html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                             .then(canvas => {
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                g.setAttribute('transform', originalTransform || '');
+                                if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                 if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                
                                 const link = document.createElement('a'); link.download = 'Markmap_Live.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
                             });
-                        }, 600);
+                        }, 500);
                     };
 
                     aiBtn.onclick = async function() {
@@ -1691,10 +1698,10 @@ else:
                         - hubungan_topik: Array of objects (sumber, target, relasi).
                         
                         ATURAN MERMAID (SANGAT KETAT):
-                        1. WAJIB diawali dengan 'graph LR'.
-                        2. ID Node HARUS 1 kata tanpa spasi (misal: N1, TopikA).
-                        3. Format: N1["Teks Utama"] --> N2["Teks Detail"].
-                        4. DILARANG KERAS menggunakan tanda kutip ganda (") di DALAM teks label. Gunakan petik tunggal (').
+                        1. Hasilkan flowchart dengan format HANYA 'graph LR'.
+                        2. ID Node HARUS 1 KATA berupa huruf/angka berurutan tanpa spasi (misal: A, B, N1, N2).
+                        3. DILARANG KERAS menggunakan tanda kutip ganda (") atau kurung siku ([]) di DALAM teks label. Gunakan petik tunggal (').
+                        4. Format relasi yang diizinkan HANYA: NodeID1['Teks Label 1'] --> NodeID2['Teks Label 2']
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
@@ -1767,9 +1774,13 @@ else:
                                 });
                             }, 100);
 
+                            // SANITASI MERMAID
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
-                                if (!rawMer.toLowerCase().startsWith('graph') && !rawMer.toLowerCase().startsWith('mindmap')) rawMer = `graph LR\n` + rawMer;
+                                if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('mindmap')) rawMer = `graph LR\n` + rawMer;
+                                // Hilangkan tanda kutip ganda yang bikin Mermaid hancur
+                                rawMer = rawMer.replace(/"/g, "'"); 
+                                
                                 const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
                                 mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
                                     const svg = mDiv.querySelector('svg');
@@ -1872,9 +1883,9 @@ else:
                         
                         ATURAN MERMAID (SANGAT KETAT):
                         1. WAJIB diawali dengan 'graph LR'.
-                        2. ID Node HARUS 1 kata tanpa spasi (misal: N1, TopikA).
-                        3. Format: N1["Teks Utama"] --> N2["Teks Detail"].
-                        4. DILARANG KERAS menggunakan tanda kutip ganda (") di DALAM teks label. Gunakan petik tunggal (').
+                        2. ID Node HARUS 1 KATA berupa huruf/angka berurutan tanpa spasi (misal: A, B, N1, N2).
+                        3. DILARANG KERAS menggunakan tanda kutip ganda (") atau kurung siku ([]) di DALAM teks label. Gunakan petik tunggal (').
+                        4. Format relasi yang diizinkan HANYA: NodeID1['Teks Label 1'] --> NodeID2['Teks Label 2']
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
@@ -1956,10 +1967,12 @@ else:
                 st.markdown("**📅 ACTION ITEMS:**")
                 st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
 
-            # Safe Serialization
+            # === SANITASI PYTHON: SIKAT HABIS KUTIP GANDA! ===
             clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
+            
+            clean_mer = clean_mer.replace('"', "'") # Ini kunci anti-syntax error-nya!
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
@@ -2013,6 +2026,7 @@ else:
                             }}
                         }});
 
+                        // DOWNLOAD MERMAID OFFLINE (FIXED SCALE & ZOOM)
                         window.downloadMermaidImage = function(wrapperId, title) {{
                             const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg');
                             if (!svgEl) return;
@@ -2025,30 +2039,32 @@ else:
                                 const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                                 const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
-                                const bbox = svgEl.getBBox(); const padding = 50;
-                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                                // Bersihkan sisa transformasi panzoom agar ukuran asli terbaca
+                                const firstG = svgEl.querySelector('g');
+                                if (firstG) firstG.removeAttribute('transform');
+                                
+                                const bbox = svgEl.getBBox(); const padding = 60;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                                 svgEl.style.maxWidth = 'none';
                                 svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
                                 svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
-                                setTimeout(() => {{
-                                    html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
-                                    .then(canvas => {{
-                                        container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                        if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
-                                        if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
-                                        if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                        
-                                        svgEl.style.width = '100%'; svgEl.style.height = '100%';
-                                        window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
-                                        
-                                        const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                        btn.innerHTML = originalText; btn.disabled = false;
-                                    }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
-                                }}, 600);
-                            }}, 100);
+                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                .then(canvas => {{
+                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
+                                    if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                    
+                                    svgEl.style.width = '100%'; svgEl.style.height = '100%';
+                                    window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true }});
+                                    
+                                    const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    btn.innerHTML = originalText; btn.disabled = false;
+                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
+                            }}, 500);
                         }};
                     </script>
                 </body></html>
@@ -2074,6 +2090,7 @@ else:
                     const {{ root }} = new Transformer().transform(markdown);
                     Markmap.create('#markmap', null, root);
 
+                    // DOWNLOAD MARKMAP OFFLINE (FIXED SCALE & ZOOM)
                     window.downloadMarkmapImage = function(wrapperId, title) {{
                         const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
@@ -2084,15 +2101,16 @@ else:
                             const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
                             
                             g.setAttribute('transform', 'translate(0,0) scale(1)');
-                            const bbox = g.getBBox(); const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2); const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
-                            
-                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {{
-                                html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                const bbox = g.getBBox(); const padding = 50;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                                svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
+                                svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
+                                
+                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                 .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');
@@ -2103,7 +2121,7 @@ else:
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
                                 }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
-                            }}, 600);
+                            }}, 500);
                         }} catch (err) {{ btn.innerHTML = originalText; btn.disabled = false; }}
                     }};
                 </script>

@@ -1608,17 +1608,21 @@ else:
                         const svgEl = container.querySelector('svg');
                         if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMermaidLive');
+                        const originalText = btn.innerHTML;
                         if (btn) { btn.innerHTML = "⏳ MENYIMPAN..."; btn.disabled = true; }
 
                         if (window.panZoomLive) { window.panZoomLive.destroy(); window.panZoomLive = null; }
 
                         setTimeout(() => {
+                            const origBodyOverflow = document.body.style.overflow;
+                            document.body.style.overflow = 'visible';
+                            
                             const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                             const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                             
                             const bbox = svgEl.getBBox(); const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 500) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                            const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                             svgEl.style.maxWidth = 'none';
@@ -1626,8 +1630,9 @@ else:
                             svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {
-                                html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                                html2canvas(container, { scale: 4, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                                 .then(canvas => {
+                                    document.body.style.overflow = origBodyOverflow;
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
                                     if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
@@ -1638,9 +1643,12 @@ else:
                                     
                                     const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
                                     link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                    if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
-                            }, 600);
+                                    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+                                }).catch(() => { 
+                                    document.body.style.overflow = origBodyOverflow;
+                                    if (btn) { btn.innerHTML = originalText; btn.disabled = false; } 
+                                });
+                            }, 800);
                         }, 100);
                     };
 
@@ -1704,7 +1712,8 @@ else:
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            "model": "gpt-4o-mini" if !document.querySelector('.profile-card.admin') else "gemini/gemini-2.5-flash",
+                            // --- REVISI SINTAKS JAVASCRIPT ---
+                            "model": document.querySelector('.profile-card.admin') ? "gemini/gemini-2.5-flash" : "gpt-4o-mini",
                             "messages": [{ "role": "user", "content": prompt }], "temperature": 0.2,
                             "response_format": {
                                 "type": "json_schema",
@@ -2028,7 +2037,7 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
-                # --- REVISI MERMAID OFFLINE (ANTI KEPOTONG & JERNIH) ---
+                # --- REVISI MERMAID OFFLINE (ANTI KEPOTONG & SUPER HD) ---
                 st.markdown("**Mermaid (Mindmap)**")
                 mer_html = f"""
                 <!DOCTYPE html><html><head>
@@ -2061,12 +2070,16 @@ else:
                             if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
                             
                             setTimeout(() => {{
+                                // TRIK AGAR GAMBAR TIDAK TERPOTONG IFRAME STREAMLIT
+                                const origBodyOverflow = document.body.style.overflow;
+                                document.body.style.overflow = 'visible';
+                                
                                 const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
                                 const originalWAttr = svgEl.getAttribute('width'); const originalHAttr = svgEl.getAttribute('height'); const originalViewBox = svgEl.getAttribute('viewBox');
                                 
                                 const bbox = svgEl.getBBox(); const padding = 50;
-                                const trueWidth = Math.max(bbox.width, 500) + (padding * 2); 
-                                const trueHeight = Math.max(bbox.height, 500) + (padding * 2);
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); 
+                                const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
                                 svgEl.style.maxWidth = 'none';
@@ -2074,8 +2087,10 @@ else:
                                 svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                                 
                                 setTimeout(() => {{
-                                    html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                    // SCALE 4 UNTUK RESOLUSI SUPER HD SAMA SEPERTI LIVE TRANSKRIP
+                                    html2canvas(container, {{ scale: 4, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                     .then(canvas => {{
+                                        document.body.style.overflow = origBodyOverflow;
                                         container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                         if (originalWAttr) svgEl.setAttribute('width', originalWAttr); else svgEl.removeAttribute('width');
                                         if (originalHAttr) svgEl.setAttribute('height', originalHAttr); else svgEl.removeAttribute('height');
@@ -2086,8 +2101,11 @@ else:
                                         
                                         const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                         btn.innerHTML = originalText; btn.disabled = false;
-                                    }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
-                                }}, 600);
+                                    }}).catch(() => {{ 
+                                        document.body.style.overflow = origBodyOverflow;
+                                        btn.innerHTML = originalText; btn.disabled = false; 
+                                    }});
+                                }}, 800);
                             }}, 100);
                         }};
                     </script>
@@ -2132,7 +2150,7 @@ else:
                             svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px';
                             
                             setTimeout(() => {{
-                                html2canvas(container, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                 .then(canvas => {{
                                     container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                     g.setAttribute('transform', originalTransform || '');

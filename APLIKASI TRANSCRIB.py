@@ -2525,6 +2525,7 @@ else:
                     </div>
                     <script>
                         let panZoomInstance = null;
+                        let currentZoom = 1;
                         
                         mermaid.initialize({{ startOnLoad: false }});
                         
@@ -2545,7 +2546,10 @@ else:
                                     fit: true,
                                     center: true,
                                     minZoom: 0.1,
-                                    maxZoom: 10
+                                    maxZoom: 10,
+                                    onZoom: function(level) {{
+                                        currentZoom = level;
+                                    }}
                                 }});
                             }}
                         }});
@@ -2571,25 +2575,35 @@ else:
                                 const originalOverflow = container.style.overflow;
                                 
                                 const originalViewBox = svgEl.getAttribute('viewBox');
+                                const originalWidthAttr = svgEl.getAttribute('width');
+                                const originalHeightAttr = svgEl.getAttribute('height');
                                 
                                 const bbox = svgEl.getBBox();
                                 const padding = 50;
                                 
-                                let trueWidth = Math.max(bbox.width, 400) + (padding * 2);
-                                let trueHeight = Math.max(bbox.height, 300) + (padding * 2);
+                                let trueWidth = Math.max(bbox.width, 600) + (padding * 2);
+                                let trueHeight = Math.max(bbox.height, 400) + (padding * 2);
                                 
                                 container.style.width = trueWidth + 'px';
                                 container.style.height = trueHeight + 'px';
                                 container.style.overflow = 'visible';
                                 
                                 svgEl.removeAttribute('viewBox');
-                                svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
+                                svgEl.removeAttribute('width');
+                                svgEl.removeAttribute('height');
+                                
+                                const viewBoxX = bbox.x - padding;
+                                const viewBoxY = bbox.y - padding;
+                                const viewBoxWidth = bbox.width + (padding * 2);
+                                const viewBoxHeight = bbox.height + (padding * 2);
+                                
+                                svgEl.setAttribute('viewBox', `${{viewBoxX}} ${{viewBoxY}} ${{viewBoxWidth}} ${{viewBoxHeight}}`);
                                 svgEl.style.width = '100%';
                                 svgEl.style.height = '100%';
                                 
                                 setTimeout(() => {{
                                     html2canvas(container, {{ 
-                                        scale: 2, 
+                                        scale: 3,
                                         useCORS: true, 
                                         backgroundColor: '#ffffff',
                                         width: trueWidth,
@@ -2599,6 +2613,9 @@ else:
                                             if (clonedSvg) {{
                                                 clonedSvg.style.width = '100%';
                                                 clonedSvg.style.height = '100%';
+                                                if (clonedSvg.getAttribute('viewBox') !== svgEl.getAttribute('viewBox')) {{
+                                                    clonedSvg.setAttribute('viewBox', svgEl.getAttribute('viewBox'));
+                                                }}
                                             }}
                                         }}
                                     }})
@@ -2613,13 +2630,28 @@ else:
                                             svgEl.removeAttribute('viewBox');
                                         }}
                                         
+                                        if (originalWidthAttr) {{
+                                            svgEl.setAttribute('width', originalWidthAttr);
+                                        }} else {{
+                                            svgEl.removeAttribute('width');
+                                        }}
+                                        
+                                        if (originalHeightAttr) {{
+                                            svgEl.setAttribute('height', originalHeightAttr);
+                                        }} else {{
+                                            svgEl.removeAttribute('height');
+                                        }}
+                                        
                                         panZoomInstance = svgPanZoom(svgEl, {{
                                             zoomEnabled: true,
                                             controlIconsEnabled: true,
                                             fit: true,
                                             center: true,
                                             minZoom: 0.1,
-                                            maxZoom: 10
+                                            maxZoom: 10,
+                                            onZoom: function(level) {{
+                                                currentZoom = level;
+                                            }}
                                         }});
                                         
                                         const link = document.createElement('a');
@@ -2642,13 +2674,28 @@ else:
                                             svgEl.removeAttribute('viewBox');
                                         }}
                                         
+                                        if (originalWidthAttr) {{
+                                            svgEl.setAttribute('width', originalWidthAttr);
+                                        }} else {{
+                                            svgEl.removeAttribute('width');
+                                        }}
+                                        
+                                        if (originalHeightAttr) {{
+                                            svgEl.setAttribute('height', originalHeightAttr);
+                                        }} else {{
+                                            svgEl.removeAttribute('height');
+                                        }}
+                                        
                                         panZoomInstance = svgPanZoom(svgEl, {{
                                             zoomEnabled: true,
                                             controlIconsEnabled: true,
                                             fit: true,
                                             center: true,
                                             minZoom: 0.1,
-                                            maxZoom: 10
+                                            maxZoom: 10,
+                                            onZoom: function(level) {{
+                                                currentZoom = level;
+                                            }}
                                         }});
                                         
                                         btn.innerHTML = "❌ GAGAL";

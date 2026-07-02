@@ -1032,7 +1032,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI (OBSIDIAN GRAPH STYLE)
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
@@ -1191,9 +1191,9 @@ else:
                 </div>
                 
                 <div class="ai-section">
-                    <div id="aiBrainContainer" style="width: 100%; height: 120px; background: #0f172a; border-radius: 12px; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); border: 1px solid #1e293b;">
+                    <div id="aiBrainContainer" style="width: 100%; height: 180px; background: #1e1e2f; border-radius: 12px; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.6); border: 1px solid #334155;">
                         <canvas id="aiBrainCanvas"></canvas>
-                        <div id="aiBrainText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #64748b; font-size: 12px; font-weight: 800; pointer-events: none; letter-spacing: 4px; z-index: 10; text-align: center;">NEURAL CORE IDLE</div>
+                        <div id="aiBrainText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #64748b; font-size: 13px; font-weight: 800; pointer-events: none; letter-spacing: 5px; z-index: 10; text-align: center; text-transform: uppercase;">NEURAL NETWORK IDLE</div>
                     </div>
                     
                     <div class="ai-row">
@@ -1247,25 +1247,34 @@ else:
                     const canvasCtx = visualizer.getContext('2d');
                     const debugInfo = document.getElementById('debugInfo');
 
-                    // ======== AI BRAIN VISUALIZER ========
+                    // ======== AI BRAIN VISUALIZER (OBSIDIAN GRAPH STYLE) ========
                     const brainCanvas = document.getElementById('aiBrainCanvas');
                     const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
                     const brainText = document.getElementById('aiBrainText');
                     let brainParticles = [];
                     let isThinking = false;
+                    let brainAnimationId;
 
                     function initBrain() {
                         if (!brainCanvas) return;
-                        brainCanvas.width = brainCanvas.parentElement.clientWidth;
-                        brainCanvas.height = brainCanvas.parentElement.clientHeight;
+                        const rect = brainCanvas.parentElement.getBoundingClientRect();
+                        brainCanvas.width = rect.width;
+                        brainCanvas.height = 180;
+                        
                         brainParticles = [];
-                        for(let i=0; i<60; i++) {
+                        // Membuat banyak nodes agar padat seperti Obsidian
+                        const numParticles = Math.floor((brainCanvas.width * brainCanvas.height) / 2500); 
+                        
+                        for(let i=0; i<numParticles; i++) {
+                            // Buat 5% node menjadi "Core" yang sedikit lebih besar
+                            let isCore = Math.random() > 0.95;
                             brainParticles.push({
                                 x: Math.random() * brainCanvas.width,
                                 y: Math.random() * brainCanvas.height,
-                                vx: (Math.random() - 0.5) * 0.8,
-                                vy: (Math.random() - 0.5) * 0.8,
-                                size: Math.random() * 2 + 0.5
+                                vx: (Math.random() - 0.5) * (isCore ? 0.3 : 1.0),
+                                vy: (Math.random() - 0.5) * (isCore ? 0.3 : 1.0),
+                                radius: isCore ? (Math.random() * 2 + 3) : (Math.random() * 1.5 + 0.5),
+                                isCore: isCore
                             });
                         }
                     }
@@ -1274,43 +1283,68 @@ else:
                         if (!brainCanvas) return;
                         brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
                         
-                        let connectionDist = isThinking ? 100 : 60;
-                        let speed = isThinking ? 6 : 1;
-                        let r = isThinking ? 168 : 56;
-                        let g = isThinking ? 85  : 189;
-                        let b = isThinking ? 247 : 248;
+                        // Konfigurasi jarak sinapsis & kecepatan
+                        const maxDistance = isThinking ? 85 : 65;
+                        const speedMultiplier = isThinking ? 2.5 : 0.8;
+                        
+                        // Warna Nodes & Lines (Idle: Slate/Blue | Thinking: Neon Purple/Cyan)
+                        const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.7)"; 
+                        const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 0.9)";
+                        const lineColorR = isThinking ? 192 : 100;
+                        const lineColorG = isThinking ? 132 : 116;
+                        const lineColorB = isThinking ? 252 : 139;
 
                         for(let i=0; i<brainParticles.length; i++) {
                             let p = brainParticles[i];
-                            p.x += p.vx * speed;
-                            p.y += p.vy * speed;
-
+                            
+                            p.x += p.vx * speedMultiplier;
+                            p.y += p.vy * speedMultiplier;
+                            
+                            // Pantulan dinding
                             if(p.x < 0 || p.x > brainCanvas.width) p.vx *= -1;
                             if(p.y < 0 || p.y > brainCanvas.height) p.vy *= -1;
-
+                            
+                            // Gambar Node
                             brainCtx.beginPath();
-                            brainCtx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-                            brainCtx.fillStyle = `rgba(${r},${g},${b}, 0.8)`;
+                            brainCtx.arc(p.x, p.y, isThinking ? p.radius * 1.3 : p.radius, 0, Math.PI * 2);
+                            brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
+                            
+                            // Efek Glow saat Thinking
+                            if (isThinking) {
+                                brainCtx.shadowBlur = p.isCore ? 15 : 8;
+                                brainCtx.shadowColor = p.isCore ? "#2dd4bf" : "#d8b4fe";
+                            } else {
+                                brainCtx.shadowBlur = 0;
+                            }
+                            
                             brainCtx.fill();
-
+                            
+                            // Hitung & Gambar Garis Koneksi (Sinapsis)
                             for(let j=i+1; j<brainParticles.length; j++) {
                                 let p2 = brainParticles[j];
-                                let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                                if(dist < connectionDist) {
+                                let dx = p.x - p2.x;
+                                let dy = p.y - p2.y;
+                                let dist = Math.sqrt(dx*dx + dy*dy);
+                                
+                                if(dist < maxDistance) {
                                     brainCtx.beginPath();
                                     brainCtx.moveTo(p.x, p.y);
                                     brainCtx.lineTo(p2.x, p2.y);
-                                    brainCtx.strokeStyle = `rgba(${r},${g},${b}, ${1 - dist/connectionDist})`;
-                                    brainCtx.lineWidth = isThinking ? 1.5 : 0.5;
+                                    
+                                    // Opasitas berkurang jika jarak semakin jauh
+                                    let opacity = 1 - (dist / maxDistance);
+                                    let alpha = isThinking ? opacity * 0.7 : opacity * 0.25;
+                                    
+                                    brainCtx.strokeStyle = `rgba(${lineColorR}, ${lineColorG}, ${lineColorB}, ${alpha})`;
+                                    brainCtx.lineWidth = isThinking ? 1.2 : 0.5;
                                     brainCtx.stroke();
                                 }
                             }
                         }
-                        requestAnimationFrame(drawBrain);
+                        brainAnimationId = requestAnimationFrame(drawBrain);
                     }
 
                     if (brainCanvas) {
-                        // Inisialisasi setelah DOM beres di-render
                         setTimeout(() => {
                             initBrain();
                             drawBrain();
@@ -1834,12 +1868,12 @@ else:
                         if (!apiKey) { alert('Masukkan API Key!'); return; }
                         if (!transcript) { alert('Transkrip kosong!'); return; }
                         
-                        // 🔴 AKTIFKAN ANIMASI BRAIN
+                        // 🔴 AKTIFKAN ANIMASI BRAIN (OBSIDIAN GRAPH STYLE)
                         isThinking = true;
                         if (brainText) {
                             brainText.innerText = "PROCESSING NEURAL DATA...";
-                            brainText.style.color = "#a855f7";
-                            brainText.style.textShadow = "0 0 12px #c084fc";
+                            brainText.style.color = "#d8b4fe"; // glowing purple
+                            brainText.style.textShadow = "0 0 15px #c084fc";
                         }
                         
                         aiBtn.innerHTML = '⏳ Memproses...';
@@ -2037,7 +2071,7 @@ else:
                             // 🔴 MATIKAN ANIMASI BRAIN SAAT SELESAI
                             isThinking = false;
                             if (brainText) {
-                                brainText.innerText = "NEURAL CORE IDLE";
+                                brainText.innerText = "NEURAL NETWORK IDLE";
                                 brainText.style.color = "#64748b";
                                 brainText.style.textShadow = "none";
                             }

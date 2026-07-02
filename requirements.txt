@@ -7,5 +7,5 @@ numpy
 librosa
 firebase-admin
 requests
-ffmpeg
+
 

@@ -1703,7 +1703,7 @@ else:
                         Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
-                            model: "emini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
+                            model: "Gemini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
                             response_format: {
                                 type: "json_schema",
                                 json_schema: {

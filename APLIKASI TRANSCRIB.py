@@ -8,6 +8,9 @@ from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
 import time
 import re
+import io
+import math
+from pydub import AudioSegment
 
 # Konfigurasi Halaman
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide", initial_sidebar_state="expanded")
@@ -1891,28 +1894,27 @@ else:
                         aiBtn.disabled = true;
                         aiContent.innerHTML = '<div class="p-6 bg-purple-50 rounded-2xl text-center mt-4"><p class="text-purple-600 font-bold">🔄 AI memproses Notulensi & Visual...</p></div>';
 
-                        // Ganti bagian prompt di dalam aiBtn.onclick dengan ini:
-                       const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                        const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
 
-                       ATURAN STRUKTUR OUTPUT:
-                       1. "ringkasan_eksekutif": Array of strings (poin-poin padat).
-                       2. "transkrip_dialog": Array of strings (format: "Pembicara: Isi").
-                       3. "jalannya_diskusi": Array of strings (Narasi detail & lengkap).
-                       4. "keputusan": Array of strings.
-                       5. "rencana_tindak_lanjut": Array of objects (tugas, pic, deadline, prioritas).
-                       6. "hubungan_topik": Array of objects (sumber, target, relasi).
+                        ATURAN STRUKTUR OUTPUT:
+                        1. "ringkasan_eksekutif": Array of strings (poin-poin padat).
+                        2. "transkrip_dialog": Array of strings (format: "Pembicara: Isi").
+                        3. "jalannya_diskusi": Array of strings (Narasi detail & lengkap).
+                        4. "keputusan": Array of strings.
+                        5. "rencana_tindak_lanjut": Array of objects (tugas, pic, deadline, prioritas).
+                        6. "hubungan_topik": Array of objects (sumber, target, relasi).
 
-                       ATURAN MERMAID (WAJIB DIIKUTI!):
-                       - Gunakan format 'graph LR'.
-                       - Gunakan format Node ID dengan kutip ganda dan kurung siku untuk kotak: A["Teks Node 1"] --> B["Teks Node 2"].
-                       - Pastikan alur logical, dari kiri ke kanan (LR).
-                       - Jangan gunakan spasi pada ID Node (Gunakan underscore jika perlu, misal: A_1).
-                       - Struktur harus hierarkis: Parent["Topik Utama"] --> Child["Detail 1"] --> Sub["Detail 2"].
+                        ATURAN MERMAID (WAJIB DIIKUTI!):
+                        - Gunakan format 'graph LR'.
+                        - Gunakan format Node ID dengan kutip ganda dan kurung siku untuk kotak: A["Teks Node 1"] --> B["Teks Node 2"].
+                        - Pastikan alur logical, dari kiri ke kanan (LR).
+                        - Jangan gunakan spasi pada ID Node (Gunakan underscore jika perlu, misal: A_1).
+                        - Struktur harus hierarkis: Parent["Topik Utama"] --> Child["Detail 1"] --> Sub["Detail 2"].
 
-                       ATURAN MARKMAP:
-                       - Gunakan markdown murni dengan nesting yang rapi menggunakan bullet points (#, -, dll).
+                        ATURAN MARKMAP:
+                        - Gunakan markdown murni dengan nesting yang rapi menggunakan bullet points (#, -, dll).
 
-                       Transkrip Rapat: "${transcript}"`;
+                        Transkrip Rapat: "${transcript}"`;
 
                         const payload = {
                             model: "openai/gpt-5-mini", 
@@ -2114,69 +2116,91 @@ else:
         components.html(html_code, height=1500, scrolling=True)
 
     # =====================================================================
-    # TAB 2: FITUR OFFLINE TRANSCRIPTION
+    # TAB 2: FITUR OFFLINE TRANSCRIPTION (DENGAN SMART CHUNKING PYDUB)
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
-        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini).")
+        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). File besar akan dipotong otomatis agar AI tidak kehabisan napas.")
 
         llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
         uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
 
         if uploaded_file is not None:
-            if uploaded_file.size > 26214400: 
-                st.error("⚠️ Ukuran file melebihi 25MB. Silakan kompres audio Anda terlebih dahulu.")
+            st.audio(uploaded_file)
+            
+            kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+            is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
+
+            if not is_allowed_to_upload:
+                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
             else:
-                st.audio(uploaded_file)
-                
-                if not is_admin():
-                    kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
-                    if kuota_upload_sekarang <= 0:
-                        st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
+                if st.button("🎙️ Mulai Transkripsi (Smart Chunking)", use_container_width=True, type="primary"):
+                    if not llm_key: 
+                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
-                        if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
-                            if not llm_key: 
-                                st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                            else:
-                                with st.spinner("⏳ Sedang mentranskripsi audio..."):
-                                    try:
-                                        url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                        headers = {"Authorization": f"Bearer {llm_key}"}
-                                        files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                                        data = {"model": "whisper-1", "response_format": "json"}
-                                        response = requests.post(url, headers=headers, files=files, data=data)
+                        with st.spinner("⏳ Membaca dan memproses file audio..."):
+                            try:
+                                # 1. Load audio menggunakan pydub
+                                audio = AudioSegment.from_file(uploaded_file)
+                                
+                                # 2. Tentukan ukuran chunk (contoh: 10 menit = 600.000 ms)
+                                chunk_length_ms = 10 * 60 * 1000 
+                                total_chunks = math.ceil(len(audio) / chunk_length_ms)
+                                
+                                full_transcript = ""
+                                progress_bar = st.progress(0)
+                                status_text = st.empty()
+                                
+                                url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                headers = {"Authorization": f"Bearer {llm_key}"}
 
-                                        if response.status_code == 200:
-                                            st.session_state["offline_transcript"] = response.json().get("text", "")
-                                            st.session_state["user_kuota_upload"] -= 1
-                                            db.collection("users").document(st.session_state["user_uid"]).update({
-                                                "kuota_upload": st.session_state["user_kuota_upload"]
-                                            })
-                                            st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
-                                        else: 
-                                            st.error(f"❌ Error dari API LiteLLM: {response.text}")
-                                    except Exception as e: 
-                                        st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
-                else:
-                    if st.button("🎙️ Mulai Transkripsi (via LiteLLM Whisper)", use_container_width=True, type="primary"):
-                        if not llm_key: 
-                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                        else:
-                            with st.spinner("⏳ Sedang mentranskripsi audio..."):
-                                try:
-                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                    headers = {"Authorization": f"Bearer {llm_key}"}
-                                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                                # 3. Looping untuk memotong dan mengirim audio
+                                success_transcription = True
+                                for i in range(total_chunks):
+                                    status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
+                                    
+                                    start_time = i * chunk_length_ms
+                                    end_time = min((i + 1) * chunk_length_ms, len(audio))
+                                    audio_chunk = audio[start_time:end_time]
+                                    
+                                    # Export chunk ke dalam memori (BytesIO) agar tidak memakan storage lokal
+                                    chunk_buffer = io.BytesIO()
+                                    audio_chunk.export(chunk_buffer, format="mp3")
+                                    chunk_buffer.name = f"chunk_{i}.mp3"
+                                    chunk_buffer.seek(0)
+                                    
+                                    files = {"file": (chunk_buffer.name, chunk_buffer.read(), "audio/mpeg")}
                                     data = {"model": "whisper-1", "response_format": "json"}
+                                    
                                     response = requests.post(url, headers=headers, files=files, data=data)
-
+                                    
                                     if response.status_code == 200:
-                                        st.session_state["offline_transcript"] = response.json().get("text", "")
-                                        st.success(f"✅ Transkripsi berhasil! (Admin Mode: Unlimited Access)")
-                                    else: 
-                                        st.error(f"❌ Error dari API LiteLLM: {response.text}")
-                                except Exception as e: 
-                                    st.error(f"Terjadi kesalahan saat menghubungi API: {str(e)}")
+                                        chunk_text = response.json().get("text", "")
+                                        full_transcript += chunk_text + " "
+                                    else:
+                                        st.error(f"❌ Error dari API LiteLLM pada chunk {i+1}: {response.text}")
+                                        success_transcription = False
+                                        break
+                                        
+                                    progress_bar.progress((i + 1) / total_chunks)
+                                
+                                # 4. Proses pasca-transkripsi
+                                if success_transcription and full_transcript.strip():
+                                    status_text.success("✅ Seluruh audio berhasil digabungkan!")
+                                    st.session_state["offline_transcript"] = full_transcript.strip()
+                                    
+                                    # Update kuota hanya jika bukan admin
+                                    if not is_admin():
+                                        st.session_state["user_kuota_upload"] -= 1
+                                        db.collection("users").document(st.session_state["user_uid"]).update({
+                                            "kuota_upload": st.session_state["user_kuota_upload"]
+                                        })
+                                        st.success(f"✅ Transkripsi berhasil! Sisa Kuota Upload: {st.session_state['user_kuota_upload']}x")
+                                    else:
+                                        st.success("✅ Transkripsi berhasil! (Admin Mode: Unlimited Access)")
+
+                            except Exception as e: 
+                                st.error(f"Terjadi kesalahan saat memproses audio: {str(e)}")
 
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")

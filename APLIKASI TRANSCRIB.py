@@ -2482,7 +2482,7 @@ else:
                 components.html(cytoscape_html, height=450)
 
             with col_v2:
-                st.markdown("**Mermaid (Mindmap) - KLIK ZOOM UNTUK MELIHAT DETAIL**")
+                st.markdown("**Mermaid (Mindmap) - Gunakan scroll untuk zoom**")
                 raw_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
                 if not raw_mer.lower().startswith('graph') and not raw_mer.lower().startswith('mindmap'): 
                     raw_mer = "graph LR\n" + raw_mer
@@ -2521,26 +2521,25 @@ else:
                             bottom: 10px;
                             left: 50%;
                             transform: translateX(-50%);
-                            background: rgba(0,0,0,0.7);
+                            background: rgba(0,0,0,0.6);
                             color: white;
                             padding: 4px 12px;
                             border-radius: 20px;
-                            font-size: 11px;
+                            font-size: 10px;
                             z-index: 50;
                             pointer-events: none;
-                            opacity: 0.7;
+                            opacity: 0.6;
                         }}
                     </style>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; border-radius:12px; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid_Offline', event)" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full HD</button>
+                    <button id="dlBtn" onclick="saveMermaidAsPNG('wrapper', 'Mermaid_Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:12px;">📸 PNG Full HD</button>
                     <div id="wrapper">
                         <pre class="mermaid">{safe_mer}</pre>
-                        <div class="zoom-hint">🔍 Gunakan scroll untuk zoom / drag untuk geser</div>
+                        <div class="zoom-hint">🔍 Scroll untuk zoom • Drag untuk geser</div>
                     </div>
                     <script>
                         let panZoomInstance = null;
-                        let currentZoom = 1;
                         
                         mermaid.initialize({{ startOnLoad: false }});
                         
@@ -2561,170 +2560,80 @@ else:
                                     fit: true,
                                     center: true,
                                     minZoom: 0.1,
-                                    maxZoom: 10,
-                                    onZoom: function(level) {{
-                                        currentZoom = level;
-                                    }}
+                                    maxZoom: 10
                                 }});
                             }}
                         }});
 
-                        window.downloadMermaidImage = function(wrapperId, title, event) {{
-                            const container = document.getElementById(wrapperId);
+                        function saveMermaidAsPNG(containerId, title) {{
+                            const container = document.getElementById(containerId);
                             const svgEl = container.querySelector('svg');
-                            if (!svgEl) return;
+                            if (!svgEl) {{
+                                alert('Gambar belum siap!');
+                                return;
+                            }}
                             
                             const btn = document.getElementById('dlBtn');
                             const originalText = btn.innerHTML;
-                            btn.innerHTML = "⏳ MENYIMPAN HD...";
+                            btn.innerHTML = "⏳ MENYIMPAN...";
                             btn.disabled = true;
                             
-                            if (panZoomInstance) {{
-                                panZoomInstance.destroy();
-                                panZoomInstance = null;
+                            // Ambil ukuran sebenarnya dari SVG
+                            const bbox = svgEl.getBBox();
+                            const padding = 50;
+                            const width = bbox.width + (padding * 2);
+                            const height = bbox.height + (padding * 2);
+                            
+                            // Clone SVG untuk di-capture
+                            const clone = container.cloneNode(true);
+                            clone.style.position = 'fixed';
+                            clone.style.top = '-9999px';
+                            clone.style.left = '-9999px';
+                            clone.style.width = width + 'px';
+                            clone.style.height = height + 'px';
+                            clone.style.overflow = 'visible';
+                            clone.style.background = '#f8fafc';
+                            clone.style.zIndex = '-1';
+                            document.body.appendChild(clone);
+                            
+                            // Setup viewBox pada clone
+                            const cloneSvg = clone.querySelector('svg');
+                            if (cloneSvg) {{
+                                cloneSvg.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{width}} ${{height}}`);
+                                cloneSvg.style.width = '100%';
+                                cloneSvg.style.height = '100%';
                             }}
                             
+                            // Tunggu rendering
                             setTimeout(() => {{
-                                const originalWidth = container.style.width;
-                                const originalHeight = container.style.height;
-                                const originalOverflow = container.style.overflow;
-                                
-                                const originalViewBox = svgEl.getAttribute('viewBox');
-                                const originalWidthAttr = svgEl.getAttribute('width');
-                                const originalHeightAttr = svgEl.getAttribute('height');
-                                
-                                // Dapatkan ukuran sebenarnya dari SVG
-                                const bbox = svgEl.getBBox();
-                                const padding = 80;
-                                
-                                // Hitung ukuran besar untuk HD
-                                let trueWidth = Math.max(bbox.width, 800) + (padding * 2);
-                                let trueHeight = Math.max(bbox.height, 600) + (padding * 2);
-                                
-                                container.style.width = trueWidth + 'px';
-                                container.style.height = trueHeight + 'px';
-                                container.style.overflow = 'visible';
-                                
-                                svgEl.removeAttribute('viewBox');
-                                svgEl.removeAttribute('width');
-                                svgEl.removeAttribute('height');
-                                
-                                const viewBoxX = bbox.x - padding;
-                                const viewBoxY = bbox.y - padding;
-                                const viewBoxWidth = bbox.width + (padding * 2);
-                                const viewBoxHeight = bbox.height + (padding * 2);
-                                
-                                svgEl.setAttribute('viewBox', `${{viewBoxX}} ${{viewBoxY}} ${{viewBoxWidth}} ${{viewBoxHeight}}`);
-                                svgEl.style.width = '100%';
-                                svgEl.style.height = '100%';
-                                
-                                setTimeout(() => {{
-                                    html2canvas(container, {{ 
-                                        scale: 4,
-                                        useCORS: true, 
-                                        backgroundColor: '#ffffff',
-                                        width: trueWidth,
-                                        height: trueHeight,
-                                        logging: false,
-                                        onclone: function(doc) {{
-                                            const clonedSvg = doc.querySelector('svg');
-                                            if (clonedSvg) {{
-                                                clonedSvg.style.width = '100%';
-                                                clonedSvg.style.height = '100%';
-                                                if (clonedSvg.getAttribute('viewBox') !== svgEl.getAttribute('viewBox')) {{
-                                                    clonedSvg.setAttribute('viewBox', svgEl.getAttribute('viewBox'));
-                                                }}
-                                            }}
-                                        }}
-                                    }})
-                                    .then(canvas => {{
-                                        container.style.width = originalWidth || '100%';
-                                        container.style.height = originalHeight || '400px';
-                                        container.style.overflow = originalOverflow || 'hidden';
-                                        
-                                        if (originalViewBox) {{
-                                            svgEl.setAttribute('viewBox', originalViewBox);
-                                        }} else {{
-                                            svgEl.removeAttribute('viewBox');
-                                        }}
-                                        
-                                        if (originalWidthAttr) {{
-                                            svgEl.setAttribute('width', originalWidthAttr);
-                                        }} else {{
-                                            svgEl.removeAttribute('width');
-                                        }}
-                                        
-                                        if (originalHeightAttr) {{
-                                            svgEl.setAttribute('height', originalHeightAttr);
-                                        }} else {{
-                                            svgEl.removeAttribute('height');
-                                        }}
-                                        
-                                        panZoomInstance = svgPanZoom(svgEl, {{
-                                            zoomEnabled: true,
-                                            controlIconsEnabled: true,
-                                            fit: true,
-                                            center: true,
-                                            minZoom: 0.1,
-                                            maxZoom: 10,
-                                            onZoom: function(level) {{
-                                                currentZoom = level;
-                                            }}
-                                        }});
-                                        
-                                        const link = document.createElement('a');
-                                        link.download = 'Mermaid_' + title + '.png';
-                                        link.href = canvas.toDataURL('image/png', 1.0);
-                                        link.click();
-                                        
+                                html2canvas(clone, {{
+                                    scale: 3,
+                                    useCORS: true,
+                                    backgroundColor: '#f8fafc',
+                                    width: width,
+                                    height: height
+                                }}).then(canvas => {{
+                                    // Download
+                                    const link = document.createElement('a');
+                                    link.download = title.replace(/\\s+/g, '_') + '.png';
+                                    link.href = canvas.toDataURL('image/png', 1.0);
+                                    link.click();
+                                    
+                                    // Cleanup
+                                    document.body.removeChild(clone);
+                                    btn.innerHTML = originalText;
+                                    btn.disabled = false;
+                                }}).catch(err => {{
+                                    console.error(err);
+                                    document.body.removeChild(clone);
+                                    btn.innerHTML = "❌ GAGAL";
+                                    setTimeout(() => {{
                                         btn.innerHTML = originalText;
                                         btn.disabled = false;
-                                    }})
-                                    .catch(err => {{
-                                        console.error('html2canvas error:', err);
-                                        container.style.width = originalWidth || '100%';
-                                        container.style.height = originalHeight || '400px';
-                                        container.style.overflow = originalOverflow || 'hidden';
-                                        
-                                        if (originalViewBox) {{
-                                            svgEl.setAttribute('viewBox', originalViewBox);
-                                        }} else {{
-                                            svgEl.removeAttribute('viewBox');
-                                        }}
-                                        
-                                        if (originalWidthAttr) {{
-                                            svgEl.setAttribute('width', originalWidthAttr);
-                                        }} else {{
-                                            svgEl.removeAttribute('width');
-                                        }}
-                                        
-                                        if (originalHeightAttr) {{
-                                            svgEl.setAttribute('height', originalHeightAttr);
-                                        }} else {{
-                                            svgEl.removeAttribute('height');
-                                        }}
-                                        
-                                        panZoomInstance = svgPanZoom(svgEl, {{
-                                            zoomEnabled: true,
-                                            controlIconsEnabled: true,
-                                            fit: true,
-                                            center: true,
-                                            minZoom: 0.1,
-                                            maxZoom: 10,
-                                            onZoom: function(level) {{
-                                                currentZoom = level;
-                                            }}
-                                        }});
-                                        
-                                        btn.innerHTML = "❌ GAGAL";
-                                        setTimeout(() => {{
-                                            btn.innerHTML = originalText;
-                                            btn.disabled = false;
-                                        }}, 2000);
-                                    }});
-                                }}, 500);
-                            }}, 200);
-                        }};
+                                    }}, 2000);
+                                }});
+                            }}, 300);
+                        }}
                     </script>
                 </body></html>
                 """

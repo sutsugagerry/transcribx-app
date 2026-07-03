@@ -1580,44 +1580,44 @@ else:
 
                     // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
                     // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
-window.dlMermaidLive = function() {
-    const mDiv = document.getElementById('mermaidLive');
-    const svgEl = mDiv.querySelector('svg');
-    if (!svgEl) return;
-    
-    const btn = document.getElementById('dlBtnMermaidLive');
-    if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
-
-    const bbox = svgEl.getBBox();
-    const padding = 20;
-    const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
-    const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
-
-    const origW = svgEl.style.width;
-    const origH = svgEl.style.height;
-    const origMaxW = svgEl.style.maxWidth;
-    
-    svgEl.style.width = width + 'px';
-    svgEl.style.height = height + 'px';
-    svgEl.style.maxWidth = 'none';
-
-    // PERBAIKAN: Target mDiv (elemen HTML), bukan svgEl
-    html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
-    .then(canvas => {
-        svgEl.style.width = origW;
-        svgEl.style.height = origH;
-        svgEl.style.maxWidth = origMaxW;
-        
-        const link = document.createElement('a'); 
-        link.download = 'Mermaid_Live.png'; 
-        link.href = canvas.toDataURL('image/png', 1.0); 
-        link.click();
-        if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-    }).catch((e) => { 
-        console.error("Download Error:", e);
-        if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
-    });
-};
+                    window.dlMermaidLive = function() {
+                        const mDiv = document.getElementById('mermaidLive');
+                        const svgEl = mDiv.querySelector('svg');
+                        if (!svgEl) return;
+                        
+                        const btn = document.getElementById('dlBtnMermaidLive');
+                        if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                    
+                        const bbox = svgEl.getBBox();
+                        const padding = 20;
+                        const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
+                        const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                    
+                        const origW = svgEl.style.width;
+                        const origH = svgEl.style.height;
+                        const origMaxW = svgEl.style.maxWidth;
+                        
+                        svgEl.style.width = width + 'px';
+                        svgEl.style.height = height + 'px';
+                        svgEl.style.maxWidth = 'none';
+                    
+                        // PERBAIKAN: Target mDiv (elemen HTML), bukan svgEl
+                        html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
+                        .then(canvas => {
+                            svgEl.style.width = origW;
+                            svgEl.style.height = origH;
+                            svgEl.style.maxWidth = origMaxW;
+                            
+                            const link = document.createElement('a'); 
+                            link.download = 'Mermaid_Live.png'; 
+                            link.href = canvas.toDataURL('image/png', 1.0); 
+                            link.click();
+                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                        }).catch((e) => { 
+                            console.error("Download Error:", e);
+                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
+                        });
+                    };
 
                     // DOWNLOAD MARKMAP LIVE
                     window.dlMarkmapLive = function() {

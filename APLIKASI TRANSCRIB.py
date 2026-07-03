@@ -565,61 +565,79 @@ if not st.session_state["logged_in"]:
         # ==========================================
         # BAGIAN HARGA PAKET (GLASSMORPHISM)
         # ==========================================
-        # 1. Definisi Fungsi Render Kartu
-        def render_price_card(title, price, features, bg, border, badge, title_color):
-            html_content = f"""
-            <div style='
-                background: {bg}; 
-                backdrop-filter: blur(12px); 
-                border: {border}; 
-                border-radius: 16px; 
-                padding: 30px 20px; 
-                color: white; 
-                height: 100%; 
-                min-height: 420px; 
-                text-align: center; 
-                position: relative;
-                display: flex;
-                flex-direction: column;
-            '>
-                {badge}
-                <h3 style='color: {title_color}; margin-top: 0; font-size: 20px; margin-bottom: 10px;'>{title}</h3>
-                <h2 style='color: white; font-size: 32px; margin: 10px 0;'>{price} <span style='font-size: 14px; color: #94a3b8; font-weight: normal;'>/ 30 hari</span></h2>
-                <hr style='border-color: rgba(255,255,255,0.1); margin: 20px 0;'>
-                <ul style='
-                    list-style: none; 
-                    padding: 0; 
-                    margin: 0; 
-                    font-size: 14px; 
-                    color: #cbd5e1; 
-                    text-align: left; 
-                    line-height: 2;
-                    flex-grow: 1;
-                '>
-                    {features}
-                </ul>
-            </div>
-            """
-            st.markdown(html_content, unsafe_allow_html=True)
-        
-        # 2. Pemanggilan Fungsi
+        st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 20px; font-weight: bold;'>✨ Paket Langganan Tersedia</h3>", unsafe_allow_html=True)
+        st.write("")
+         
         col_p1, col_p2, col_p3 = st.columns(3)
-        
+         
+        # ===== BASIC PACKAGE =====
         with col_p1:
-            feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>5x</b> Premium AI Summary</li><li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>"
-            render_price_card("BASIC", "Rp 29.000", feats, "rgba(30, 41, 59, 0.4)", "1px solid rgba(255,255,255,0.1)", "", "#94a3b8")
-        
+            st.markdown("""
+            <div style="background-color:rgba(30, 41, 59, 0.4); padding:30px 20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <h3 style="color:#94a3b8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket BASIC</h3>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 29.000</h2>
+                <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
+                <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
+                <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>5x</b> AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+                <button style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px; transition:all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#3b82f6'; this.style.transform='translateY(0)'">Pilih Paket</button>
+            </div>
+            """, unsafe_allow_html=True)
+         
+        # ===== EXECUTIVE PACKAGE (BEST SELLER) =====
         with col_p2:
-            feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>10x</b> Premium AI Summary</li><li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>"
-            badge = "<div style='position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; padding:4px 15px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow: 0 4px 10px rgba(239,68,68,0.4);'>🔥 Best Seller</div>"
-            render_price_card("EXECUTIVE", "Rp 49.000", feats, "rgba(15, 23, 42, 0.7)", "2px solid #38bdf8", badge, "#38bdf8")
-        
+            st.markdown("""
+            <div style="background-color:rgba(15, 23, 42, 0.8); padding:30px 20px; border-radius:15px; border:2px solid #38bdf8; height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; box-shadow:0 10px 25px -5px rgba(56,189,248,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; padding:6px 18px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(239,68,68,0.4); letter-spacing:0.5px;">🔥 BEST SELLER 🔥</div>
+                
+                <h3 style="color:#38bdf8; margin-top:15px; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket EXECUTIVE</h3>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 49.000</h2>
+                <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
+                <hr style="border-color:rgba(59, 130, 246, 0.3); margin:20px 0;">
+                <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>10x</b> AI Summary & Mindmap</li>
+                    <li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+                <button style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px; transition:all 0.2s;" onmouseover="this.style.background='#059669'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#10b981'; this.style.transform='translateY(0)'">Pilih Paket</button>
+            </div>
+            """, unsafe_allow_html=True)
+         
+        # ===== MASTER / VIP PACKAGE =====
         with col_p3:
-            feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>30x</b> Premium AI Summary</li><li>✅ <b>10x</b> Upload Audio (Max 30mnt)</li><li>🌟 <b>Prioritas Support</b> via WA</li>"
-            render_price_card("MASTER", "Rp 129.000", feats, "rgba(30, 41, 59, 0.4)", "1px solid rgba(255,255,255,0.1)", "", "#fb7185")
+            st.markdown("""
+            <div style="background-color:rgba(30, 41, 59, 0.4); padding:30px 20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <h3 style="color:#fb7185; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket MASTER</h3>
+                <p style="color:#fca5a5; font-size:12px; margin:0 0 8px 0; font-weight:bold;">VIP / ENTERPRISE</p>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 129.000</h2>
+                <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
+                <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
+                <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>30x</b> AI Summary & Mindmap</li>
+                    <li>✅ <b>10x</b> Upload Audio (Max 30mnt)</li>
+                    <li>🌟 <b>Prioritas Support</b> via WA 24/7</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+                <button style="background:#f59e0b; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px; transition:all 0.2s;" onmouseover="this.style.background='#d97706'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#f59e0b'; this.style.transform='translateY(0)'">Pilih Paket</button>
+            </div>
+            """, unsafe_allow_html=True)
+         
+        st.write("")
+        st.markdown("""
+        <div style="text-align:center; margin-top:30px; padding:20px; background:rgba(56, 189, 248, 0.1); border-radius:12px; border:1px solid rgba(56, 189, 248, 0.3);">
+            <h4 style="color:#38bdf8; margin:0;">Ingin aktivasi atau perpanjang paket?</h4>
+            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Hubungi <b>Admin (Gerry)</b> via WhatsApp untuk mendapatkan akses premium 🚀</p>
+        </div>
+        """, unsafe_allow_html=True)
+         
         st.write("")
         st.write("")
-        st.markdown("<p style='text-align:center; color:#64748b; font-size:15px;'>Ingin aktivasi atau perpanjang paket? Hubungi Admin (Gerry) secara langsung.</p><br><br>", unsafe_allow_html=True)
 
     with tab_login:
         col1, col2, col3 = st.columns([1, 1.5, 1])

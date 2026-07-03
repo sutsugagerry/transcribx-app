@@ -1578,35 +1578,55 @@ else:
                         }
                     };
 
-                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
-                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
+                    
+                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)                   
                     window.dlMermaidLive = function() {
                         const mDiv = document.getElementById('mermaidLive');
+                        const container = document.getElementById('merContainerLive');
                         const svgEl = mDiv.querySelector('svg');
                         if (!svgEl) return;
                         
                         const btn = document.getElementById('dlBtnMermaidLive');
                         if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
                     
+                        // Hitung ukuran asli
                         const bbox = svgEl.getBBox();
-                        const padding = 20;
-                        const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
-                        const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                        const padding = 40;
+                        const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
+                        const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                     
-                        const origW = svgEl.style.width;
-                        const origH = svgEl.style.height;
-                        const origMaxW = svgEl.style.maxWidth;
+                        // Backup style asli
+                        const origSvgW = svgEl.style.width;
+                        const origSvgH = svgEl.style.height;
+                        const origSvgMaxW = svgEl.style.maxWidth;
+                        const origDivCssText = mDiv.style.cssText;
+                        const origClasses = mDiv.className;
+                        const origContainerOverflow = container.style.overflow;
+                    
+                        // RESET CSS sementara agar flexbox tidak memotong gambar
+                        mDiv.className = ''; // Copot Tailwind class (flex, justify-center, dll)
+                        mDiv.style.width = trueWidth + 'px';
+                        mDiv.style.height = trueHeight + 'px';
+                        mDiv.style.backgroundColor = '#ffffff';
+                        mDiv.style.display = 'block'; 
                         
-                        svgEl.style.width = width + 'px';
-                        svgEl.style.height = height + 'px';
+                        svgEl.style.width = trueWidth + 'px';
+                        svgEl.style.height = trueHeight + 'px';
                         svgEl.style.maxWidth = 'none';
+                        
+                        container.style.overflow = 'visible';
                     
-                        // PERBAIKAN: Target mDiv (elemen HTML), bukan svgEl
+                        // Proses Foto
                         html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
                         .then(canvas => {
-                            svgEl.style.width = origW;
-                            svgEl.style.height = origH;
-                            svgEl.style.maxWidth = origMaxW;
+                            // Kembalikan semua style ke kondisi semula
+                            svgEl.style.width = origSvgW;
+                            svgEl.style.height = origSvgH;
+                            svgEl.style.maxWidth = origSvgMaxW;
+                            
+                            mDiv.className = origClasses;
+                            mDiv.style.cssText = origDivCssText;
+                            container.style.overflow = origContainerOverflow;
                             
                             const link = document.createElement('a'); 
                             link.download = 'Mermaid_Live.png'; 
@@ -1618,7 +1638,6 @@ else:
                             if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
                         });
                     };
-
                     // DOWNLOAD MARKMAP LIVE
                     window.dlMarkmapLive = function() {
                         const container = document.getElementById('markmapLiveWrapper');
@@ -2035,8 +2054,10 @@ else:
                         }} catch(e) {{}}
 
                         // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
+                        // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
                         window.downloadMermaidImage = function(wrapperId, title) {{
                             const mDiv = document.getElementById(wrapperId); 
+                            const container = document.getElementById('merContainerWrap');
                             const svgEl = mDiv.querySelector('svg');
                             if (!svgEl) return;
                             
@@ -2045,31 +2066,42 @@ else:
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
                             setTimeout(() => {{
+                                // Hitung ukuran asli
                                 const bbox = svgEl.getBBox(); 
                                 const padding = 40;
                                 const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
                                 const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                                 
-                                const origW = svgEl.style.width;
-                                const origH = svgEl.style.height;
-                                const origMaxW = svgEl.style.maxWidth;
-                                const origOverflow = mDiv.style.overflow;
+                                // Backup style asli
+                                const origSvgW = svgEl.style.width;
+                                const origSvgH = svgEl.style.height;
+                                const origSvgMaxW = svgEl.style.maxWidth;
+                                const origDivCssText = mDiv.style.cssText;
+                                const origContainerOverflow = container ? container.style.overflow : '';
+                                
+                                // RESET CSS sementara agar flexbox tidak memotong gambar
+                                mDiv.style.width = trueWidth + 'px';
+                                mDiv.style.height = trueHeight + 'px';
+                                mDiv.style.display = 'block';
+                                mDiv.style.backgroundColor = '#ffffff';
+                                mDiv.style.margin = '0 auto';
                                 
                                 svgEl.style.width = trueWidth + 'px';
                                 svgEl.style.height = trueHeight + 'px';
                                 svgEl.style.maxWidth = 'none';
-                                mDiv.style.overflow = 'visible';
-                                mDiv.style.width = trueWidth + 'px';
                                 
-                                // KUNCI PERBAIKAN: Targetkan mDiv, bukan svgEl
+                                if (container) container.style.overflow = 'visible';
+                                
+                                // Proses Foto
                                 html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
                                 .then(canvas => {{
-                                    // Kembalikan ke style semula
-                                    svgEl.style.width = origW;
-                                    svgEl.style.height = origH;
-                                    svgEl.style.maxWidth = origMaxW;
-                                    mDiv.style.overflow = origOverflow;
-                                    mDiv.style.width = '100%';
+                                    // Kembalikan semua style ke kondisi semula
+                                    svgEl.style.width = origSvgW;
+                                    svgEl.style.height = origSvgH;
+                                    svgEl.style.maxWidth = origSvgMaxW;
+                                    
+                                    mDiv.style.cssText = origDivCssText;
+                                    if (container) container.style.overflow = origContainerOverflow;
                                     
                                     const link = document.createElement('a'); 
                                     link.download = 'Mermaid_' + title + '.png'; 

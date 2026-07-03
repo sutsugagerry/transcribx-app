@@ -565,33 +565,36 @@ if not st.session_state["logged_in"]:
         # ==========================================
         # BAGIAN HARGA PAKET (GLASSMORPHISM)
         # ==========================================
-        st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 60px; font-weight: bold;'>💳 Pilihan Paket Langganan</h3>", unsafe_allow_html=True)
-        st.write("")
+        # 1. Definisi Fungsi Render Kartu
+        def render_price_card(title, price, features, bg, border, badge, title_color):
+            html_content = f"""
+            <div style='background: {bg}; backdrop-filter: blur(12px); border: {border}; border-radius: 16px; padding: 30px 20px; color: white; height: 100%; text-align: center; position: relative;'>
+                {badge}
+                <h3 style='color: {title_color}; margin-top: 0; font-size: 20px;'>{title}</h3>
+                <h2 style='color: white; font-size: 32px; margin: 10px 0;'>{price} <span style='font-size: 14px; color: #94a3b8; font-weight: normal;'>/ 30 hari</span></h2>
+                <hr style='border-color: rgba(255,255,255,0.1); margin: 20px 0;'>
+                <ul style='list-style: none; padding: 0; margin: 0; font-size: 14px; color: #cbd5e1; text-align: left; line-height: 2;'>
+                    {features}
+                </ul>
+            </div>
+            """
+            st.markdown(html_content, unsafe_allow_html=True)
+        
+        # 2. Pemanggilan Fungsi
         col_p1, col_p2, col_p3 = st.columns(3)
-        glass_price = """
-        <div style='background: {bg}; backdrop-filter: blur(12px); border: {border}; border-radius: 16px; padding: 30px 20px; color: white; height: 100%; text-align: center; position: relative; transition: transform 0.3s;' onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-            {badge}
-            <h3 style='color: {title_color}; margin-top: 0; font-size: 20px;'>{title}</h3>
-            <h2 style='color: white; font-size: 32px; margin: 10px 0;'>{price} <span style='font-size: 14px; color: #94a3b8; font-weight: normal;'>/ 30 hari</span></h2>
-            <hr style='border-color: rgba(255,255,255,0.1); margin: 20px 0;'>
-            <ul style='list-style: none; padding: 0; margin: 0; font-size: 14px; color: #cbd5e1; text-align: left; line-height: 2;'>
-                {features}
-            </ul>
-        </div>
-        """
-        with col_p1: 
+        
+        with col_p1:
             feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>5x</b> Premium AI Summary</li><li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>"
-            st.markdown(glass_price.format(bg="rgba(30, 41, 59, 0.4)", border="1px solid rgba(255,255,255,0.1)", badge="", title_color="#94a3b8", title="BASIC", price="Rp 29.000", features=feats), unsafe_allow_html=True)
+            render_price_card("BASIC", "Rp 29.000", feats, "rgba(30, 41, 59, 0.4)", "1px solid rgba(255,255,255,0.1)", "", "#94a3b8")
         
         with col_p2:
             feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>10x</b> Premium AI Summary</li><li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>"
             badge = "<div style='position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; padding:4px 15px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow: 0 4px 10px rgba(239,68,68,0.4);'>🔥 Best Seller</div>"
-            st.markdown(glass_price.format(bg="rgba(15, 23, 42, 0.7)", border="2px solid #38bdf8", badge=badge, title_color="#38bdf8", title="EXECUTIVE", price="Rp 49.000", features=feats), unsafe_allow_html=True)
+            render_price_card("EXECUTIVE", "Rp 49.000", feats, "rgba(15, 23, 42, 0.7)", "2px solid #38bdf8", badge, "#38bdf8")
         
         with col_p3:
             feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>30x</b> Premium AI Summary</li><li>✅ <b>10x</b> Upload Audio (Max 30mnt)</li><li>🌟 <b>Prioritas Support</b> via WA</li>"
-            st.markdown(glass_price.format(bg="rgba(30, 41, 59, 0.4)", border="1px solid rgba(255,255,255,0.1)", badge="", title_color="#fb7185", title="MASTER", price="Rp 129.000", features=feats), unsafe_allow_html=True)
-
+            render_price_card("MASTER", "Rp 129.000", feats, "rgba(30, 41, 59, 0.4)", "1px solid rgba(255,255,255,0.1)", "", "#fb7185")
         st.write("")
         st.write("")
         st.markdown("<p style='text-align:center; color:#64748b; font-size:15px;'>Ingin aktivasi atau perpanjang paket? Hubungi Admin (Gerry) secara langsung.</p><br><br>", unsafe_allow_html=True)

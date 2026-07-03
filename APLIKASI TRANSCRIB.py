@@ -1767,7 +1767,7 @@ else:
                                     rawMer = `graph LR\n` + rawMer;
                                 }
                                 // Paksa hapus semua kutip dan kurung aneh
-                                rawMer = rawMer.replace(/"/g, "'").replace(/\(/g, "[").replace(/\)/g, "]"); 
+                                rawMer = rawMer.replace(/`/g, "");
                                 
                                 const mDiv = document.getElementById('mermaidLive'); 
                                 mDiv.textContent = rawMer; 
@@ -1971,7 +1971,7 @@ else:
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
             
-            clean_mer = clean_mer.replace('"', "'").replace('(', '[').replace(')', ']') # Sapu bersih semua perusak syntax
+            clean_mer = clean_mer.replace('(', '[').replace(')', ']')
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())

@@ -2044,4 +2044,145 @@ else:
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
                     <style>
-                        .zoom-controls {{ position: absolute; right: 20px; bottom:
+                        .zoom-controls {{ position: absolute; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }}
+                        .zoom-btn {{ background-color: #a8a29e; color: white; border: none; font-weight: 900; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 14px; text-align: center; opacity: 0.9; transition: 0.2s; }}
+                        .zoom-btn:hover {{ background-color: #78716c; opacity: 1; }}
+                        .zoom-btn-text {{ font-size: 11px; padding: 4px 6px; }}
+                    </style>
+                </head>
+                <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                    <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Mermaid')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
+                    
+                    <div id="wrapper" style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#ffffff; position:relative;">
+                        <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center;"></pre>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="if(window.panZoom) window.panZoom.zoomIn()">➕</button>
+                            <button class="zoom-btn zoom-btn-text" onclick="if(window.panZoom) {{ window.panZoom.resetZoom(); window.panZoom.center(); }}">RESET</button>
+                            <button class="zoom-btn" onclick="if(window.panZoom) window.panZoom.zoomOut()">➖</button>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        document.getElementById('merContainer').textContent = {mer_json_str};
+                        mermaid.initialize({{ startOnLoad: false, theme: 'default' }});
+                        mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
+                            const svgEl = document.querySelector('.mermaid svg');
+                            if (svgEl) {{
+                                svgEl.removeAttribute('height'); // Matikan pemotongan bawaan
+                                svgEl.removeAttribute('width');
+                                svgEl.style.maxWidth = '100%';
+                                svgEl.style.width = '100%'; 
+                                svgEl.style.height = '100%';
+                                window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: false, fit: true, center: true, minZoom: 0.1 }});
+                            }}
+                        }});
+
+                        // DOWNLOAD MERMAID OFFLINE (FIXED SCALE & ZOOM)
+                        window.downloadMermaidImage = function(wrapperId, title) {{
+                            const container = document.getElementById(wrapperId); 
+                            const svgEl = container.querySelector('svg');
+                            if (!svgEl) return;
+                            const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
+                            btn.innerHTML = "⏳..."; btn.disabled = true;
+                            
+                            if (window.panZoom) {{ window.panZoom.destroy(); window.panZoom = null; }}
+                            
+                            setTimeout(() => {{
+                                const originalWidth = container.style.width; 
+                                const originalHeight = container.style.height; 
+                                const originalOverflow = container.style.overflow;
+                                
+                                const bbox = svgEl.getBBox(); const padding = 60;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); 
+                                const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px'; 
+                                container.style.height = trueHeight + 'px'; 
+                                container.style.overflow = 'visible';
+                                
+                                svgEl.setAttribute('viewBox', `${{bbox.x - padding}} ${{bbox.y - padding}} ${{trueWidth}} ${{trueHeight}}`);
+                                svgEl.style.width = trueWidth + 'px';
+                                svgEl.style.height = trueHeight + 'px';
+                                
+                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                .then(canvas => {{
+                                    container.style.width = originalWidth; 
+                                    container.style.height = originalHeight; 
+                                    container.style.overflow = originalOverflow;
+                                    
+                                    svgEl.removeAttribute('width');
+                                    svgEl.removeAttribute('height');
+                                    svgEl.style.maxWidth = '100%';
+                                    svgEl.style.width = '100%'; 
+                                    svgEl.style.height = '100%';
+                                    
+                                    window.panZoom = svgPanZoom(svgEl, {{ zoomEnabled: true, controlIconsEnabled: false, fit: true, center: true, minZoom: 0.1 }});
+                                    
+                                    const link = document.createElement('a'); 
+                                    link.download = 'Mermaid_' + title + '.png'; 
+                                    link.href = canvas.toDataURL('image/png', 1.0); 
+                                    link.click();
+                                    btn.innerHTML = originalText; btn.disabled = false;
+                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
+                            }}, 500);
+                        }};
+                    </script>
+                </body></html>
+                """
+                components.html(mer_html, height=450)
+
+            st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
+            markmap_html = f"""
+            <!DOCTYPE html><html><head>
+                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+            </head>
+            <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button>
+                <div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                    <svg id="markmap" style="width:100%; height:100%;"></svg>
+                </div>
+                <script>
+                    const markdown = {markmap_json_str};
+                    const {{ Transformer, Markmap }} = window.markmap;
+                    const {{ root }} = new Transformer().transform(markdown);
+                    Markmap.create('#markmap', null, root);
+
+                    // DOWNLOAD MARKMAP OFFLINE (FIXED SCALE & ZOOM)
+                    window.downloadMarkmapImage = function(wrapperId, title) {{
+                        const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
+                        const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
+                        btn.innerHTML = "⏳..."; btn.disabled = true;
+                        try {{
+                            const g = svgEl.querySelector('g'); if (!g) throw new Error("G missing");
+                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                            const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
+                            
+                            g.setAttribute('transform', 'translate(0,0) scale(1)');
+                            
+                            setTimeout(() => {{
+                                const bbox = g.getBBox(); const padding = 50;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                                svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
+                                
+                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                .then(canvas => {{
+                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    g.setAttribute('transform', originalTransform || '');
+                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
+                                    
+                                    const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
+                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    btn.innerHTML = originalText; btn.disabled = false;
+                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
+                            }}, 500);
+                        }} catch (err) {{ btn.innerHTML = originalText; btn.disabled = false; }}
+                    }};
+                </script>
+            </body></html>
+            """
+            components.html(markmap_html, height=600)

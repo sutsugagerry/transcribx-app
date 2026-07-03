@@ -592,17 +592,17 @@ if not st.session_state["logged_in"]:
         with col_p2:
             st.markdown("""
             <div style="background-color:rgba(30, 41, 59, 0.4); padding:30px 20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <h3 style="color:#94a3b8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket BASIC</h3>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 29.000</h2>
+                <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; padding:6px 18px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(239,68,68,0.4); letter-spacing:0.5px;">🔥 BEST SELLER</div>
+                
+                <h3 style="color:#38bdf8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">EXECUTIVE</h3>
+                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 49.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>5x</b> AI Summary & Mindmap</li>
-                    <li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>
-                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>
                 </ul>
-                <button style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px; transition:all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#3b82f6'; this.style.transform='translateY(0)'">Pilih Paket</button>
             </div>
             """, unsafe_allow_html=True)
          

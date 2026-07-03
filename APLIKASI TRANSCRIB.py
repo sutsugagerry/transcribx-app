@@ -2035,8 +2035,7 @@ else:
                         }} catch(e) {{}}
 
                         // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
-                        // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
-                        window.downloadMermaidImage = function(wrapperId, title) {
+                        window.downloadMermaidImage = function(wrapperId, title) {{
                             const mDiv = document.getElementById(wrapperId); 
                             const svgEl = mDiv.querySelector('svg');
                             if (!svgEl) return;
@@ -2045,37 +2044,43 @@ else:
                             const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
-                            setTimeout(() => {
-                                const bbox = svgEl.getBBox(); const padding = 40;
-                                const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
-                                const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                            setTimeout(() => {{
+                                const bbox = svgEl.getBBox(); 
+                                const padding = 40;
+                                const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
+                                const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                                 
                                 const origW = svgEl.style.width;
                                 const origH = svgEl.style.height;
                                 const origMaxW = svgEl.style.maxWidth;
+                                const origOverflow = mDiv.style.overflow;
                                 
-                                svgEl.style.width = width + 'px';
-                                svgEl.style.height = height + 'px';
+                                svgEl.style.width = trueWidth + 'px';
+                                svgEl.style.height = trueHeight + 'px';
                                 svgEl.style.maxWidth = 'none';
+                                mDiv.style.overflow = 'visible';
+                                mDiv.style.width = trueWidth + 'px';
                                 
-                                // PERBAIKAN: Target mDiv (elemen HTML), bukan svgEl
-                                html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
-                                .then(canvas => {
+                                // KUNCI PERBAIKAN: Targetkan mDiv, bukan svgEl
+                                html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
+                                .then(canvas => {{
+                                    // Kembalikan ke style semula
                                     svgEl.style.width = origW;
                                     svgEl.style.height = origH;
                                     svgEl.style.maxWidth = origMaxW;
+                                    mDiv.style.overflow = origOverflow;
+                                    mDiv.style.width = '100%';
                                     
                                     const link = document.createElement('a'); 
                                     link.download = 'Mermaid_' + title + '.png'; 
                                     link.href = canvas.toDataURL('image/png', 1.0); 
                                     link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
-                                }).catch((e) => { 
-                                    console.error("Download Error:", e);
+                                }}).catch(() => {{ 
                                     btn.innerHTML = originalText; btn.disabled = false; 
-                                });
-                            }, 500);
-                        };
+                                }});
+                            }}, 500);
+                        }};
                     </script>
                 </body></html>
                 """

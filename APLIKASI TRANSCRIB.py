@@ -1036,7 +1036,7 @@ else:
             """, unsafe_allow_html=True)
 
     # =====================================================================
-    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI (OBSIDIAN GRAPH STYLE)
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
@@ -1134,22 +1134,12 @@ else:
                 .audio-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }
                 .audio-item audio { height: 36px; flex: 1; min-width: 200px; }
                 
-                .cy-container { width: 100%; height: 400px; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0; position: relative; }
-                .btn-export { cursor: pointer; background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
-                .btn-export:hover { background: #059669; }
-                
                 .fade-in { animation: fadeIn 0.5s ease; }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 
                 .instruction-box {
                     background: #fffbeb; border: 2px solid #f59e0b; padding: 16px; border-radius: 12px;
                     margin-bottom: 16px; font-size: 13px; color: #92400e;
-                }
-                
-                .debug-box {
-                    background: #f0fdf4; border: 1px solid #86efac; padding: 10px; border-radius: 8px;
-                    margin-top: 10px; font-size: 11px; color: #166534; font-family: monospace;
-                    max-height: 150px; overflow-y: auto;
                 }
 
                 @media (max-width: 640px) {
@@ -1188,10 +1178,6 @@ else:
                 
                 <div class="visualizer-container">
                     <canvas id="visualizer"></canvas>
-                </div>
-                
-                <div id="debugInfo" class="debug-box" style="display:none;">
-                    <strong>🔍 Debug Log:</strong>
                 </div>
                 
                 <div class="ai-section">
@@ -1233,6 +1219,7 @@ else:
                 (function() {
                     'use strict';
 
+                    // ======== DOM REFS ========
                     const startBtn = document.getElementById('startBtn');
                     const stopBtn = document.getElementById('stopBtn');
                     const copyBtn = document.getElementById('copyBtn');
@@ -1248,12 +1235,12 @@ else:
                     const audioContainer = document.getElementById('audioContainer');
                     const visualizer = document.getElementById('visualizer');
                     const canvasCtx = visualizer.getContext('2d');
-                    const debugInfo = document.getElementById('debugInfo');
 
                     if (window.mermaid) {
                         mermaid.initialize({ startOnLoad: false, theme: 'default' });
                     }
 
+                    // ======== AI BRAIN VISUALIZER ========
                     const brainCanvas = document.getElementById('aiBrainCanvas');
                     const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
                     const brainText = document.getElementById('aiBrainText');
@@ -1346,6 +1333,7 @@ else:
                         window.addEventListener('resize', initBrain);
                     }
 
+                    // ======== STATE MANAGEMENT ========
                     let isRecording = false;
                     let isVisualizerActive = false;
                     let recognition = null;
@@ -1590,80 +1578,79 @@ else:
                         }
                     };
 
+                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
                     window.dlMermaidLive = function() {
-                        const wrapper = document.getElementById('mermaidLiveWrapper');
-                        const svgEl = wrapper.querySelector('svg');
+                        const mDiv = document.getElementById('mermaidLive');
+                        const svgEl = mDiv.querySelector('svg');
                         if (!svgEl) return;
+                        
                         const btn = document.getElementById('dlBtnMermaidLive');
                         if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
 
-                        setTimeout(() => {
-                            const originalWidth = wrapper.style.width; 
-                            const originalHeight = wrapper.style.height; 
-                            const originalOverflow = wrapper.style.overflow;
+                        const bbox = svgEl.getBBox();
+                        const padding = 20;
+                        const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
+                        const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+
+                        const origW = svgEl.style.width;
+                        const origH = svgEl.style.height;
+                        const origMaxW = svgEl.style.maxWidth;
+                        
+                        // Set dimensi SVG penuh agar saat difoto tidak terpotong
+                        svgEl.style.width = width + 'px';
+                        svgEl.style.height = height + 'px';
+                        svgEl.style.maxWidth = 'none';
+
+                        html2canvas(svgEl, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
+                        .then(canvas => {
+                            // Kembalikan ke aslinya
+                            svgEl.style.width = origW;
+                            svgEl.style.height = origH;
+                            svgEl.style.maxWidth = origMaxW;
                             
-                            const origSvgWidth = svgEl.style.width;
-                            const origSvgHeight = svgEl.style.height;
-                            const origSvgMaxWidth = svgEl.style.maxWidth;
-                            
-                            const bbox = svgEl.getBBox(); 
-                            const padding = 40;
-                            const trueWidth = Math.max(bbox.width, svgEl.scrollWidth) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, svgEl.scrollHeight) + (padding * 2);
-                            
-                            wrapper.style.width = trueWidth + 'px'; 
-                            wrapper.style.height = trueHeight + 'px'; 
-                            wrapper.style.overflow = 'visible';
-                            
-                            svgEl.style.width = trueWidth + 'px';
-                            svgEl.style.height = trueHeight + 'px';
-                            svgEl.style.maxWidth = 'none';
-                            
-                            html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
-                            .then(canvas => {
-                                wrapper.style.width = originalWidth; 
-                                wrapper.style.height = originalHeight; 
-                                wrapper.style.overflow = originalOverflow;
-                                
-                                svgEl.style.width = origSvgWidth;
-                                svgEl.style.height = origSvgHeight;
-                                svgEl.style.maxWidth = origSvgMaxWidth;
-                                
-                                const link = document.createElement('a'); link.download = 'Mermaid_Live.png'; 
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-                            }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } });
-                        }, 500);
+                            const link = document.createElement('a'); 
+                            link.download = 'Mermaid_Live.png'; 
+                            link.href = canvas.toDataURL('image/png', 1.0); 
+                            link.click();
+                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                        }).catch(() => { 
+                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
+                        });
                     };
 
+                    // DOWNLOAD MARKMAP LIVE
                     window.dlMarkmapLive = function() {
                         const container = document.getElementById('markmapLiveWrapper');
                         const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         
-                        const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
-                        const originalViewBox = svgEl.getAttribute('viewBox');
+                        const btn = document.getElementById('dlBtnMMLive');
+                        if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                        
+                        const originalWidth = container.style.width; 
+                        const originalHeight = container.style.height; 
+                        const originalOverflow = container.style.overflow;
                         
                         const g = svgEl.querySelector('g'); 
                         const originalTransform = g ? g.getAttribute('transform') : null;
-                        if (g) g.setAttribute('transform', 'translate(0,0) scale(1)');
+                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
                         
                         setTimeout(() => {
-                            const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50;
+                            const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 60;
                             const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
                             const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                            svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
+                            svgEl.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
                             
                             html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                             .then(canvas => {
                                 container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
                                 if (g && originalTransform) g.setAttribute('transform', originalTransform);
-                                if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
                                 
                                 const link = document.createElement('a'); link.download = 'Markmap_Live.png';
                                 link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                            });
+                                if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; }
+                            }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; } });
                         }, 500);
                     };
 
@@ -1685,15 +1672,14 @@ else:
                         - hubungan_topik: Array of objects (sumber, target, relasi).
                         
                         ATURAN MERMAID (SANGAT KETAT):
-                        1. Hasilkan flowchart berstruktur pohon (Tree style) yang SANGAT DETAIL dari kiri ke kanan.
-                        2. WAJIB diawali dengan: graph LR
-                        3. ID Node HANYA boleh huruf dan angka berurutan TANPA SPASI (misal: A1, B2).
-                        4. Teks label WAJIB diapit tanda kutip ganda ["..."] (misal: A1["Teks Rapat"]). DILARANG pakai kurung siku atau karakter aneh di DALAM label.
-                        5. Format relasi HANYA: NodeID1["Teks 1"] --> NodeID2["Teks 2"]
+                        1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
+                        2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
+                        3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
+                        4. Teks label HANYA boleh menggunakan kurung siku (contoh: A[Teks Label] --> B[Teks Label]). DILARANG MENGGUNAKAN TANDA KUTIP ATAU KARAKTER ANEH DI DALAM TEKS LABEL.
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
-                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin). Buat sangat panjang ke kanan agar visualisasinya lebar memanjang.
+                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).
                         
                         Transkrip Rapat: "${transcript}"`;
 
@@ -1750,14 +1736,14 @@ else:
                                         </div>
                                         <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
                                             <div class="relative bg-white border rounded-xl" style="height:396px;">
-                                                <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold shadow-md">📸 PNG</button>
-                                                <div id="mermaidLiveWrapper" style="width:100%; height:100%; overflow:auto; background:#ffffff; padding:20px;">
+                                                <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                                <div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;">
                                                     <pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                 </div>`;
 
                             setTimeout(() => {
@@ -1774,19 +1760,31 @@ else:
                                 });
                             }, 100);
 
-                            // MERMAID DENGAN ERROR HANDLING
+                            // SANITASI MERMAID (Mencegah Syntax Error)
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
-                                if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('mindmap')) rawMer = `graph LR\n` + rawMer;
+                                if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
+                                    rawMer = `graph LR\n` + rawMer;
+                                }
+                                // Paksa hapus semua kutip dan kurung aneh
+                                rawMer = rawMer.replace(/"/g, "'").replace(/\(/g, "[").replace(/\)/g, "]"); 
                                 
                                 const mDiv = document.getElementById('mermaidLive'); 
                                 mDiv.textContent = rawMer; 
                                 mDiv.removeAttribute('data-processed');
                                 
-                                mermaid.run({ querySelector: '#mermaidLive' }).catch(e => {
-                                    console.error("Mermaid error:", e);
-                                    mDiv.innerHTML = "<span style='color:red;'>⚠️ Format Mermaid tidak valid dari AI. Coba generate ulang.</span>";
-                                });
+                                try {
+                                    mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
+                                        const svg = mDiv.querySelector('svg');
+                                        if (svg) { 
+                                            svg.style.maxWidth = 'none'; 
+                                            svg.style.height = 'auto';
+                                        }
+                                    }).catch(e => {
+                                        console.error("Mermaid error:", e);
+                                        mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Transkrip mungkin mengandung karakter ilegal.</div>";
+                                    });
+                                } catch(e) {}
                             }, 100);
 
                             setTimeout(() => {
@@ -1807,7 +1805,7 @@ else:
         components.html(html_code, height=1600, scrolling=True)
 
     # =====================================================================
-    # TAB 2: FITUR OFFLINE TRANSCRIPTION (DENGAN SMART CHUNKING PYDUB)
+    # TAB 2: FITUR OFFLINE TRANSCRIPTION
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
@@ -1883,15 +1881,14 @@ else:
                         - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
                         
                         ATURAN MERMAID (SANGAT KETAT):
-                        1. Hasilkan flowchart berstruktur pohon (Tree style) yang SANGAT DETAIL dari kiri ke kanan.
-                        2. WAJIB diawali dengan: graph LR
-                        3. ID Node HANYA boleh huruf dan angka berurutan TANPA SPASI (misal: A1, B2).
-                        4. Teks label WAJIB diapit tanda kutip ganda ["..."] (misal: A1["Teks Rapat"]). DILARANG pakai kurung siku atau karakter aneh di DALAM label.
-                        5. Format relasi HANYA: NodeID1["Teks 1"] --> NodeID2["Teks 2"]
+                        1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
+                        2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
+                        3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
+                        4. Teks label HANYA boleh menggunakan kurung siku (contoh: A[Teks Label] --> B[Teks Label]). DILARANG MENGGUNAKAN TANDA KUTIP ATAU KARAKTER ANEH DI DALAM TEKS LABEL.
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
-                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin). Buat sangat panjang ke kanan agar visualisasinya lebar memanjang.
+                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).
                         
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
@@ -1969,9 +1966,12 @@ else:
                 st.markdown("**📅 ACTION ITEMS:**")
                 st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
 
-            clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").trim()
-            if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('mindmap'):
+            # === SANITASI PYTHON EKSTREM ===
+            clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
+            if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
+            
+            clean_mer = clean_mer.replace('"', "'").replace('(', '[').replace(')', ']') # Sapu bersih semua perusak syntax
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
@@ -2009,11 +2009,11 @@ else:
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <div class="relative bg-white border rounded-xl" style="height:400px;">
-                        <button id="dlBtn" onclick="downloadMermaidImage('wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.2);">📸 PNG</button>
-                        
-                        <div id="wrapper" style="width:100%; height:100%; overflow:auto; background:#ffffff; padding:20px;">
-                            <pre class="mermaid" id="merContainer" style="margin:0; min-width:100%; min-height:100%; display:flex; justify-content:center; align-items:center;"></pre>
+                    <button id="dlBtn" onclick="downloadMermaidImage('merContainer', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
+                    
+                    <div style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff; position:relative;">
+                        <div id="merContainerWrap" style="width:100%; height:100%; overflow:auto; border-radius:8px;">
+                            <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; display:flex; justify-content:center; align-items:center;"></pre>
                         </div>
                     </div>
                     
@@ -2021,47 +2021,45 @@ else:
                         document.getElementById('merContainer').textContent = {mer_json_str};
                         mermaid.initialize({{ startOnLoad: false, theme: 'default' }});
                         
-                        mermaid.run({{ querySelector: '.mermaid' }}).catch(e => {{
-                            document.getElementById('merContainer').innerHTML = "<span style='color:red;'>⚠️ Format Mermaid tidak valid dari AI. Coba generate ulang.</span>";
-                        }});
+                        try {{
+                            mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
+                                const svgEl = document.querySelector('.mermaid svg');
+                                if (svgEl) {{
+                                    svgEl.style.maxWidth = 'none'; 
+                                    svgEl.style.height = 'auto';
+                                }}
+                            }}).catch(e => {{
+                                document.getElementById('merContainerWrap').innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Error: " + e.message + "</div>";
+                            }});
+                        }} catch(e) {{}}
 
+                        // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
                         window.downloadMermaidImage = function(wrapperId, title) {{
-                            const wrapper = document.getElementById(wrapperId); 
-                            const svgEl = wrapper.querySelector('svg');
+                            const mDiv = document.getElementById(wrapperId); 
+                            const svgEl = mDiv.querySelector('svg');
                             if (!svgEl) return;
+                            
                             const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
                             setTimeout(() => {{
-                                const originalWidth = wrapper.style.width; 
-                                const originalHeight = wrapper.style.height; 
-                                const originalOverflow = wrapper.style.overflow;
-                                
-                                const origSvgWidth = svgEl.style.width;
-                                const origSvgHeight = svgEl.style.height;
-                                const origSvgMaxWidth = svgEl.style.maxWidth;
-                                
                                 const bbox = svgEl.getBBox(); const padding = 40;
-                                const trueWidth = Math.max(bbox.width, svgEl.scrollWidth) + (padding * 2); 
-                                const trueHeight = Math.max(bbox.height, svgEl.scrollHeight) + (padding * 2);
+                                const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
+                                const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                                 
-                                wrapper.style.width = trueWidth + 'px'; 
-                                wrapper.style.height = trueHeight + 'px'; 
-                                wrapper.style.overflow = 'visible';
+                                const origW = svgEl.style.width;
+                                const origH = svgEl.style.height;
+                                const origMaxW = svgEl.style.maxWidth;
                                 
-                                svgEl.style.width = trueWidth + 'px';
-                                svgEl.style.height = trueHeight + 'px';
+                                svgEl.style.width = width + 'px';
+                                svgEl.style.height = height + 'px';
                                 svgEl.style.maxWidth = 'none';
                                 
-                                html2canvas(wrapper, {{ scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                                html2canvas(svgEl, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
                                 .then(canvas => {{
-                                    wrapper.style.width = originalWidth; 
-                                    wrapper.style.height = originalHeight; 
-                                    wrapper.style.overflow = originalOverflow;
-                                    
-                                    svgEl.style.width = origSvgWidth;
-                                    svgEl.style.height = origSvgHeight;
-                                    svgEl.style.maxWidth = origSvgMaxWidth;
+                                    svgEl.style.width = origW;
+                                    svgEl.style.height = origH;
+                                    svgEl.style.maxWidth = origMaxW;
                                     
                                     const link = document.createElement('a'); 
                                     link.download = 'Mermaid_' + title + '.png'; 
@@ -2095,37 +2093,36 @@ else:
                     const {{ root }} = new Transformer().transform(markdown);
                     Markmap.create('#markmap', null, root);
 
-                    // DOWNLOAD MARKMAP OFFLINE (FIXED SCALE & ZOOM)
+                    // DOWNLOAD MARKMAP OFFLINE
                     window.downloadMarkmapImage = function(wrapperId, title) {{
                         const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
                         const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
                         btn.innerHTML = "⏳..."; btn.disabled = true;
-                        try {{
-                            const g = svgEl.querySelector('g'); if (!g) throw new Error("G missing");
-                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
-                            const originalTransform = g.getAttribute('transform'); const originalViewBox = svgEl.getAttribute('viewBox');
+                        
+                        const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                        const g = svgEl.querySelector('g'); 
+                        const originalTransform = g ? g.getAttribute('transform') : null;
+                        
+                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                        
+                        setTimeout(() => {{
+                            const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50;
+                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2); 
+                            const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                             
-                            g.setAttribute('transform', 'translate(0,0) scale(1)');
+                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                            svgEl.setAttribute('viewBox', `${{(bbox.x || 0) - padding}} ${{(bbox.y || 0) - padding}} ${{trueWidth}} ${{trueHeight}}`);
                             
-                            setTimeout(() => {{
-                                const bbox = g.getBBox(); const padding = 50;
-                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                            html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
+                            .then(canvas => {{
+                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                 
-                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                                svgEl.setAttribute('viewBox', (bbox.x - padding) + ' ' + (bbox.y - padding) + ' ' + trueWidth + ' ' + trueHeight);
-                                
-                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
-                                .then(canvas => {{
-                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                    g.setAttribute('transform', originalTransform || '');
-                                    if (originalViewBox) svgEl.setAttribute('viewBox', originalViewBox); else svgEl.removeAttribute('viewBox');
-                                    
-                                    const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
-                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                    btn.innerHTML = originalText; btn.disabled = false;
-                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
-                            }}, 500);
-                        }} catch (err) {{ btn.innerHTML = originalText; btn.disabled = false; }}
+                                const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
+                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                btn.innerHTML = originalText; btn.disabled = false;
+                            }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
+                        }}, 500);
                     }};
                 </script>
             </body></html>

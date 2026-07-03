@@ -243,7 +243,7 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN LOGIN
+# HALAMAN DEPAN (BERANDA & LOGIN)
 # =====================================================================
 if not st.session_state["logged_in"]:
     st.markdown("""
@@ -255,6 +255,22 @@ if not st.session_state["logged_in"]:
     }
     [data-testid="stSidebar"] { display: none; }
     
+    /* Override styling Tab untuk mode gelap di halaman depan */
+    div[data-testid="stTabs"] button {
+        color: #94a3b8 !important;
+        background-color: transparent !important;
+    }
+    div[data-testid="stTabs"] button[aria-selected="true"] {
+        color: #38bdf8 !important;
+        background-color: rgba(56, 189, 248, 0.1) !important;
+    }
+    div[data-baseweb="tab-list"] {
+        background-color: rgba(15, 23, 42, 0.5) !important;
+        border-radius: 12px;
+        padding: 5px;
+        margin-bottom: 20px;
+    }
+
     div[data-testid="stForm"] {
         background: rgba(15, 23, 42, 0.4) !important;
         backdrop-filter: blur(16px) saturate(180%);
@@ -508,80 +524,153 @@ if not st.session_state["logged_in"]:
     </script>
     """, height=0, width=0)
 
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
+    # PEMBUATAN TAB DI HALAMAN DEPAN
+    tab_home, tab_login = st.tabs(["🏠 Beranda Platform", "🔐 Login Portal"])
+
+    with tab_home:
+        # ==========================================
+        # HERO SECTION
+        # ==========================================
+        st.markdown("""
+        <div style="text-align: center; padding: 40px 20px; color: white; animation: fadeIn 1s ease-in-out;">
+            <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 10px; background: -webkit-linear-gradient(#38bdf8, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 4px 15px rgba(56,189,248,0.3);">
+                TranscribX Enterprise
+            </h1>
+            <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 700px; margin: 0 auto 30px auto; line-height: 1.6;">
+                Pusat Notulensi & Edukasi Cerdas AI. Mengubah suara rapat Anda menjadi teks, ringkasan eksekutif, daftar penugasan, dan peta konsep visual secara instan.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ==========================================
+        # BAGIAN MANFAAT (GLASSMORPHISM)
+        # ==========================================
+        st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 20px; font-weight: bold;'>✨ Kenapa Memilih TranscribX?</h3>", unsafe_allow_html=True)
         st.write("")
-        st.write("")
-        st.write("")
-        
-        title_html = """
-        <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 10px;'>
-            <div class="germic-login-wrapper">
-                <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
-                    <circle class="signal-wave-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
-                    <circle class="signal-wave-login signal-wave-2-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
-                    <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
-                    <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse-login"/>
-                    <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
-                    <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
-                    <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
-                    <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
-                    <g id="germic-login-face">
-                        <rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
-                        <rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
-                        <rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/>
-                    </g>
-                </svg>
-            </div>
-            <h1 class='login-title'>TranscribX</h1>
+        col_f1, col_f2, col_f3 = st.columns(3)
+        glass_card = """
+        <div style='background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 25px; color: white; height: 100%; transition: transform 0.3s;' onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style='font-size: 35px; margin-bottom: 15px;'>{icon}</div>
+            <h4 style='color: #e0f2fe; margin-top: 0; font-size: 18px;'>{title}</h4>
+            <p style='color: #94a3b8; font-size: 14px; line-height: 1.6;'>{desc}</p>
         </div>
         """
-        st.markdown(title_html, unsafe_allow_html=True)
+        with col_f1: 
+            st.markdown(glass_card.format(icon="🎙️", title="Transkripsi Live & Cepat", desc="Tangkap setiap kata dari rapat Zoom, YouTube, atau file audio Anda dengan teknologi Speech-to-Text mutakhir secara real-time."), unsafe_allow_html=True)
+        with col_f2: 
+            st.markdown(glass_card.format(icon="🤖", title="AI Smart Summary", desc="Tidak perlu pusing membaca transkrip panjang. AI otomatis membuat ringkasan eksekutif dan mengekstrak daftar tugas (Action Items)."), unsafe_allow_html=True)
+        with col_f3: 
+            st.markdown(glass_card.format(icon="🕸️", title="Auto Mindmap Visual", desc="Ubah diskusi kompleks menjadi Peta Konsep visual (Markmap & Cytoscape) yang interaktif, profesional, dan siap diunduh HD."), unsafe_allow_html=True)
+
+        # ==========================================
+        # BAGIAN HARGA PAKET (GLASSMORPHISM)
+        # ==========================================
+        st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 60px; font-weight: bold;'>💳 Pilihan Paket Langganan</h3>", unsafe_allow_html=True)
+        st.write("")
+        col_p1, col_p2, col_p3 = st.columns(3)
+        glass_price = """
+        <div style='background: {bg}; backdrop-filter: blur(12px); border: {border}; border-radius: 16px; padding: 30px 20px; color: white; height: 100%; text-align: center; position: relative; transition: transform 0.3s;' onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+            {badge}
+            <h3 style='color: {title_color}; margin-top: 0; font-size: 20px;'>{title}</h3>
+            <h2 style='color: white; font-size: 32px; margin: 10px 0;'>{price} <span style='font-size: 14px; color: #94a3b8; font-weight: normal;'>/ 30 hari</span></h2>
+            <hr style='border-color: rgba(255,255,255,0.1); margin: 20px 0;'>
+            <ul style='list-style: none; padding: 0; margin: 0; font-size: 14px; color: #cbd5e1; text-align: left; line-height: 2;'>
+                {features}
+            </ul>
+        </div>
+        """
+        with col_p1: 
+            feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>5x</b> Premium AI Summary</li><li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>"
+            st.markdown(glass_price.format(bg="rgba(30, 41, 59, 0.4)", border="1px solid rgba(255,255,255,0.1)", badge="", title_color="#94a3b8", title="BASIC", price="Rp 29.000", features=feats), unsafe_allow_html=True)
         
-        with st.form("login_form"):
-            st.markdown("""
-            <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
-            <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
-            """, unsafe_allow_html=True)
-            
-            email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
-            pass_login = st.text_input("Password", type="password", placeholder="••••••••")
+        with col_p2:
+            feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>10x</b> Premium AI Summary</li><li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>"
+            badge = "<div style='position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; padding:4px 15px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow: 0 4px 10px rgba(239,68,68,0.4);'>🔥 Best Seller</div>"
+            st.markdown(glass_price.format(bg="rgba(15, 23, 42, 0.7)", border="2px solid #38bdf8", badge=badge, title_color="#38bdf8", title="EXECUTIVE", price="Rp 49.000", features=feats), unsafe_allow_html=True)
+        
+        with col_p3:
+            feats = "<li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>30x</b> Premium AI Summary</li><li>✅ <b>10x</b> Upload Audio (Max 30mnt)</li><li>🌟 <b>Prioritas Support</b> via WA</li>"
+            st.markdown(glass_price.format(bg="rgba(30, 41, 59, 0.4)", border="1px solid rgba(255,255,255,0.1)", badge="", title_color="#fb7185", title="MASTER", price="Rp 129.000", features=feats), unsafe_allow_html=True)
+
+        st.write("")
+        st.write("")
+        st.markdown("<p style='text-align:center; color:#64748b; font-size:15px;'>Ingin aktivasi atau perpanjang paket? Hubungi Admin (Gerry) secara langsung.</p><br><br>", unsafe_allow_html=True)
+
+    with tab_login:
+        col1, col2, col3 = st.columns([1, 1.5, 1])
+        with col2:
             st.write("")
-            btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True, type="primary")
+            st.write("")
+            st.write("")
             
-            if btn_login:
-                if email_login and pass_login:
-                    with st.spinner("Memverifikasi kredensial..."):
-                        user_data = login_firebase(email_login, pass_login)
-                        if "idToken" in user_data:
-                            uid = user_data["localId"]
-                            record_login(uid, email_login)
-                            
-                            if email_login in ADMIN_EMAILS_CONFIG:
-                                st.session_state.update({"logged_in": True, "user_email": email_login, "user_uid": uid, "user_paket": "ADMIN", "user_kuota_ai": 999999, "user_kuota_upload": 999999, "sisa_hari": 999999})
-                                st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
-                                st.rerun()
-                            
-                            user_db_info = check_subscription(uid)
-                            if user_db_info.get("status_subscription", "non-aktif") == "aktif":
-                                cek_reset_kuota_bulanan(uid, user_db_info)
-                                st.session_state.update({
-                                    "logged_in": True, "user_email": email_login, "user_uid": uid, 
-                                    "user_paket": user_db_info.get("paket", "BASIC"), "user_kuota_ai": user_db_info.get("kuota_ai", 0), 
-                                    "user_kuota_upload": user_db_info.get("kuota_upload", 0), "sisa_hari": hitung_sisa_hari(user_db_info.get("tanggal_berakhir")), 
-                                    "tanggal_berakhir": user_db_info.get("tanggal_berakhir", "")
-                                })
-                                st.success("Login berhasil! Memuat sistem...")
-                                st.rerun()
+            title_html = """
+            <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 10px;'>
+                <div class="germic-login-wrapper">
+                    <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
+                        <circle class="signal-wave-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                        <circle class="signal-wave-login signal-wave-2-login" cx="50" cy="12" r="8" stroke="#fb7185" stroke-width="1" />
+                        <circle cx="50" cy="12" r="8" stroke="#3b82f6" stroke-opacity="0.2" />
+                        <path d="M50 25V15M50 15L45 10M50 15L55 10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="50" cy="12" r="3" fill="#fb7185" class="animate-pulse-login"/>
+                        <rect x="5" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                        <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
+                        <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+                        <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
+                        <g id="germic-login-face">
+                            <rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
+                            <rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
+                            <rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/>
+                        </g>
+                    </svg>
+                </div>
+                <h1 class='login-title'>TranscribX</h1>
+            </div>
+            """
+            st.markdown(title_html, unsafe_allow_html=True)
+            
+            with st.form("login_form"):
+                st.markdown("""
+                <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
+                <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
+                """, unsafe_allow_html=True)
+                
+                email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
+                pass_login = st.text_input("Password", type="password", placeholder="••••••••")
+                st.write("")
+                btn_login = st.form_submit_button("🚀 Masuk ke Sistem", use_container_width=True, type="primary")
+                
+                if btn_login:
+                    if email_login and pass_login:
+                        with st.spinner("Memverifikasi kredensial..."):
+                            user_data = login_firebase(email_login, pass_login)
+                            if "idToken" in user_data:
+                                uid = user_data["localId"]
+                                record_login(uid, email_login)
+                                
+                                if email_login in ADMIN_EMAILS_CONFIG:
+                                    st.session_state.update({"logged_in": True, "user_email": email_login, "user_uid": uid, "user_paket": "ADMIN", "user_kuota_ai": 999999, "user_kuota_upload": 999999, "sisa_hari": 999999})
+                                    st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
+                                    st.rerun()
+                                
+                                user_db_info = check_subscription(uid)
+                                if user_db_info.get("status_subscription", "non-aktif") == "aktif":
+                                    cek_reset_kuota_bulanan(uid, user_db_info)
+                                    st.session_state.update({
+                                        "logged_in": True, "user_email": email_login, "user_uid": uid, 
+                                        "user_paket": user_db_info.get("paket", "BASIC"), "user_kuota_ai": user_db_info.get("kuota_ai", 0), 
+                                        "user_kuota_upload": user_db_info.get("kuota_upload", 0), "sisa_hari": hitung_sisa_hari(user_db_info.get("tanggal_berakhir")), 
+                                        "tanggal_berakhir": user_db_info.get("tanggal_berakhir", "")
+                                    })
+                                    st.success("Login berhasil! Memuat sistem...")
+                                    st.rerun()
+                                else:
+                                    st.error(f"⚠️ Akun Anda sudah tidak aktif. Hubungi Admin untuk perpanjangan.")
                             else:
-                                st.error(f"⚠️ Akun Anda sudah tidak aktif. Hubungi Admin untuk perpanjangan.")
-                        else:
-                            st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
-                else:
-                    st.warning("Silakan masukkan email dan password.")
+                                st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
+                    else:
+                        st.warning("Silakan masukkan email dan password.")
 # =====================================================================
-# APLIKASI UTAMA
+# APLIKASI UTAMA (SETELAH LOGIN)
 # =====================================================================
 else:
     components.html("""
@@ -1904,7 +1993,7 @@ else:
                         1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
                         2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
                         3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
-                        4. Teks label WAJIB DIAPIT TANDA KUTIP GANDA. Contoh: A["Teks Label Utama"] --> B["Teks Label Lain"]. DILARANG KERAS menggunakan kurung siku di dalam teks label itu sendiri.               
+                        4. Teks label WAJIB DIAPIT TANDA KUTIP GANDA. Contoh: A["Teks Label Utama"] --> B["Teks Label Lain"]. DILARANG KERAS menggunakan kurung siku di dalam teks label itu sendiri.                
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
                         Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).
@@ -1990,7 +2079,7 @@ else:
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
             
-            
+            clean_mer = clean_mer.replace('`', '')
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
@@ -2052,7 +2141,6 @@ else:
                             }});
                         }} catch(e) {{}}
 
-                        // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
                         // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
                         window.downloadMermaidImage = function(wrapperId, title) {{
                             const mDiv = document.getElementById(wrapperId); 

@@ -1676,7 +1676,7 @@ else:
                         1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
                         2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
                         3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
-                        4. Teks label HANYA boleh menggunakan kurung siku (contoh: A[Teks Label] --> B[Teks Label]). DILARANG MENGGUNAKAN TANDA KUTIP ATAU KARAKTER ANEH DI DALAM TEKS LABEL.
+                        4. Teks label WAJIB DIAPIT TANDA KUTIP GANDA. Contoh: A["Teks Label Utama"] --> B["Teks Label Lain"]. DILARANG KERAS menggunakan kurung siku di dalam teks label itu sendiri, gunakan kurung biasa saja untuk singkatan.
                         
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
@@ -1768,7 +1768,7 @@ else:
                                     rawMer = `graph LR\n` + rawMer;
                                 }
                                 // Paksa hapus semua kutip dan kurung aneh
-                                rawMer = rawMer.replace(/`/g, "");
+                                rawMer = rawMer.replace(/`/g, "").replace(/\[([A-Z0-9]+)\]/g, "($1)");
                                 
                                 const mDiv = document.getElementById('mermaidLive'); 
                                 mDiv.textContent = rawMer; 
@@ -1972,7 +1972,7 @@ else:
             if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'):
                 clean_mer = "graph LR\n" + clean_mer
             
-            clean_mer = clean_mer.replace('(', '[').replace(')', ']')
+            
             
             mer_json_str = json.dumps(clean_mer)
             markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())

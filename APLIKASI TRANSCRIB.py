@@ -600,7 +600,7 @@ if not st.session_state["logged_in"]:
                 </ul>
             </div>
             """
-            st.markdown(html_content, unsafe_allow_html=True))
+            st.markdown(html_content, unsafe_allow_html=True)
         
         # 2. Pemanggilan Fungsi
         col_p1, col_p2, col_p3 = st.columns(3)

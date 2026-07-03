@@ -568,17 +568,39 @@ if not st.session_state["logged_in"]:
         # 1. Definisi Fungsi Render Kartu
         def render_price_card(title, price, features, bg, border, badge, title_color):
             html_content = f"""
-            <div style='background: {bg}; backdrop-filter: blur(12px); border: {border}; border-radius: 16px; padding: 30px 20px; color: white; height: 100%; text-align: center; position: relative;'>
+            <div style='
+                background: {bg}; 
+                backdrop-filter: blur(12px); 
+                border: {border}; 
+                border-radius: 16px; 
+                padding: 30px 20px; 
+                color: white; 
+                height: 100%; 
+                min-height: 420px; 
+                text-align: center; 
+                position: relative;
+                display: flex;
+                flex-direction: column;
+            '>
                 {badge}
-                <h3 style='color: {title_color}; margin-top: 0; font-size: 20px;'>{title}</h3>
+                <h3 style='color: {title_color}; margin-top: 0; font-size: 20px; margin-bottom: 10px;'>{title}</h3>
                 <h2 style='color: white; font-size: 32px; margin: 10px 0;'>{price} <span style='font-size: 14px; color: #94a3b8; font-weight: normal;'>/ 30 hari</span></h2>
                 <hr style='border-color: rgba(255,255,255,0.1); margin: 20px 0;'>
-                <ul style='list-style: none; padding: 0; margin: 0; font-size: 14px; color: #cbd5e1; text-align: left; line-height: 2;'>
+                <ul style='
+                    list-style: none; 
+                    padding: 0; 
+                    margin: 0; 
+                    font-size: 14px; 
+                    color: #cbd5e1; 
+                    text-align: left; 
+                    line-height: 2;
+                    flex-grow: 1;
+                '>
                     {features}
                 </ul>
             </div>
             """
-            st.markdown(html_content, unsafe_allow_html=True)
+            st.markdown(html_content, unsafe_allow_html=True))
         
         # 2. Pemanggilan Fungsi
         col_p1, col_p2, col_p3 = st.columns(3)

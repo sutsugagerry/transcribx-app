@@ -1579,44 +1579,45 @@ else:
                     };
 
                     // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
-                    window.dlMermaidLive = function() {
-                        const mDiv = document.getElementById('mermaidLive');
-                        const svgEl = mDiv.querySelector('svg');
-                        if (!svgEl) return;
-                        
-                        const btn = document.getElementById('dlBtnMermaidLive');
-                        if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)
+window.dlMermaidLive = function() {
+    const mDiv = document.getElementById('mermaidLive');
+    const svgEl = mDiv.querySelector('svg');
+    if (!svgEl) return;
+    
+    const btn = document.getElementById('dlBtnMermaidLive');
+    if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
 
-                        const bbox = svgEl.getBBox();
-                        const padding = 20;
-                        const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
-                        const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+    const bbox = svgEl.getBBox();
+    const padding = 20;
+    const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
+    const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
 
-                        const origW = svgEl.style.width;
-                        const origH = svgEl.style.height;
-                        const origMaxW = svgEl.style.maxWidth;
-                        
-                        // Set dimensi SVG penuh agar saat difoto tidak terpotong
-                        svgEl.style.width = width + 'px';
-                        svgEl.style.height = height + 'px';
-                        svgEl.style.maxWidth = 'none';
+    const origW = svgEl.style.width;
+    const origH = svgEl.style.height;
+    const origMaxW = svgEl.style.maxWidth;
+    
+    svgEl.style.width = width + 'px';
+    svgEl.style.height = height + 'px';
+    svgEl.style.maxWidth = 'none';
 
-                        html2canvas(svgEl, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
-                        .then(canvas => {
-                            // Kembalikan ke aslinya
-                            svgEl.style.width = origW;
-                            svgEl.style.height = origH;
-                            svgEl.style.maxWidth = origMaxW;
-                            
-                            const link = document.createElement('a'); 
-                            link.download = 'Mermaid_Live.png'; 
-                            link.href = canvas.toDataURL('image/png', 1.0); 
-                            link.click();
-                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-                        }).catch(() => { 
-                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
-                        });
-                    };
+    // PERBAIKAN: Target mDiv (elemen HTML), bukan svgEl
+    html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
+    .then(canvas => {
+        svgEl.style.width = origW;
+        svgEl.style.height = origH;
+        svgEl.style.maxWidth = origMaxW;
+        
+        const link = document.createElement('a'); 
+        link.download = 'Mermaid_Live.png'; 
+        link.href = canvas.toDataURL('image/png', 1.0); 
+        link.click();
+        if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+    }).catch((e) => { 
+        console.error("Download Error:", e);
+        if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
+    });
+};
 
                     // DOWNLOAD MARKMAP LIVE
                     window.dlMarkmapLive = function() {
@@ -2034,15 +2035,17 @@ else:
                         }} catch(e) {{}}
 
                         // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
-                        window.downloadMermaidImage = function(wrapperId, title) {{
+                        // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
+                        window.downloadMermaidImage = function(wrapperId, title) {
                             const mDiv = document.getElementById(wrapperId); 
                             const svgEl = mDiv.querySelector('svg');
                             if (!svgEl) return;
                             
-                            const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML;
+                            const btn = document.getElementById('dlBtn'); 
+                            const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
-                            setTimeout(() => {{
+                            setTimeout(() => {
                                 const bbox = svgEl.getBBox(); const padding = 40;
                                 const width = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
                                 const height = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
@@ -2055,8 +2058,9 @@ else:
                                 svgEl.style.height = height + 'px';
                                 svgEl.style.maxWidth = 'none';
                                 
-                                html2canvas(svgEl, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
-                                .then(canvas => {{
+                                // PERBAIKAN: Target mDiv (elemen HTML), bukan svgEl
+                                html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
+                                .then(canvas => {
                                     svgEl.style.width = origW;
                                     svgEl.style.height = origH;
                                     svgEl.style.maxWidth = origMaxW;
@@ -2066,9 +2070,12 @@ else:
                                     link.href = canvas.toDataURL('image/png', 1.0); 
                                     link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
-                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
-                            }}, 500);
-                        }};
+                                }).catch((e) => { 
+                                    console.error("Download Error:", e);
+                                    btn.innerHTML = originalText; btn.disabled = false; 
+                                });
+                            }, 500);
+                        };
                     </script>
                 </body></html>
                 """

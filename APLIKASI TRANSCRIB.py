@@ -1904,8 +1904,7 @@ else:
                         1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
                         2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
                         3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
-                        4. Teks label HANYA boleh menggunakan kurung siku (contoh: A[Teks Label] --> B[Teks Label]). DILARANG MENGGUNAKAN TANDA KUTIP ATAU KARAKTER ANEH DI DALAM TEKS LABEL.
-                        
+                        4. Teks label WAJIB DIAPIT TANDA KUTIP GANDA. Contoh: A["Teks Label Utama"] --> B["Teks Label Lain"]. DILARANG KERAS menggunakan kurung siku di dalam teks label itu sendiri.               
                         ATURAN MARKMAP (MUTLAK):
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
                         Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).

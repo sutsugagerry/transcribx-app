@@ -1804,6 +1804,15 @@ else:
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
                         if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                         
+                        // --- TAMBAHKAN KODE INI DI SINI ---
+                        // Notifikasi sementara sebelum data hasil muncul
+                        aiContent.innerHTML = `
+                            <div class="p-4 bg-yellow-50 text-yellow-700 rounded-xl mb-4 border border-yellow-200 animate-pulse">
+                                <strong>⏳ AI sedang membaca transkrip...</strong>
+                                <p style="margin:0; font-size:0.9em;">Sedang melakukan analisis mendalam dan menyusun visualisasi. Mohon tunggu sebentar.</p>
+                            </div>
+                        `;
+                        
                         isThinking = true;
                         if (brainText) { brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }
                         aiBtn.innerHTML = '⏳ Memproses...'; aiBtn.disabled = true;

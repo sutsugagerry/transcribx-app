@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import time
 import io
 import math
+import os
+import tempfile
 from pydub import AudioSegment
 
 # Konfigurasi Halaman
@@ -2019,7 +2021,7 @@ else:
         components.html(html_code, height=1600, scrolling=True)
 
     # =====================================================================
-    # TAB 2: FITUR OFFLINE TRANSCRIPTION
+    # TAB 2: FITUR OFFLINE TRANSCRIPTION (DIPERBAIKI)
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
@@ -2037,16 +2039,27 @@ else:
                 st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
             else:
                 if st.button("🎙️ Mulai Transkripsi (Smart Chunking)", use_container_width=True, type="primary"):
-                    if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                    if not llm_key: 
+                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
-                        with st.spinner("⏳ Membaca dan memproses file audio..."):
+                        with st.spinner("⏳ Mengamankan file ke storage sementara untuk mencegah memory crash..."):
+                            temp_file_path = None
                             try:
-                                audio = AudioSegment.from_file(uploaded_file)
+                                # 1. TULIS KE DISK (Meringankan beban RAM)
+                                file_extension = uploaded_file.name.split('.')[-1]
+                                with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_audio:
+                                    temp_audio.write(uploaded_file.getvalue())
+                                    temp_file_path = temp_audio.name
+                                
+                                # 2. BACA DARI DISK (Bukan dari RAM)
+                                status_text = st.empty()
+                                status_text.info("Memproses audio (Chunking)...")
+                                audio = AudioSegment.from_file(temp_file_path)
+                                
                                 chunk_length_ms = 10 * 60 * 1000 
                                 total_chunks = math.ceil(len(audio) / chunk_length_ms)
                                 full_transcript = ""
                                 progress_bar = st.progress(0)
-                                status_text = st.empty()
                                 
                                 url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                 headers = {"Authorization": f"Bearer {llm_key}"}
@@ -2064,8 +2077,12 @@ else:
                                     files = {"file": (chunk_buffer.name, chunk_buffer.read(), "audio/mpeg")}
                                     response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
                                     
-                                    if response.status_code == 200: full_transcript += response.json().get("text", "") + " "
-                                    else: st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}"); success_transcription = False; break
+                                    if response.status_code == 200: 
+                                        full_transcript += response.json().get("text", "") + " "
+                                    else: 
+                                        st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}")
+                                        success_transcription = False
+                                        break
                                     progress_bar.progress((i + 1) / total_chunks)
                                 
                                 if success_transcription and full_transcript.strip():
@@ -2074,7 +2091,16 @@ else:
                                     if not is_admin():
                                         st.session_state["user_kuota_upload"] -= 1
                                         db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
-                            except Exception as e: st.error(f"Terjadi kesalahan saat memproses audio: {str(e)}")
+                                        
+                            except Exception as e: 
+                                st.error(f"Terjadi kesalahan saat memproses audio: {str(e)}")
+                            finally:
+                                # 3. BERSIHKAN FILE SEMENTARA WALAUPUN ERROR
+                                if temp_file_path and os.path.exists(temp_file_path):
+                                    try:
+                                        os.remove(temp_file_path)
+                                    except:
+                                        pass
 
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
@@ -2151,7 +2177,7 @@ else:
             col_t1, col_t2 = st.columns([3, 1])
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            txt_report = f"NOTULENSI RAPAT\\n====================\\n\\nRingkasan:\\n" + "\\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
+            txt_report = f"NOTULENSI RAPAT\n====================\n\nRingkasan:\n" + "\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
             with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
 
             with st.container(border=True):

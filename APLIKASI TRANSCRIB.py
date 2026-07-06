@@ -2117,7 +2117,7 @@ else:
                                 if os.path.exists(temp_dir):
                                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-      # Lanjutan kode generate summary...
+     # Lanjutan kode generate summary...
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
             st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
@@ -2128,20 +2128,20 @@ else:
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
                     st.error("❌ Kuota AI Summary habis!")
                 else:
+                   # =========================================================
+                    # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
                     # =========================================================
-                    # TAHAP 1: EKSTRAKSI TEKS (STREAMING MODE MENCEGAH 524)
-                    # =========================================================
-                    with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan... (Menggunakan Stream agar kebal Timeout 524)"):
-                        prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut.
-                        WAJIB kembalikan output HANYA dalam format JSON MURNI tanpa blok markdown (tanpa ```json).
+                    with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
+                        prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan WAJIB kembalikan output HANYA dalam format JSON.
+                        PENTING: JANGAN menyalin ulang atau membuat transkrip dialog penuh. Fokus pada ekstraksi poin-poin penting agar ringkas dan cepat.
+                        
                         STRUKTUR JSON YANG HARUS DIIKUTI:
                         {{
-                            "ringkasan_eksekutif": ["poin 1", "poin 2"],
+                            "ringkasan_eksekutif": ["poin ringkas 1", "poin ringkas 2"],
                             "notulensi_rapat": {{
-                                "agenda": "Topik rapat",
-                                "peserta": ["Nama 1", "Nama 2"],
-                                "transkrip_dialog": ["Pembicara A: Teks", "Pembicara B: Teks"],
-                                "jalannya_diskusi": ["Narasi detail panjang 1", "Narasi 2"],
+                                "agenda": "Topik utama rapat",
+                                "peserta": ["Nama/Peran 1", "Nama/Peran 2"],
+                                "jalannya_diskusi": ["Poin penting diskusi 1", "Poin penting diskusi 2"],
                                 "keputusan": ["Keputusan 1", "Keputusan 2"],
                                 "rencana_tindak_lanjut": [
                                     {{"tugas": "Deskripsi", "pic": "Nama", "deadline": "Tanggal", "prioritas": "Tinggi/Sedang/Rendah"}}
@@ -2154,39 +2154,24 @@ else:
                             "model":"gemini/gemini-2.5-flash",
                             "messages": [{ "role": "user", "content": prompt1 }], 
                             "temperature": 0.2,
-                            "stream": True # <-- KUNCI PENGHANCUR ERROR 524 CLOUDFLARE
+                            "response_format": { "type": "json_object" }
                         }
 
-                        res1_text = ""
-                        success_tahap1 = False
+                        res1 = None
                         try:
-                            # Request dengan stream=True (Server-Sent Events)
-                            response1 = requests.post("[https://litellm.koboi2026.biz.id/v1/chat/completions](https://litellm.koboi2026.biz.id/v1/chat/completions)", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload1, stream=True)
-                            
-                            if response1.status_code != 200:
-                                st.error(f"Error AI (Tahap 1): Server mengembalikan status {response1.status_code}")
-                            else:
-                                # Parsing aliran data secara real-time
-                                for line in response1.iter_lines():
-                                    if line:
-                                        decoded = line.decode('utf-8')
-                                        if decoded.startswith("data: ") and "[DONE]" not in decoded:
-                                            try:
-                                                chunk = json.loads(decoded[6:])
-                                                res1_text += chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                                            except:
-                                                pass
-                                success_tahap1 = len(res1_text) > 10
+                            res1 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload1)
+                            if res1.status_code != 200:
+                                st.error(f"Error AI (Tahap 1): Server mengembalikan status {res1.status_code}")
+                                res1 = None
                         except Exception as e: 
                             st.error(f"Koneksi LLM Gagal (Tahap 1): {str(e)}")
 
                     # =========================================================
-                    # TAHAP 2: GENERATE VISUALISASI (STREAMING MODE)
+                    # TAHAP 2: GENERATE KODE VISUALISASI MAPPING
                     # =========================================================
-                    if success_tahap1:
+                    if res1:
                         with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep (Mindmap & Cytoscape)..."):
-                            prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. 
-                            WAJIB kembalikan HANYA JSON MURNI tanpa blok markdown (tanpa ```json).
+                            prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB kembalikan HANYA JSON.
                             STRUKTUR JSON:
                             {{
                                 "hubungan_topik": [
@@ -2195,62 +2180,36 @@ else:
                                 "visual_mindmap": "graph LR\\nA[Topik] --> B[Sub Topik]",
                                 "markmap_code": "# Topik Utama\\n## Sub Topik"
                             }}
-                            ATURAN KETAT:
-                            - hubungan_topik (CYTOSCAPE): 5-15 entitas dan hubungannya.
-                            - visual_mindmap (MERMAID): graph LR. ID Node HARUS 1 HURUF/ANGKA saja. Label WAJIB DIAPIT TANDA KUTIP GANDA.
-                            - markmap_code (MARKMAP): Markdown murni left-to-right tree.
+                            ATURAN SANGAT KETAT:
+                            - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                            - visual_mindmap (MERMAID): Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'. ID Node HARUS 1 HURUF/ANGKA saja. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
+                            - markmap_code (MARKMAP): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail menggunakan Markdown murni.
                             Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                             payload2 = {
                                 "model":"gemini/gemini-2.5-flash",
                                 "messages": [{ "role": "user", "content": prompt2 }], 
                                 "temperature": 0.2,
-                                "stream": True
+                                "response_format": { "type": "json_object" }
                             }
 
-                            res2_text = ""
-                            success_tahap2 = False
                             try:
-                                response2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload2, stream=True)
-                                
-                                if response2.status_code == 200:
-                                    for line in response2.iter_lines():
-                                        if line:
-                                            decoded = line.decode('utf-8')
-                                            if decoded.startswith("data: ") and "[DONE]" not in decoded:
-                                                try:
-                                                    chunk = json.loads(decoded[6:])
-                                                    res2_text += chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                                                except:
-                                                    pass
-                                    success_tahap2 = len(res2_text) > 10
-                                else:
-                                    st.error(f"Error AI (Tahap 2): Server mengembalikan status {response2.status_code}")
-                            except Exception as e: 
-                                st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
-
-                            # =========================================================
-                            # PENGGABUNGAN DAN PARSING JSON AKHIR
-                            # =========================================================
-                            if success_tahap1 and success_tahap2:
-                                try:
-                                    # Bersihkan output LLM dari kemungkinan markdown block (apabila AI ngeyel)
-                                    clean_text1 = res1_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-                                    clean_text2 = res2_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+                                res2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload2)
+                                if res2.status_code == 200:
+                                    # GABUNGKAN HASIL TAHAP 1 DAN TAHAP 2
+                                    data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
+                                    data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
                                     
-                                    data_teks = json.loads(clean_text1)
-                                    data_visual = json.loads(clean_text2)
-                                    
-                                    # Safety check struktur
-                                    if "notulensi_rapat" not in data_teks: 
+                                    # Pastikan struktur JSON notulensi_rapat aman jika format dari AI sedikit meleset
+                                    if "notulensi_rapat" not in data_teks:
                                         data_teks["notulensi_rapat"] = {}
                                         
-                                    # Injeksi data visual ke JSON utama
+                                    # Menginjeksi visual mapping ke dalam kerangka notulensi
                                     data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
                                     data_teks["markmap_code"] = data_visual.get("markmap_code", "")
                                     data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
 
-                                    # Update UI
+                                    # Simpan hasil akhir ke session state
                                     st.session_state["offline_summary"] = data_teks
                                     
                                     if not is_admin():
@@ -2258,12 +2217,12 @@ else:
                                         db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
                                     
                                     st.success("✅ Analisis AI Lengkap & Selesai!")
-                                except Exception as e:
-                                    st.error(f"Gagal Parsing JSON hasil streaming: {str(e)}")
-                                    with st.expander("Lihat raw output (Untuk Debugging)"):
-                                        st.code(f"Output 1:\n{res1_text}\n\nOutput 2:\n{res2_text}")
+                                else:
+                                    st.error(f"Error AI (Tahap 2): Server mengembalikan status {res2.status_code}")
+                            except Exception as e: 
+                                st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
 
-        # BIARKAN KODE DI BAWAH INI TETAP SEPERTI ASLINYA
+        # BIARKAN KODE DI BAWAH INI TETAP SEPERTI ASLINYA (TIDAK PERLU DIUBAH)
         if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")

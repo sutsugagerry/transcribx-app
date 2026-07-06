@@ -969,11 +969,21 @@ else:
                         except: pass
                     return ''
                 
-                try: styled_df = df_display.style.map(color_status, subset=['📊 Status']).map(color_sisa_hari, subset=['⏳ Sisa Hari'])
-                except: styled_df = df_display.style.applymap(color_status, subset=['📊 Status']).applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
-                st.dataframe(styled_df, use_container_width=True, hide_index=True, height=350)
-            else: st.info("🔍 Tidak ada user yang sesuai dengan filter.")
+                # Memastikan seluruh dataframe bertipe string untuk menghindari error PyArrow
+                df_display = df_display.astype(str)
 
+                try: 
+                    styled_df = df_display.style.map(color_status, subset=['📊 Status']).map(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                except AttributeError: 
+                    # Fallback untuk versi Pandas lama
+                    styled_df = df_display.style.applymap(color_status, subset=['📊 Status']).applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                
+                # Tampilkan tabel tanpa menggunakan backend PyArrow
+                st.dataframe(styled_df, use_container_width=True, hide_index=True, height=350)
+                
+            else: 
+                st.info("🔍 Tidak ada user yang sesuai dengan filter.")
+                
             st.markdown("---")
             st.markdown("### 🛠️ Action Center (Kelola & Edit Klien)")
             user_options = [u['Email'] for u in filtered_users if u['Status'] != 'admin']

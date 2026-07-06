@@ -2117,7 +2117,7 @@ else:
                                 if os.path.exists(temp_dir):
                                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-       # Lanjutan kode generate summary...
+      # Lanjutan kode generate summary...
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
             st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
@@ -2129,49 +2129,38 @@ else:
                     st.error("❌ Kuota AI Summary habis!")
                 else:
                     # =========================================================
-                    # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Mencegah Timeout)
+                    # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Payload Sederhana)
                     # =========================================================
                     with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
-                        prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN JSON NOTULENSI:
-                        - ringkasan_eksekutif: Buat array of strings (poin-poin padat).
-                        - transkrip_dialog: Lakukan SPEAKER DIARIZATION berformat "Pembicara X: Teks".
-                        - jalannya_diskusi: Buat array of strings. WAJIB NARASI DETAIL, PANJANG, dan LENGKAP.
-                        - keputusan: Array of strings. Kesimpulan utama.
-                        - rencana_tindak_lanjut: Ekstrak tabel penugasan (tugas, pic, deadline, prioritas). JIKA KOSONG, buat 1 tugas default.
+                        prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan WAJIB kembalikan output HANYA dalam format JSON.
+                        STRUKTUR JSON YANG HARUS DIIKUTI:
+                        {{
+                            "ringkasan_eksekutif": ["poin 1", "poin 2"],
+                            "notulensi_rapat": {{
+                                "agenda": "Topik rapat",
+                                "peserta": ["Nama 1", "Nama 2"],
+                                "transkrip_dialog": ["Pembicara A: Teks", "Pembicara B: Teks"],
+                                "jalannya_diskusi": ["Narasi detail panjang 1", "Narasi 2"],
+                                "keputusan": ["Keputusan 1", "Keputusan 2"],
+                                "rencana_tindak_lanjut": [
+                                    {{"tugas": "Deskripsi", "pic": "Nama", "deadline": "Tanggal", "prioritas": "Tinggi/Sedang/Rendah"}}
+                                ]
+                            }}
+                        }}
                         Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                         payload1 = {
                             "model":"gemini/gemini-2.5-flash",
-                            "messages": [{ "role": "user", "content": prompt1 }], "temperature": 0.2,
-                            "response_format": {
-                                "type": "json_schema",
-                                "json_schema": {
-                                    "name": "meeting_summary_text", "strict": False,
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "ringkasan_eksekutif": { "type": "array", "items": { "type": "string" } },
-                                            "notulensi_rapat": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "agenda": { "type": "string" }, "peserta": { "type": "array", "items": { "type": "string" } },
-                                                    "transkrip_dialog": { "type": "array", "items": { "type": "string" } },
-                                                    "jalannya_diskusi": { "type": "array", "items": { "type": "string" } }, "keputusan": { "type": "array", "items": { "type": "string" } },
-                                                    "rencana_tindak_lanjut": { "type": "array", "items": { "type": "object", "properties": { "tugas": { "type": "string" }, "pic": { "type": "string" }, "deadline": { "type": "string" }, "prioritas": { "type": "string" } }, "required": ["tugas", "pic", "deadline", "prioritas"], "additionalProperties": False } }
-                                                }, "required": ["agenda", "peserta", "transkrip_dialog", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut"], "additionalProperties": False
-                                            }
-                                        }, "required": ["ringkasan_eksekutif", "notulensi_rapat"], "additionalProperties": False
-                                    }
-                                }
-                            }
+                            "messages": [{ "role": "user", "content": prompt1 }], 
+                            "temperature": 0.2,
+                            "response_format": { "type": "json_object" }
                         }
 
                         res1 = None
                         try:
                             res1 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload1)
                             if res1.status_code != 200:
-                                st.error(f"Error AI (Tahap 1): {res1.text}")
+                                st.error(f"Error AI (Tahap 1): Server mengembalikan status {res1.status_code}")
                                 res1 = None
                         except Exception as e: 
                             st.error(f"Koneksi LLM Gagal (Tahap 1): {str(e)}")
@@ -2181,29 +2170,26 @@ else:
                     # =========================================================
                     if res1:
                         with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep (Mindmap & Cytoscape)..."):
-                            prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat berikut.
+                            prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB kembalikan HANYA JSON.
+                            STRUKTUR JSON:
+                            {{
+                                "hubungan_topik": [
+                                    {{"sumber": "Entitas 1", "target": "Entitas 2", "relasi": "Hubungan"}}
+                                ],
+                                "visual_mindmap": "graph LR\\nA[Topik] --> B[Sub Topik]",
+                                "markmap_code": "# Topik Utama\\n## Sub Topik"
+                            }}
                             ATURAN SANGAT KETAT:
                             - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
                             - visual_mindmap (MERMAID): Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'. ID Node HARUS 1 HURUF/ANGKA saja. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
-                            - markmap_code (MARKMAP): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail menggunakan Markdown murni (# Topik, ## Sub Topik).
+                            - markmap_code (MARKMAP): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail menggunakan Markdown murni.
                             Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
                             payload2 = {
                                 "model":"gemini/gemini-2.5-flash",
-                                "messages": [{ "role": "user", "content": prompt2 }], "temperature": 0.2,
-                                "response_format": {
-                                    "type": "json_schema",
-                                    "json_schema": {
-                                        "name": "meeting_summary_visual", "strict": False,
-                                        "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "hubungan_topik": { "type": "array", "items": { "type": "object", "properties": { "sumber": { "type": "string" }, "target": { "type": "string" }, "relasi": { "type": "string" } }, "required": ["sumber", "target", "relasi"], "additionalProperties": False } },
-                                                "visual_mindmap": { "type": "string" }, "markmap_code": { "type": "string" }
-                                            }, "required": ["hubungan_topik", "visual_mindmap", "markmap_code"], "additionalProperties": False
-                                        }
-                                    }
-                                }
+                                "messages": [{ "role": "user", "content": prompt2 }], 
+                                "temperature": 0.2,
+                                "response_format": { "type": "json_object" }
                             }
 
                             try:
@@ -2213,6 +2199,10 @@ else:
                                     data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
                                     data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
                                     
+                                    # Pastikan struktur JSON notulensi_rapat aman jika format dari AI sedikit meleset
+                                    if "notulensi_rapat" not in data_teks:
+                                        data_teks["notulensi_rapat"] = {}
+                                        
                                     # Menginjeksi visual mapping ke dalam kerangka notulensi
                                     data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
                                     data_teks["markmap_code"] = data_visual.get("markmap_code", "")
@@ -2227,7 +2217,7 @@ else:
                                     
                                     st.success("✅ Analisis AI Lengkap & Selesai!")
                                 else:
-                                    st.error(f"Error AI (Tahap 2): {res2.text}")
+                                    st.error(f"Error AI (Tahap 2): Server mengembalikan status {res2.status_code}")
                             except Exception as e: 
                                 st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
 

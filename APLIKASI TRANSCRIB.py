@@ -1323,8 +1323,7 @@ else:
             <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
                 <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
                 <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
-                <button id="downloadTxtBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📝 Save Raw TXT</button>
-                <button id="downloadNotulensiBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px; display: none;">📑 Download Full Notulensi</button>
+                <button id="downloadTxtBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px;">📝 Save TXT</button>
             </div>
 
             <div id="transcriptBox" class="transcript-box">
@@ -1352,7 +1351,6 @@ else:
                     const copyBtn = document.getElementById('copyBtn');
                     const clearBtn = document.getElementById('clearBtn');
                     const downloadTxtBtn = document.getElementById('downloadTxtBtn');
-                    const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn'); // REFERENSI TOMBOL BARU
                     const aiBtn = document.getElementById('aiBtn');
                     const apiKeyInput = document.getElementById('apiKeyInput');
                     const aiContent = document.getElementById('aiContent');
@@ -1363,8 +1361,6 @@ else:
                     const audioContainer = document.getElementById('audioContainer');
                     const visualizer = document.getElementById('visualizer');
                     const canvasCtx = visualizer.getContext('2d');
-
-                    let lastAiData = null; // MENYIMPAN DATA JSON AI
 
                     if (window.mermaid) {
                         mermaid.initialize({ startOnLoad: false, theme: 'default' });
@@ -1690,52 +1686,10 @@ else:
                         a.download = 'Transkrip_Live_' + Date.now() + '.txt';
                         a.click();
                     };
-                    
-                    // ==========================================
-                    // LOGIKA TOMBOL DOWNLOAD NOTULENSI FULL
-                    // ==========================================
-                    downloadNotulensiBtn.onclick = function() {
-                        if (!lastAiData) { alert('Belum ada data notulensi! Silakan Generate AI Summary terlebih dahulu.'); return; }
-                        
-                        const d = lastAiData.notulensi_rapat || {};
-                        let text = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\\n";
-                        text += "========================================\\n\\n";
-
-                        text += "🌟 RINGKASAN EKSEKUTIF:\\n";
-                        (lastAiData.ringkasan_eksekutif || []).forEach(r => text += "- " + r + "\\n");
-
-                        text += "\\n📌 AGENDA: " + (d.agenda || "-") + "\\n";
-                        text += "👥 PESERTA: " + (d.peserta ? d.peserta.join(', ') : "-") + "\\n\\n";
-
-                        if (d.transkrip_dialog && d.transkrip_dialog.length > 0) {
-                            text += "💬 TRANSKRIP DIALOG:\\n";
-                            d.transkrip_dialog.forEach(l => text += l + "\\n");
-                            text += "\\n";
-                        }
-
-                        text += "🗣️ JALANNYA DISKUSI:\\n";
-                        (d.jalannya_diskusi || []).forEach(j => text += "- " + j + "\\n");
-
-                        text += "\\n✅ KEPUTUSAN:\\n";
-                        (d.keputusan || []).forEach(k => text += "- " + k + "\\n");
-
-                        text += "\\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\\n";
-                        (d.rencana_tindak_lanjut || []).forEach(t => {
-                            text += `- ${t.tugas} | ${t.pic} | ${t.deadline} | ${t.prioritas}\\n`;
-                        });
-
-                        const blob = new Blob([text], { type: 'text/plain' });
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = 'Notulensi_Lengkap_' + Date.now() + '.txt';
-                        a.click();
-                    };
 
                     clearBtn.onclick = function() {
                         transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
                         lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = "";
-                        lastAiData = null;
-                        downloadNotulensiBtn.style.display = 'none'; // Sembunyikan tombol notulensi
                     };
 
                     function getTranscriptText() {
@@ -1850,6 +1804,7 @@ else:
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
                         if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                         
+                        // --- TAMBAHKAN KODE INI DI SINI ---
                         // Notifikasi sementara sebelum data hasil muncul
                         aiContent.innerHTML = `
                             <div class="p-4 bg-yellow-50 text-yellow-700 rounded-xl mb-4 border border-yellow-200 animate-pulse">
@@ -1916,10 +1871,6 @@ else:
                             });
                             const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
                             
-                            // MENYIMPAN DATA UNTUK DOWNLOAD NOTULENSI
-                            lastAiData = data;
-                            downloadNotulensiBtn.style.display = 'inline-flex';
-                            
                             let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
                                 `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
                             ).join('');
@@ -1968,10 +1919,10 @@ else:
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
                                 if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
-                                    rawMer = `graph LR\\n` + rawMer;
+                                    rawMer = `graph LR\n` + rawMer;
                                 }
                                 // Paksa hapus semua kutip dan kurung aneh
-                                rawMer = rawMer.replace(/`/g, "").replace(/\\[([A-Z0-9]+)\\]/g, "($1)");
+                                rawMer = rawMer.replace(/`/g, "").replace(/\[([A-Z0-9]+)\]/g, "($1)");
                                 
                                 const mDiv = document.getElementById('mermaidLive'); 
                                 mDiv.textContent = rawMer; 

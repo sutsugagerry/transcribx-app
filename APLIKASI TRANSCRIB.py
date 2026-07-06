@@ -953,7 +953,7 @@ else:
             if filter_paket != "Semua": filtered_users = [u for u in filtered_users if u['Paket'] == filter_paket]
 
             if filtered_users:
-                df_display = pd.DataFrame([{ "📧 Email": u['Email'], "📊 Status": u['Status'].upper(), "📦 Paket": u['Paket'], "💎 AI": u['Sisa AI'], "📤 Upload": u['Sisa Upload'], "⏳ Sisa Hari": u['Sisa Hari'], "🕒 Last Login": u['Last Login'], "🔑 ID": u['UID_Short'] } for u in filtered_users])
+                df_display = pd.DataFrame([{ "📧 Email": u['Email'], "📊 Status": str(u['Status']).upper(), "📦 Paket": u['Paket'], "💎 AI": str(u['Sisa AI']), "📤 Upload": str(u['Sisa Upload']), "⏳ Sisa Hari": str(u['Sisa Hari']), "🕒 Last Login": u['Last Login'], "🔑 ID": u['UID_Short'] } for u in filtered_users])
                 def color_status(val):
                     if val == "ADMIN": return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
                     elif val == "AKTIF": return 'background-color: #d1fae5; color: #065f46; font-weight: bold'

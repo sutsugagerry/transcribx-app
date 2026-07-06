@@ -2025,7 +2025,7 @@ else:
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
-        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). File besar akan dipotong otomatis agar AI tidak kehabisan napas.")
+        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Menggunakan mesin FFmpeg native agar tidak membebani RAM.")
 
         llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
         uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
@@ -2038,70 +2038,86 @@ else:
             if not is_allowed_to_upload:
                 st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
             else:
-                if st.button("🎙️ Mulai Transkripsi (Smart Chunking)", use_container_width=True, type="primary"):
+                if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
                     if not llm_key: 
                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
-                        with st.spinner("⏳ Mengamankan file ke storage sementara untuk mencegah memory crash..."):
-                            temp_file_path = None
+                        with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
+                            temp_dir = tempfile.mkdtemp()
+                            input_path = None
                             try:
-                                # 1. TULIS KE DISK (Meringankan beban RAM)
+                                import subprocess
+                                import glob
+                                
+                                # 1. Simpan file original ke folder sementara
                                 file_extension = uploaded_file.name.split('.')[-1]
-                                with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_audio:
-                                    temp_audio.write(uploaded_file.getvalue())
-                                    temp_file_path = temp_audio.name
+                                input_path = os.path.join(temp_dir, f"input_audio.{file_extension}")
+                                with open(input_path, "wb") as f:
+                                    f.write(uploaded_file.getvalue())
                                 
-                                # 2. BACA DARI DISK (Bukan dari RAM)
+                                # 2. Potong audio menggunakan FFmpeg langsung di disk (Chunk 10 menit / 600 detik)
+                                # Kami ubah ke format MP3 bitrate rendah (64k) agar proses upload API nanti sangat ringan
                                 status_text = st.empty()
-                                status_text.info("Memproses audio (Chunking)...")
-                                audio = AudioSegment.from_file(temp_file_path)
+                                status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
+                                output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
                                 
-                                chunk_length_ms = 10 * 60 * 1000 
-                                total_chunks = math.ceil(len(audio) / chunk_length_ms)
-                                full_transcript = ""
-                                progress_bar = st.progress(0)
+                                command = [
+                                    "ffmpeg", "-i", input_path,
+                                    "-f", "segment", "-segment_time", "600",
+                                    "-c:a", "libmp3lame", "-b:a", "64k",
+                                    output_pattern
+                                ]
+                                # Jalankan perintah tanpa loading ke python memory
+                                subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                                 
-                                url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                headers = {"Authorization": f"Bearer {llm_key}"}
+                                # 3. Proses file yang sudah dipotong
+                                chunk_files = sorted(glob.glob(os.path.join(temp_dir, "chunk_*.mp3")))
+                                total_chunks = len(chunk_files)
+                                
+                                if total_chunks == 0:
+                                    st.error("Gagal memotong audio.")
+                                else:
+                                    full_transcript = ""
+                                    progress_bar = st.progress(0)
+                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                    headers = {"Authorization": f"Bearer {llm_key}"}
 
-                                success_transcription = True
-                                for i in range(total_chunks):
-                                    status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
-                                    audio_chunk = audio[i * chunk_length_ms : min((i + 1) * chunk_length_ms, len(audio))]
-                                    
-                                    chunk_buffer = io.BytesIO()
-                                    audio_chunk.export(chunk_buffer, format="mp3")
-                                    chunk_buffer.name = f"chunk_{i}.mp3"
-                                    chunk_buffer.seek(0)
-                                    
-                                    files = {"file": (chunk_buffer.name, chunk_buffer.read(), "audio/mpeg")}
-                                    response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
-                                    
-                                    if response.status_code == 200: 
-                                        full_transcript += response.json().get("text", "") + " "
-                                    else: 
-                                        st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}")
-                                        success_transcription = False
-                                        break
-                                    progress_bar.progress((i + 1) / total_chunks)
-                                
-                                if success_transcription and full_transcript.strip():
-                                    status_text.success("✅ Seluruh audio berhasil ditranskrip!")
-                                    st.session_state["offline_transcript"] = full_transcript.strip()
-                                    if not is_admin():
-                                        st.session_state["user_kuota_upload"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                                    success_transcription = True
+                                    for i, chunk_file in enumerate(chunk_files):
+                                        status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
                                         
+                                        # Buka per chunk, baca bytes-nya, lalu tutup. Jauh lebih hemat RAM.
+                                        with open(chunk_file, "rb") as f:
+                                            files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
+                                            response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
+                                        
+                                        if response.status_code == 200: 
+                                            full_transcript += response.json().get("text", "") + " "
+                                        else: 
+                                            st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}")
+                                            success_transcription = False
+                                            break
+                                        
+                                        progress_bar.progress((i + 1) / total_chunks)
+                                    
+                                    if success_transcription and full_transcript.strip():
+                                        status_text.success("✅ Seluruh audio berhasil ditranskrip!")
+                                        st.session_state["offline_transcript"] = full_transcript.strip()
+                                        if not is_admin():
+                                            st.session_state["user_kuota_upload"] -= 1
+                                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                                            
+                            except subprocess.CalledProcessError as e:
+                                st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")
                             except Exception as e: 
-                                st.error(f"Terjadi kesalahan saat memproses audio: {str(e)}")
+                                st.error(f"Terjadi kesalahan: {str(e)}")
                             finally:
-                                # 3. BERSIHKAN FILE SEMENTARA WALAUPUN ERROR
-                                if temp_file_path and os.path.exists(temp_file_path):
-                                    try:
-                                        os.remove(temp_file_path)
-                                    except:
-                                        pass
+                                # 4. Bersihkan SEMUA file sementara (Input & Chunks)
+                                import shutil
+                                if os.path.exists(temp_dir):
+                                    shutil.rmtree(temp_dir, ignore_errors=True)
 
+        # Lanjutan kode generate summary...
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
             st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)

@@ -2230,9 +2230,34 @@ else:
             col_t1, col_t2 = st.columns([3, 1])
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            txt_report = f"NOTULENSI RAPAT\n====================\n\nRingkasan:\n" + "\n".join([f"- {r}" for r in data.get('ringkasan_eksekutif', [])])
-            with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
+            # Merangkai seluruh isi JSON ke dalam format teks laporan
+            txt_report = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n"
+            txt_report += "========================================\n\n"
+            
+            txt_report += "🌟 RINGKASAN EKSEKUTIF:\n"
+            for r in data.get('ringkasan_eksekutif', []):
+                txt_report += f"- {r}\n"
+                
+            notulensi = data.get('notulensi_rapat', {})
+            
+            txt_report += f"\n📌 AGENDA: {notulensi.get('agenda', '-')}\n"
+            
+            peserta = notulensi.get('peserta', [])
+            txt_report += f"👥 PESERTA: {', '.join(peserta) if isinstance(peserta, list) else peserta}\n\n"
+            
+            txt_report += "🗣️ JALANNYA DISKUSI:\n"
+            for d in notulensi.get('jalannya_diskusi', []):
+                txt_report += f"- {d}\n"
+                
+            txt_report += "\n✅ KEPUTUSAN:\n"
+            for k in notulensi.get('keputusan', []):
+                txt_report += f"- {k}\n"
+                
+            txt_report += "\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\n"
+            for t in notulensi.get('rencana_tindak_lanjut', []):
+                txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
 
+            with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
             with st.container(border=True):
                 st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
                 rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>"

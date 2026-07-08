@@ -686,11 +686,29 @@ if not st.session_state["logged_in"]:
         # ==========================================
         # BAGIAN MANFAAT (GLASSMORPHISM)
         # ==========================================
+        st.markdown("""
+        <style>
+        .glass-hover-card {
+            background: rgba(30, 41, 59, 0.6); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(56, 189, 248, 0.3); 
+            border-radius: 16px; 
+            padding: 25px; 
+            color: white; 
+            height: 100%; 
+            transition: transform 0.3s ease;
+        }
+        .glass-hover-card:hover {
+            transform: translateY(-5px);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 20px; font-weight: bold;'>✨ Kenapa Memilih TranscribX?</h3>", unsafe_allow_html=True)
         st.write("")
         col_f1, col_f2, col_f3 = st.columns(3)
         glass_card = """
-        <div style='background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 25px; color: white; height: 100%; transition: transform 0.3s;' onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class='glass-hover-card'>
             <div style='font-size: 35px; margin-bottom: 15px;'>{icon}</div>
             <h4 style='color: #e0f2fe; margin-top: 0; font-size: 18px;'>{title}</h4>
             <p style='color: #94a3b8; font-size: 14px; line-height: 1.6;'>{desc}</p>
@@ -703,9 +721,30 @@ if not st.session_state["logged_in"]:
         with col_f3: 
             st.markdown(glass_card.format(icon="🕸️", title="Auto Mindmap Visual", desc="Ubah diskusi kompleks menjadi Peta Konsep visual (Markmap & Cytoscape) yang interaktif, profesional, dan siap diunduh HD."), unsafe_allow_html=True)
 
-        # ==========================================
+       # ==========================================
         # BAGIAN HARGA PAKET (GLASSMORPHISM)
         # ==========================================
+        st.markdown("""
+        <style>
+        .pricing-card {
+            background-color: rgba(30, 41, 59, 0.4); 
+            padding: 30px 20px; 
+            border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            height: 100%; 
+            min-height: 420px; 
+            text-align: center; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            transition: transform 0.2s ease;
+        }
+        .pricing-card:hover {
+            transform: scale(1.02);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 20px; font-weight: bold;'>✨ Paket Langganan Tersedia</h3>", unsafe_allow_html=True)
         st.write("")
         
@@ -714,7 +753,7 @@ if not st.session_state["logged_in"]:
         # ===== BASIC PACKAGE =====
         with col_p1:
             st.markdown("""
-            <div style="background-color:rgba(30, 41, 59, 0.4); padding:30px 20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="pricing-card">
                 <h3 style="color:#94a3b8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket BASIC</h3>
                 <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 29.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
@@ -731,7 +770,7 @@ if not st.session_state["logged_in"]:
         # ===== EXECUTIVE PACKAGE (BEST SELLER) =====
         with col_p2:
             st.markdown("""
-            <div style="background-color:rgba(30, 41, 59, 0.4); padding:30px 20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="pricing-card">
                 <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; padding:6px 18px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(239,68,68,0.4); letter-spacing:0.5px;">🔥 BEST SELLER</div>
                 <h3 style="color:#38bdf8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">EXECUTIVE</h3>
                 <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 49.000</h2>
@@ -748,7 +787,7 @@ if not st.session_state["logged_in"]:
         # ===== MASTER / VIP PACKAGE =====
         with col_p3:
             st.markdown("""
-            <div style="background-color:rgba(30, 41, 59, 0.4); padding:30px 20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); height:100%; min-height:420px; text-align:center; position:relative; display:flex; flex-direction:column; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="pricing-card">
                 <h3 style="color:#fb7185; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket MASTER</h3>
                 <p style="color:#fca5a5; font-size:12px; margin:0 0 8px 0; font-weight:bold;">VIP / ENTERPRISE</p>
                 <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 129.000</h2>

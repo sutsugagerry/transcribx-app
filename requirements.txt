@@ -7,5 +7,5 @@ numpy
 librosa
 firebase-admin
 requests
-pip install python-docx
+python-docx
 

@@ -13,6 +13,12 @@ import os
 import tempfile
 from pydub import AudioSegment
 
+# === IMPORT UNTUK EXPORT DOCX ===
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
+
 # Konfigurasi Halaman
 st.set_page_config(page_title="TranscribX - Enterprise AI", layout="wide", initial_sidebar_state="expanded")
 
@@ -129,7 +135,7 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 # =====================================================================
-# DATA PAKET LANGGANAN
+# DATA PAKET LANGGANAN & HELPER DOCX
 # =====================================================================
 PAKET_LANGGANAN = {
     "BASIC": {"ai_limit": 5, "upload_limit": 1, "durasi_hari": 30},
@@ -235,6 +241,139 @@ def cek_reset_kuota_bulanan(uid, user_data):
         st.session_state["user_kuota_ai"], st.session_state["user_kuota_upload"] = PAKET_LANGGANAN[user_data["paket"]]["ai_limit"], PAKET_LANGGANAN[user_data["paket"]]["upload_limit"]
         return True
     return False
+
+# =====================================================================
+# FUNGSI GENERATE DOCX
+# =====================================================================
+def generate_notulensi_docx(data):
+    doc = Document()
+    
+    # 1. HEADER (Menggunakan tabel tanpa border untuk layout Kiri-Kanan)
+    header_table = doc.add_table(rows=1, cols=2)
+    header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    header_table.autofit = True
+    
+    # Kolom Kiri: Branding SmartDose
+    cell_left = header_table.cell(0, 0)
+    p_left = cell_left.paragraphs[0]
+    run_logo = p_left.add_run("SMARTDOSE\n")
+    run_logo.bold = True
+    run_logo.font.size = Pt(28)
+    run_logo.font.color.rgb = RGBColor(30, 58, 138) # Warna Biru Tua
+    
+    run_sub = p_left.add_run("Enterprise AI Transcription\nHealthcare & Productivity")
+    run_sub.font.size = Pt(10)
+    run_sub.font.color.rgb = RGBColor(100, 116, 139)
+    
+    # Kolom Kanan: Nama Organisasi
+    cell_right = header_table.cell(0, 1)
+    p_right = cell_right.paragraphs[0]
+    p_right.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run_org = p_right.add_run("SMARTDOSE ENTERPRISE\nDIVISI INOVASI DIGITAL\n")
+    run_org.bold = True
+    run_org.font.size = Pt(12)
+    run_org.font.color.rgb = RGBColor(30, 58, 138)
+    run_motto = p_right.add_run("Sistem Notulensi Cerdas & Presisi")
+    run_motto.italic = True
+    run_motto.font.size = Pt(10)
+
+    # Garis Pemisah (Simulasi dengan paragraf border bawah/garis)
+    doc.add_paragraph("_" * 80).alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc.add_paragraph() # Spasi
+
+    # 2. JUDUL DOKUMEN
+    p_title = doc.add_paragraph()
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run_title = p_title.add_run("NOTULEN RAPAT")
+    run_title.bold = True
+    run_title.font.size = Pt(16)
+    run_title.font.color.rgb = RGBColor(30, 58, 138)
+    
+    p_subtitle = doc.add_paragraph()
+    p_subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    notulensi = data.get('notulensi_rapat', {})
+    run_subtitle = p_subtitle.add_run(notulensi.get('agenda', 'Koordinasi dan Pembahasan Internal'))
+    run_subtitle.bold = True
+    run_subtitle.font.size = Pt(12)
+    doc.add_paragraph() # Spasi
+
+    # 3. TABEL METADATA (Hari, Waktu, Media, dll)
+    table_meta = doc.add_table(rows=6, cols=2)
+    table_meta.style = 'Table Grid'
+    
+    for row in table_meta.rows:
+        row.cells[0].width = Inches(1.5)
+        row.cells[1].width = Inches(4.5)
+
+    meta_data = [
+        ("Hari / Tanggal", datetime.now().strftime("%A, %d %B %Y")),
+        ("Waktu", datetime.now().strftime("%H:%M WIB")),
+        ("Media", "SmartDose TranscribX (Offline/Live)"),
+        ("Notulis", "AI Transcription System"),
+        ("Peserta", ", ".join(notulensi.get('peserta', [])) if isinstance(notulensi.get('peserta'), list) else notulensi.get('peserta', '-')),
+        ("Agenda", notulensi.get('agenda', '-'))
+    ]
+
+    for i, (key, val) in enumerate(meta_data):
+        cell_k = table_meta.cell(i, 0)
+        cell_k.text = key
+        cell_k.paragraphs[0].runs[0].bold = True
+        table_meta.cell(i, 1).text = str(val)
+        
+    doc.add_paragraph() # Spasi
+
+    def add_section_header(num, title):
+        p = doc.add_paragraph()
+        run = p.add_run(f"{num}. {title}")
+        run.bold = True
+        run.font.size = Pt(11)
+        run.font.color.rgb = RGBColor(30, 58, 138)
+
+    def add_bullet_points(items, is_numbered=False):
+        style = 'List Number' if is_numbered else 'List Bullet'
+        for item in items:
+            doc.add_paragraph(str(item), style=style)
+
+    # 4. KONTEN NOTULENSI
+    add_section_header("1", "RINGKASAN EKSEKUTIF")
+    for r in data.get('ringkasan_eksekutif', []):
+        doc.add_paragraph(r)
+
+    add_section_header("2", "POKOK PEMBAHASAN / JALANNYA DISKUSI")
+    add_bullet_points(notulensi.get('jalannya_diskusi', []))
+
+    add_section_header("3", "KEPUTUSAN RAPAT")
+    add_bullet_points(notulensi.get('keputusan', []), is_numbered=True)
+
+    add_section_header("4", "TINDAK LANJUT")
+    tindak_lanjut = notulensi.get('rencana_tindak_lanjut', [])
+    if tindak_lanjut:
+        table_tl = doc.add_table(rows=1, cols=4)
+        table_tl.style = 'Table Grid'
+        hdr_cells = table_tl.rows[0].cells
+        headers = ['Tugas', 'PIC', 'Deadline', 'Prioritas']
+        for i, header in enumerate(headers):
+            hdr_cells[i].text = header
+            hdr_cells[i].paragraphs[0].runs[0].bold = True
+            
+        for tl in tindak_lanjut:
+            row_cells = table_tl.add_row().cells
+            row_cells[0].text = str(tl.get('tugas', '-'))
+            row_cells[1].text = str(tl.get('pic', '-'))
+            row_cells[2].text = str(tl.get('deadline', '-'))
+            row_cells[3].text = str(tl.get('prioritas', '-'))
+    else:
+        doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
+
+    # 5. FOOTER / TTD
+    p_footer = doc.add_paragraph()
+    p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run_footer = p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")
+    
+    doc_io = io.BytesIO()
+    doc.save(doc_io)
+    doc_io.seek(0)
+    return doc_io
 
 # =====================================================================
 # INISIALISASI SESSION STATE
@@ -708,6 +847,7 @@ if not st.session_state["logged_in"]:
                                 st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
                     else:
                         st.warning("Silakan masukkan email dan password.")
+
 # =====================================================================
 # APLIKASI UTAMA (SETELAH LOGIN)
 # =====================================================================
@@ -1763,7 +1903,7 @@ else:
                     };
 
                     
-                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)                   
+                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)                  
                     window.dlMermaidLive = function() {
                         const mDiv = document.getElementById('mermaidLive');
                         const container = document.getElementById('merContainerLive');
@@ -2106,7 +2246,7 @@ else:
                                         if not is_admin():
                                             st.session_state["user_kuota_upload"] -= 1
                                             db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
-                                            
+                                        
                             except subprocess.CalledProcessError as e:
                                 st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")
                             except Exception as e: 
@@ -2117,7 +2257,6 @@ else:
                                 if os.path.exists(temp_dir):
                                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-     # Lanjutan kode generate summary...
         if st.session_state["offline_transcript"]:
             st.markdown("#### 📝 Hasil Transkripsi")
             st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
@@ -2128,7 +2267,7 @@ else:
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
                     st.error("❌ Kuota AI Summary habis!")
                 else:
-                   # =========================================================
+                    # =========================================================
                     # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
                     # =========================================================
                     with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
@@ -2222,7 +2361,6 @@ else:
                             except Exception as e: 
                                 st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
 
-        # BIARKAN KODE DI BAWAH INI TETAP SEPERTI ASLINYA (TIDAK PERLU DIUBAH)
         if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")
@@ -2257,7 +2395,30 @@ else:
             for t in notulensi.get('rencana_tindak_lanjut', []):
                 txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
 
-            with col_t2: st.download_button(label="📝 Download Laporan (TXT)", data=txt_report, file_name="Notulensi_Offline.txt", mime="text/plain", use_container_width=True)
+            with col_t2: 
+                # Tombol Download TXT Lama
+                st.download_button(
+                    label="📝 Download Laporan (TXT)", 
+                    data=txt_report, 
+                    file_name=f"Notulensi_{datetime.now().strftime('%Y%m%d')}.txt", 
+                    mime="text/plain", 
+                    use_container_width=True
+                )
+                
+                # TOMBOL DOWNLOAD DOCX BARU
+                try:
+                    docx_file = generate_notulensi_docx(data)
+                    st.download_button(
+                        label="📄 Download Resmi (DOCX)",
+                        data=docx_file,
+                        file_name=f"Notulen_SmartDose_{datetime.now().strftime('%Y%m%d')}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True,
+                        type="primary"
+                    )
+                except Exception as e:
+                    st.error(f"Gagal memuat DOCX: {e}")
+
             with st.container(border=True):
                 st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
                 rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>"

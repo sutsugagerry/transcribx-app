@@ -2101,8 +2101,12 @@ else:
                         };
 
                         try {
-                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
-                                method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+                            const response = await fetch("https://corsproxy.io/?https://litellm.koboi2026.biz.id/v1/chat/completions", {
+                                method: "POST", 
+                                headers: { 
+                                    "Authorization": "Bearer " + apiKey, 
+                                    "Content-Type": "application/json" 
+                                },
                                 body: JSON.stringify(payload)
                             });
                             const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);

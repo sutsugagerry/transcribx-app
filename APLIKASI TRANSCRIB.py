@@ -1944,53 +1944,128 @@ else:
                     };
 
                     // ==========================================
-                    // LOGIKA TOMBOL DOWNLOAD DOCX (FROM JS)
+                    // LOGIKA TOMBOL DOWNLOAD DOCX (FROM JS) - MATCH OFFLINE
                     // ==========================================
                     downloadDocxBtn.onclick = function() {
                         if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
                         
                         const d = lastAiData.notulensi_rapat || {};
                         
-                        // Kita susun struktur dokumen rapi ala Word
-                        let content = `
-                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                        <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
-                        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-                            <h1 style="color: #1e3a8a; text-align: center;">NOTULEN RAPAT SMARTDOSE ENTERPRISE</h1>
-                            <hr>
-                            <p><b>Hari / Tanggal:</b> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
-                            <b>Agenda:</b> ${d.agenda || '-'}<br>
-                            <b>Peserta:</b> ${d.peserta ? d.peserta.join(', ') : '-'}</p>
-                            
-                            <h2 style="color: #1e3a8a;">1. RINGKASAN EKSEKUTIF</h2>
-                            <ul>${(lastAiData.ringkasan_eksekutif || []).map(r => `<li>${r}</li>`).join('')}</ul>
-                            
-                            <h2 style="color: #1e3a8a;">2. JALANNYA DISKUSI</h2>
-                            <ul>${(d.jalannya_diskusi || []).map(j => `<li>${j}</li>`).join('')}</ul>
-                            
-                            <h2 style="color: #1e3a8a;">3. KEPUTUSAN RAPAT</h2>
-                            <ol>${(d.keputusan || []).map(k => `<li>${k}</li>`).join('')}</ol>
-                            
-                            <h2 style="color: #1e3a8a;">4. RENCANA TINDAK LANJUT (ACTION ITEMS)</h2>
-                            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-                                <tr style="background-color: #f1f5f9;">
-                                    <th>Tugas</th><th>PIC</th><th>Deadline</th><th>Prioritas</th>
+                        // Setup Format Waktu & Tanggal meniru Python (Contoh: Thursday, 09 July 2026)
+                        const now = new Date();
+                        const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+                        const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                        const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+                        
+                        // Render Action Items (Tabel atau Teks Kosong)
+                        let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
+                        if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
+                            actionItemsHtml = `
+                            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt;">
+                                <tr>
+                                    <th><b>Tugas</b></th><th><b>PIC</b></th><th><b>Deadline</b></th><th><b>Prioritas</b></th>
                                 </tr>
-                                ${(d.rencana_tindak_lanjut || []).map(t => `
+                                ${d.rencana_tindak_lanjut.map(t => `
                                 <tr>
                                     <td>${t.tugas || '-'}</td><td>${t.pic || '-'}</td><td>${t.deadline || '-'}</td><td><b>${t.prioritas || '-'}</b></td>
                                 </tr>`).join('')}
+                            </table>`;
+                        }
+
+                        // Menyusun struktur dokumen rapi ala Word (Sama persis dengan generate_notulensi_docx Python)
+                        let content = `
+                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                        <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
+                        <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
+                            
+                            <!-- KOP SURAT (HEADER KIRI KANAN) -->
+                            <table style="width: 100%; border: none; border-collapse: collapse;">
+                                <tr>
+                                    <td style="width: 50%; text-align: left; vertical-align: top; border: none; padding: 0;">
+                                        <span style="font-size: 28pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE</span><br>
+                                        <span style="font-size: 10pt; color: #64748b;">Enterprise AI Transcription<br>Healthcare & Productivity</span>
+                                    </td>
+                                    <td style="width: 50%; text-align: right; vertical-align: top; border: none; padding: 0;">
+                                        <span style="font-size: 12pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE ENTERPRISE<br>DIVISI INOVASI DIGITAL</span><br>
+                                        <span style="font-size: 10pt; font-style: italic; color: #000000;">Sistem Notulensi Cerdas & Presisi</span>
+                                    </td>
+                                </tr>
                             </table>
-                            <br><br>
-                            <p style="text-align: right;">Jakarta, ${new Date().toLocaleDateString('id-ID')}<br><br><br><b>( Tim Notulen SmartDose )</b></p>
+                            
+                            <!-- GARIS BAWAH KOP -->
+                            <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
+                                ________________________________________________________________________________
+                            </div>
+
+                            <!-- JUDUL & AGENDA -->
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br>
+                                <span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
+                            </div>
+                            
+                            <!-- TABEL METADATA (GRID) -->
+                            <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;">
+                                <tr>
+                                    <td style="width: 1.5in;"><b>Hari / Tanggal</b></td>
+                                    <td style="width: 4.5in;">${tanggalStr}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Waktu</b></td>
+                                    <td>${waktuStr}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Media</b></td>
+                                    <td>SmartDose TranscribX (Offline/Live)</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Notulis</b></td>
+                                    <td>AI Transcription System</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Peserta</b></td>
+                                    <td>${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Agenda</b></td>
+                                    <td>${d.agenda || '-'}</td>
+                                </tr>
+                            </table>
+                            
+                            <!-- 1. RINGKASAN EKSEKUTIF -->
+                            <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>
+                            ${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}
+                            <br>
+
+                            <!-- 2. POKOK PEMBAHASAN / JALANNYA DISKUSI -->
+                            <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p>
+                            <ul style="margin-top: 0;">
+                                ${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}
+                            </ul>
+                            <br>
+
+                            <!-- 3. KEPUTUSAN RAPAT -->
+                            <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p>
+                            <ol style="margin-top: 0;">
+                                ${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}
+                            </ol>
+                            <br>
+
+                            <!-- 4. TINDAK LANJUT -->
+                            <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>
+                            ${actionItemsHtml}
+                            
+                            <br><br><br>
+                            
+                            <!-- TANDA TANGAN (Kanan Bawah) -->
+                            <p style="text-align: right;">
+                                Jakarta, ${tanggalFooterStr}<br><br><br><br>
+                                ( Tim Notulen SmartDose )
+                            </p>
                         </body>
                         </html>`;
-                    
-                        // Ubah ke format Word Blob dan Download
-                        const blob = new Blob(['\ufeff', content], {
-                            type: 'application/msword'
-                        });
                         
+                        // Generate file MS Word (.doc)
+                        const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;

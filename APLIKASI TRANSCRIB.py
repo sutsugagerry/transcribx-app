@@ -1516,6 +1516,7 @@ else:
                 <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
                 <button id="downloadTxtBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📝 Save Raw TXT</button>
                 <button id="downloadNotulensiBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px; display: none;">📑 Download Full Notulensi</button>
+                <button id="downloadDocxBtn" class="btn-custom btn-ai" style="padding: 6px 14px; font-size: 13px; display: none; background: #ef4444;">📄 Download Resmi (DOCX)</button>
             </div>
 
             <div id="transcriptBox" class="transcript-box">
@@ -1544,6 +1545,7 @@ else:
                     const clearBtn = document.getElementById('clearBtn');
                     const downloadTxtBtn = document.getElementById('downloadTxtBtn');
                     const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn'); // REFERENSI TOMBOL BARU
+                    const downloadDocxBtn = document.getElementById('downloadDocxBtn'); // <-- TAMBAHAN BARU
                     const aiBtn = document.getElementById('aiBtn');
                     const apiKeyInput = document.getElementById('apiKeyInput');
                     const aiContent = document.getElementById('aiContent');
@@ -1941,6 +1943,63 @@ else:
                         }
                     };
 
+                    // ==========================================
+                    // LOGIKA TOMBOL DOWNLOAD DOCX (FROM JS)
+                    // ==========================================
+                    downloadDocxBtn.onclick = function() {
+                        if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
+                        
+                        const d = lastAiData.notulensi_rapat || {};
+                        
+                        // Kita susun struktur dokumen rapi ala Word
+                        let content = `
+                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                        <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
+                        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                            <h1 style="color: #1e3a8a; text-align: center;">NOTULEN RAPAT SMARTDOSE ENTERPRISE</h1>
+                            <hr>
+                            <p><b>Hari / Tanggal:</b> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+                            <b>Agenda:</b> ${d.agenda || '-'}<br>
+                            <b>Peserta:</b> ${d.peserta ? d.peserta.join(', ') : '-'}</p>
+                            
+                            <h2 style="color: #1e3a8a;">1. RINGKASAN EKSEKUTIF</h2>
+                            <ul>${(lastAiData.ringkasan_eksekutif || []).map(r => `<li>${r}</li>`).join('')}</ul>
+                            
+                            <h2 style="color: #1e3a8a;">2. JALANNYA DISKUSI</h2>
+                            <ul>${(d.jalannya_diskusi || []).map(j => `<li>${j}</li>`).join('')}</ul>
+                            
+                            <h2 style="color: #1e3a8a;">3. KEPUTUSAN RAPAT</h2>
+                            <ol>${(d.keputusan || []).map(k => `<li>${k}</li>`).join('')}</ol>
+                            
+                            <h2 style="color: #1e3a8a;">4. RENCANA TINDAK LANJUT (ACTION ITEMS)</h2>
+                            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+                                <tr style="background-color: #f1f5f9;">
+                                    <th>Tugas</th><th>PIC</th><th>Deadline</th><th>Prioritas</th>
+                                </tr>
+                                ${(d.rencana_tindak_lanjut || []).map(t => `
+                                <tr>
+                                    <td>${t.tugas || '-'}</td><td>${t.pic || '-'}</td><td>${t.deadline || '-'}</td><td><b>${t.prioritas || '-'}</b></td>
+                                </tr>`).join('')}
+                            </table>
+                            <br><br>
+                            <p style="text-align: right;">Jakarta, ${new Date().toLocaleDateString('id-ID')}<br><br><br><b>( Tim Notulen SmartDose )</b></p>
+                        </body>
+                        </html>`;
+                    
+                        // Ubah ke format Word Blob dan Download
+                        const blob = new Blob(['\ufeff', content], {
+                            type: 'application/msword'
+                        });
+                        
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'Notulen_Live_SmartDose_' + Date.now() + '.doc';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    };
+
                     
                     // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)                  
                     window.dlMermaidLive = function() {
@@ -2114,6 +2173,7 @@ else:
                             // MENYIMPAN DATA UNTUK DOWNLOAD NOTULENSI
                             lastAiData = data;
                             downloadNotulensiBtn.style.display = 'inline-flex';
+                            downloadDocxBtn.style.display = 'inline-flex'; // <-- TAMBAHAN BARU: Munculkan tombol DOCX
                             
                             let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
                                 `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`

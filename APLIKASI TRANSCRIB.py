@@ -1944,12 +1944,12 @@ else:
                     };
 
                     // ==========================================
-                    // LOGIKA TOMBOL DOWNLOAD DOCX (FROM JS) + GAMBAR LENGKAP
+                    // LOGIKA TOMBOL DOWNLOAD DOCX (FROM JS) + GAMBAR LENGKAP & ANTI POTONG
                     // ==========================================
                     downloadDocxBtn.onclick = async function() {
                         if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
                         
-                        // 1. Ubah Status Tombol Jadi Loading (Screenshot butuh 1-3 detik)
+                        // 1. Ubah Status Tombol Jadi Loading
                         const originalBtnText = downloadDocxBtn.innerHTML;
                         downloadDocxBtn.innerHTML = "⏳ Memproses Gambar & Dokumen...";
                         downloadDocxBtn.disabled = true;
@@ -1957,13 +1957,13 @@ else:
                         try {
                             const d = lastAiData.notulensi_rapat || {};
                             
-                            // Setup Tanggal & Waktu (Menyamakan mode offline)
+                            // Setup Tanggal & Waktu
                             const now = new Date();
                             const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
                             const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
                             const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
                             
-                            // 2. TANGKAP GAMBAR CYTOSCAPE (Paling mudah, pakai API bawaannya)
+                            // 2. TANGKAP GAMBAR CYTOSCAPE
                             let cyImageHtml = "";
                             if (window.cyInstance) {
                                 try {
@@ -1979,50 +1979,86 @@ else:
                             const mermaidContainer = document.getElementById('merContainerLive'); 
                             if (mermaidContainer && mermaidContainer.querySelector('svg')) {
                                 try {
+                                    const svgMermaid = mermaidContainer.querySelector('svg');
                                     const origW = mermaidContainer.style.width;
                                     const origH = mermaidContainer.style.height;
                                     const origOverflow = mermaidContainer.style.overflow;
                                     
-                                    // Perbesar kontainer sementara agar tidak terpotong
-                                    mermaidContainer.style.width = '800px';
-                                    mermaidContainer.style.height = 'auto';
+                                    // Deteksi lebar asli dari SVG Mermaid
+                                    const bboxMermaid = svgMermaid.getBBox();
+                                    const mWidth = Math.max(bboxMermaid.width + 100, 800);
+                                    const mHeight = Math.max(bboxMermaid.height + 100, 600);
+
+                                    mermaidContainer.style.width = mWidth + 'px';
+                                    mermaidContainer.style.height = mHeight + 'px';
                                     mermaidContainer.style.overflow = 'visible';
 
-                                    const canvasMermaid = await html2canvas(mermaidContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                                    const canvasMermaid = await html2canvas(mermaidContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: mWidth, height: mHeight });
                                     const merBase64 = canvasMermaid.toDataURL('image/png');
                                     mermaidImageHtml = `
                                     <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">B. Mermaid (Mindmap Struktur)</p>
                                     <img src="${merBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
                                     
-                                    // Kembalikan ukuran aslinya
                                     mermaidContainer.style.width = origW;
                                     mermaidContainer.style.height = origH;
                                     mermaidContainer.style.overflow = origOverflow;
                                 } catch (err) { console.error("Gagal screenshot Mermaid:", err); }
                             }
 
-                            // 4. TANGKAP GAMBAR MARKMAP
+                            // 4. TANGKAP GAMBAR MARKMAP (DISEMPURNAKAN AGAR TIDAK TERPOTONG)
                             let markmapImageHtml = "";
                             const markmapContainer = document.getElementById('markmapLiveWrapper');
-                            if (markmapContainer && markmapContainer.querySelector('svg')) {
+                            const markmapSvg = markmapContainer ? markmapContainer.querySelector('svg') : null;
+                            
+                            if (markmapContainer && markmapSvg) {
                                 try {
                                     const origW = markmapContainer.style.width;
                                     const origH = markmapContainer.style.height;
                                     const origOverflow = markmapContainer.style.overflow;
+                                    const origViewBox = markmapSvg.getAttribute('viewBox');
                                     
-                                    markmapContainer.style.width = '1000px';
-                                    markmapContainer.style.height = '700px';
-                                    markmapContainer.style.overflow = 'visible';
+                                    const g = markmapSvg.querySelector('g');
+                                    const originalTransform = g ? g.getAttribute('transform') : null;
+                                    
+                                    // Reset transform untuk menghindari efek zoom/pan pengguna saat ini
+                                    if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                                    
+                                    // Beri jeda sangat kecil agar DOM merender transform baru
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    
+                                    // Dapatkan Bounding Box ASLI dari elemen G
+                                    const bbox = g ? g.getBBox() : markmapSvg.getBBox();
+                                    const padding = 60;
+                                    const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                                    const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
 
-                                    const canvasMarkmap = await html2canvas(markmapContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                                    // Terapkan ukuran baru ke kontainer dan atur ulang viewBox
+                                    markmapContainer.style.width = trueWidth + 'px';
+                                    markmapContainer.style.height = trueHeight + 'px';
+                                    markmapContainer.style.overflow = 'visible';
+                                    markmapSvg.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
+
+                                    // Lakukan Screenshot
+                                    const canvasMarkmap = await html2canvas(markmapContainer, { 
+                                        scale: 2, 
+                                        useCORS: true, 
+                                        backgroundColor: '#ffffff',
+                                        width: trueWidth,
+                                        height: trueHeight
+                                    });
                                     const mmBase64 = canvasMarkmap.toDataURL('image/png');
                                     markmapImageHtml = `
                                     <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">C. Markmap (Peta Konsep Detail)</p>
                                     <img src="${mmBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
 
+                                    // Kembalikan ke kondisi semula
                                     markmapContainer.style.width = origW;
                                     markmapContainer.style.height = origH;
                                     markmapContainer.style.overflow = origOverflow;
+                                    if (origViewBox) markmapSvg.setAttribute('viewBox', origViewBox);
+                                    else markmapSvg.removeAttribute('viewBox');
+                                    if (g && originalTransform) g.setAttribute('transform', originalTransform);
+
                                 } catch (err) { console.error("Gagal screenshot Markmap:", err); }
                             }
 

@@ -2101,7 +2101,7 @@ else:
                         };
 
                         try {
-                            const response = await fetch("https://corsproxy.io/?https://litellm.koboi2026.biz.id/v1/chat/completions", {
+                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
                                 method: "POST", 
                                 headers: { 
                                     "Authorization": "Bearer " + apiKey, 

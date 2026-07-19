@@ -138,9 +138,9 @@ db = firestore.client()
 # DATA PAKET LANGGANAN & HELPER DOCX
 # =====================================================================
 PAKET_LANGGANAN = {
-    "BASIC": {"ai_limit": 5, "upload_limit": 1, "durasi_hari": 30},
-    "EXECUTIVE": {"ai_limit": 10, "upload_limit": 3, "durasi_hari": 30},
-    "MASTER": {"ai_limit": 30, "upload_limit": 10, "durasi_hari": 30},
+    "BASIC": {"ai_limit": 8, "upload_limit": 1, "durasi_hari": 30},
+    "EXECUTIVE": {"ai_limit": 25, "upload_limit": 5, "durasi_hari": 30},
+    "MASTER": {"ai_limit": 60, "upload_limit": 15, "durasi_hari": 30},
     "NON-AKTIF": {"ai_limit": 0, "upload_limit": 0, "durasi_hari": 0}
 }
 
@@ -755,13 +755,13 @@ if not st.session_state["logged_in"]:
             st.markdown("""
             <div class="pricing-card">
                 <h3 style="color:#94a3b8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket BASIC</h3>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 29.000</h2>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 35.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>5x</b> AI Summary & Mindmap</li>
-                    <li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>
+                    <li>✅ <b>8x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload Audio (Max 45mnt)</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
@@ -773,13 +773,14 @@ if not st.session_state["logged_in"]:
             <div class="pricing-card">
                 <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; padding:6px 18px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(239,68,68,0.4); letter-spacing:0.5px;">🔥 BEST SELLER</div>
                 <h3 style="color:#38bdf8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">EXECUTIVE</h3>
-                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 49.000</h2>
+                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 69.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>
+                    <li>✅ <b>25x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>5x</b> Upload Audio (Max 45mnt)</li>
+                    <li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -790,13 +791,13 @@ if not st.session_state["logged_in"]:
             <div class="pricing-card">
                 <h3 style="color:#fb7185; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket MASTER</h3>
                 <p style="color:#fca5a5; font-size:12px; margin:0 0 8px 0; font-weight:bold;">VIP / ENTERPRISE</p>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 129.000</h2>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 149.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>30x</b> AI Summary & Mindmap</li>
-                    <li>✅ <b>10x</b> Upload Audio (Max 30mnt)</li>
+                    <li>✅ <b>60x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>15x</b> Upload Audio (Max 45mnt)</li>
                     <li>🌟 <b>Prioritas Support</b> via WA 24/7</li>
                 </ul>
             </div>
@@ -1239,6 +1240,33 @@ else:
                                     st.success(f"✅ Masa aktif {selected_email} ditambah {hari_tambahan} hari!")
                                     time.sleep(1)
                                     st.rerun()
+
+                        # ==========================================
+                        # LOGIKA BARU: TAB TOP-UP KUOTA
+                        # ==========================================
+                        with tab_topup:
+                            st.caption("Top-up atau tambah kuota AI & Upload secara eceran tanpa mengubah masa aktif paket bulanan.")
+                            with st.form("form_topup_kuota"):
+                                col_tp1, col_tp2 = st.columns(2)
+                                with col_tp1:
+                                    tambah_ai = st.number_input("➕ Tambah Kuota AI (Notulensi)", min_value=0, max_value=500, value=10)
+                                with col_tp2:
+                                    tambah_upload = st.number_input("➕ Tambah Kuota Upload (MP3)", min_value=0, max_value=50, value=3)
+                                
+                                btn_topup = st.form_submit_button("🔋 Eksekusi Top-Up", type="primary", use_container_width=True)
+                                
+                                if btn_topup:
+                                    if tambah_ai > 0 or tambah_upload > 0:
+                                        uid = selected_user['UID']
+                                        db.collection("users").document(uid).update({
+                                            "kuota_ai": firestore.Increment(tambah_ai),
+                                            "kuota_upload": firestore.Increment(tambah_upload)
+                                        })
+                                        st.success(f"✅ Top-Up Berhasil! Akun {selected_email} mendapat tambahan {tambah_ai}x AI dan {tambah_upload}x Upload.")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else:
+                                        st.warning("⚠️ Masukkan nominal top-up lebih dari 0.")
                                     
                         with tab_history:
                             col_h1, col_h2 = st.columns([1, 1.5], gap="large")

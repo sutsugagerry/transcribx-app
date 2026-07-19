@@ -970,66 +970,68 @@ else:
         components.html(germic_html, height=250)
         st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
         
-        if st.session_state.get("logged_in"):
-            user_email = st.session_state.get('user_email')
-            
-            if is_admin():
-                card_class = "profile-card admin"
-                paket_str = "👑 ADMIN (Unlimited)"
-                ai_str = "♾️ Unlimited"
-                up_str = "♾️ Unlimited"
-                hari_str = "Status: Permanen"
-            else:
-                # === SINKRONISASI REAL-TIME KE FIREBASE MUTLAK ===
-                try:
-                    uid = st.session_state.get("user_uid")
-                    if uid:
-                        fresh_data = db.collection("users").document(uid).get().to_dict()
-                        if fresh_data:
-                            # Paksa timpa memori lokal dengan data asli dari database
-                            st.session_state["user_kuota_ai"] = fresh_data.get("kuota_ai", 0)
-                            st.session_state["user_kuota_upload"] = fresh_data.get("kuota_upload", 0)
-                            st.session_state["user_paket"] = fresh_data.get("paket", "NON-AKTIF")
-                except Exception:
-                    pass
-                # ==================================================
+      profile_placeholder = st.empty() # Wadah dinamis
+        
+        def render_sidebar_profile():
+            if st.session_state.get("logged_in"):
+                user_email = st.session_state.get('user_email')
                 
-                paket = st.session_state.get('user_paket', 'NON-AKTIF')
-                sisa_hari = st.session_state.get('sisa_hari', 0)
-                
-                if paket == 'NON-AKTIF':
-                    card_class = "profile-card user-inactive"
-                    paket_str = "NON-AKTIF"
-                    ai_str = "0x"
-                    up_str = "0x"
-                    hari_str = "Masa Aktif: Habis"
+                if is_admin():
+                    card_class = "profile-card admin"
+                    paket_str = "👑 ADMIN (Unlimited)"
+                    ai_str = "♾️ Unlimited"
+                    up_str = "♾️ Unlimited"
+                    hari_str = "Status: Permanen"
                 else:
-                    paket_str = paket 
-                    ai_val = st.session_state.get('user_kuota_ai', 0)
-                    up_val = st.session_state.get('user_kuota_upload', 0)
-                    ai_str = f"{ai_val}x"
-                    up_str = f"{up_val}x"
-                    hari_str = f"⏳ Sisa: {sisa_hari} hari"
+                    try:
+                        uid = st.session_state.get("user_uid")
+                        if uid:
+                            fresh_data = db.collection("users").document(uid).get().to_dict()
+                            if fresh_data:
+                                st.session_state["user_kuota_ai"] = fresh_data.get("kuota_ai", 0)
+                                st.session_state["user_kuota_upload"] = fresh_data.get("kuota_upload", 0)
+                                st.session_state["user_paket"] = fresh_data.get("paket", "NON-AKTIF")
+                    except Exception:
+                        pass
                     
-                    if sisa_hari <= 3: card_class = "profile-card user-warning"
-                    else: card_class = "profile-card user-active"
+                    paket = st.session_state.get('user_paket', 'NON-AKTIF')
+                    sisa_hari = st.session_state.get('sisa_hari', 0)
+                    
+                    if paket == 'NON-AKTIF':
+                        card_class = "profile-card user-inactive"
+                        paket_str = "NON-AKTIF"
+                        ai_str = "0x"
+                        up_str = "0x"
+                        hari_str = "Masa Aktif: Habis"
+                    else:
+                        paket_str = paket 
+                        ai_val = st.session_state.get('user_kuota_ai', 0)
+                        up_val = st.session_state.get('user_kuota_upload', 0)
+                        ai_str = f"{ai_val}x"
+                        up_str = f"{up_val}x"
+                        hari_str = f"⏳ Sisa: {sisa_hari} hari"
+                        
+                        if sisa_hari <= 3: card_class = "profile-card user-warning"
+                        else: card_class = "profile-card user-active"
 
-            profile_html = f"""<div class="{card_class}">
-            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
-            <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
-            <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-            <div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
-            <div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
-            <div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
-            </div>
-            <div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
-            {hari_str}
-            </div>
-            </div>"""
-            st.markdown(profile_html, unsafe_allow_html=True)
-            
-            if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
-                st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
+                profile_html = f"""<div class="{card_class}">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
+                <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
+                <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+                <div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
+                <div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
+                </div>
+                <div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
+                {hari_str}
+                </div>
+                </div>"""
+                
+                # Masukkan ke wadah dinamis
+                with profile_placeholder.container():
+                    st.markdown(profile_html, unsafe_allow_html=True)
+                    if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
+                        st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
 
     colA, colB = st.columns([8, 1])
     with colB:
@@ -2588,13 +2590,11 @@ else:
                     if not llm_key: 
                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
-                        # =========================================================
-                        # POTONG KUOTA UPLOAD TEPAT DI AWAL SAAT TOMBOL DIKLIK
-                        # =========================================================
+                        # POTONG KUOTA & REFRESH SIDEBAR SECARA LIVE SEKARANG JUGA
                         if not is_admin():
                             st.session_state["user_kuota_upload"] -= 1
                             db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
-                        # =========================================================
+                            render_sidebar_profile() # <--- FUNGSI SAKTI REFRESH UI
 
                         with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
                             temp_dir = tempfile.mkdtemp()
@@ -2670,12 +2670,18 @@ else:
             st.markdown("#### 📝 Hasil Transkripsi")
             st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
 
-            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+           if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                 if not llm_key: 
                     st.warning("⚠️ Masukkan API Key LiteLLM!")
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
                     st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
                 else:
+                    # POTONG KUOTA AI & REFRESH SIDEBAR SECARA LIVE SEKARANG JUGA
+                    if not is_admin():
+                        st.session_state["user_kuota_ai"] -= 1
+                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+                        render_sidebar_profile() # <--- FUNGSI SAKTI REFRESH UI
+
                     # =========================================================
                     # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
                     # =========================================================

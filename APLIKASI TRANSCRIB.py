@@ -970,7 +970,10 @@ else:
         components.html(germic_html, height=250)
         st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
         
-      profile_placeholder = st.empty()
+        # =================================================================
+        # MULAI DARI SINI: BUNGKUS SIDEBAR KE DALAM FUNGSI DAN ST.EMPTY
+        # =================================================================
+        profile_placeholder = st.empty() # Wadah dinamis
         
         def render_sidebar_profile():
             if st.session_state.get("logged_in"):
@@ -1032,6 +1035,10 @@ else:
                     st.markdown(profile_html, unsafe_allow_html=True)
                     if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
                         st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
+        
+        # Eksekusi fungsi pertama kali saat halaman dimuat
+        render_sidebar_profile()
+        # =================================================================
 
     colA, colB = st.columns([8, 1])
     with colB:
@@ -2590,11 +2597,14 @@ else:
                     if not llm_key: 
                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
-                        # POTONG KUOTA & REFRESH SIDEBAR SECARA LIVE SEKARANG JUGA
+                        # =========================================================
+                        # POTONG KUOTA UPLOAD TEPAT DI AWAL SAAT TOMBOL DIKLIK
+                        # =========================================================
                         if not is_admin():
                             st.session_state["user_kuota_upload"] -= 1
                             db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
                             render_sidebar_profile() # <--- FUNGSI SAKTI REFRESH UI
+                        # =========================================================
 
                         with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
                             temp_dir = tempfile.mkdtemp()
@@ -2654,7 +2664,6 @@ else:
                                     if success_transcription and full_transcript.strip():
                                         status_text.success("✅ Seluruh audio berhasil ditranskrip!")
                                         st.session_state["offline_transcript"] = full_transcript.strip()
-                                        # Kuota upload SUDAH dipotong di awal, jadi kode pemotongan lama di sini sudah Dihapus
                                         
                             except subprocess.CalledProcessError as e:
                                 st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")
@@ -2670,13 +2679,15 @@ else:
             st.markdown("#### 📝 Hasil Transkripsi")
             st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
 
-           if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                 if not llm_key: 
                     st.warning("⚠️ Masukkan API Key LiteLLM!")
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
                     st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
                 else:
+                    # =========================================================
                     # POTONG KUOTA AI & REFRESH SIDEBAR SECARA LIVE SEKARANG JUGA
+                    # =========================================================
                     if not is_admin():
                         st.session_state["user_kuota_ai"] -= 1
                         db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
@@ -2762,10 +2773,6 @@ else:
                                     data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
 
                                     st.session_state["offline_summary"] = data_teks
-                                    
-                                    if not is_admin():
-                                        st.session_state["user_kuota_ai"] -= 1
-                                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
                                     
                                     st.success("✅ Analisis AI Lengkap & Selesai!")
                                 else:

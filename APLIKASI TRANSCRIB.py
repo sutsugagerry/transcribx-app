@@ -1399,8 +1399,37 @@ else:
     # =====================================================================
     # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
     # =====================================================================
+    # =====================================================================
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
+    # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
+        
+        # === 1. LOGIKA PENGURANGAN KUOTA DARI JAVASCRIPT ===
+        kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
+        can_use_ai = is_admin() or kuota_ai_sekarang > 0
+        
+        # Widget rahasia untuk menerima sinyal "sukses" dari iframe JavaScript
+        trigger_val = st.text_input("trigger_ai_live", key="trigger_ai_live", label_visibility="collapsed")
+        st.markdown("""
+        <style>
+            div[data-testid="stTextInput"]:has(input[aria-label="trigger_ai_live"]) {
+                display: none !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Jika JavaScript mengirimkan sinyal DEDUCT (Berhasil generate AI)
+        if trigger_val.startswith("DEDUCT_"):
+            if st.session_state.get("last_deduct_id") != trigger_val:
+                st.session_state["last_deduct_id"] = trigger_val
+                if not is_admin() and st.session_state["user_kuota_ai"] > 0:
+                    # Kurangi kuota dan update ke Firebase
+                    st.session_state["user_kuota_ai"] -= 1
+                    db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+                st.rerun() # Refresh halaman agar metrik sidebar langsung terupdate
+        # ===================================================
+
         st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
         st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
         
@@ -1581,7 +1610,8 @@ else:
             <script>
                 (function() {
                     'use strict';
-
+                     const canUseAi = __CAN_USE_AI__;
+                    
                     // ======== DOM REFS ========
                     const startBtn = document.getElementById('startBtn');
                     const stopBtn = document.getElementById('stopBtn');
@@ -2298,6 +2328,12 @@ else:
                     };
 
                     aiBtn.onclick = async function() {
+                        // 1. Cek kuota sebelum menjalankan AI
+                        if (!canUseAi) {
+                            alert("❌ Kuota AI Summary Anda telah habis! Silakan lakukan Top-Up atau hubungi Admin.");
+                            return;
+                        }
+
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
                         if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                         
@@ -2430,34 +2466,33 @@ else:
                                 mDiv.removeAttribute('data-processed');
                                 
                                 try {
-                                    mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
-                                        const svg = mDiv.querySelector('svg');
-                                        if (svg) { 
-                                            svg.style.maxWidth = 'none'; 
-                                            svg.style.height = 'auto';
-                                        }
-                                    }).catch(e => {
-                                        console.error("Mermaid error:", e);
-                                        mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Transkrip mungkin mengandung karakter ilegal.</div>";
-                                    });
-                                } catch(e) {}
-                            }, 100);
+                                const parentDoc = window.parent.document;
+                                const inputEl = parentDoc.querySelector('input[aria-label="trigger_ai_live"]');
+                                if (inputEl) {
+                                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                    nativeInputValueSetter.call(inputEl, "DEDUCT_" + Date.now());
+                                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                                    inputEl.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, keyCode: 13, key: 'Enter' }));
+                                }
+                            } catch (error) {
+                                console.warn("Tidak dapat mengirim sinyal potong kuota ke Python", error);
+                            }
 
-                            setTimeout(() => {
-                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                const { Transformer, Markmap } = window.markmap;
-                                const { root } = new Transformer().transform(rawMm);
-                                Markmap.create('#markmapLive', null, root);
-                            }, 100);
-
-                        } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
-                        finally { aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; }
+                        } catch(err) { 
+                            aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; 
+                        }
+                        finally { 
+                            aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; 
+                        }
                     };
                 })();
             </script>
         </body>
         </html>
         """
+        # Inject status kuota ke dalam JavaScript
+        html_code = html_code.replace("__CAN_USE_AI__", "true" if can_use_ai else "false")
+        
         components.html(html_code, height=1600, scrolling=True)
 
     # =====================================================================

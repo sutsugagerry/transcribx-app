@@ -396,6 +396,14 @@ if not st.session_state["logged_in"]:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
     
+    /* === PEMBASMI GHOST TOOLTIP CHART YANG NYANGKUT SAAT LOGOUT === */
+    #vg-tooltip-element, .vg-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+    /* =============================================================== */
+    
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background: transparent !important;
     }

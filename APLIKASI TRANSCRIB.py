@@ -157,7 +157,12 @@ def hitung_sisa_hari(tanggal_berakhir_str):
     try:
         tanggal_berakhir = datetime.fromisoformat(tanggal_berakhir_str) if isinstance(tanggal_berakhir_str, str) else tanggal_berakhir_str.replace(tzinfo=None)
         selisih = tanggal_berakhir - datetime.now()
-        return selisih.days if selisih.days > 0 else 0
+        
+        # Gunakan math.ceil untuk membulatkan total detik ke atas
+        # 86400 adalah jumlah detik dalam 1 hari
+        sisa = math.ceil(selisih.total_seconds() / 86400)
+        
+        return sisa if sisa > 0 else 0
     except: return 0
 
 def cek_dan_update_status_kadaluarsa(uid, user_data):

@@ -892,24 +892,33 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA (SETELAH LOGIN)
 # =====================================================================
 else:
-    components.html("""
-    <script>
-        const canvas = window.parent.document.getElementById('node-bg-canvas');
-        if (canvas) { canvas.remove(); }
-    </script>
-    """, height=0)
-
+    # Membunuh paksa canvas background dari sisi CSS
     st.markdown("""
     <style>
+    #node-bg-canvas { 
+        display: none !important; 
+        opacity: 0 !important; 
+        visibility: hidden !important; 
+    }
     .stApp {
-        background: white;
-        animation: none;
+        background: #ffffff !important;
+        animation: none !important;
     }
     [data-testid="stSidebar"] {
         display: flex !important;
     }
     </style>
     """, unsafe_allow_html=True)
+    
+    # Fallback script Javascript
+    components.html("""
+    <script>
+        try {
+            const canvas = window.parent.document.getElementById('node-bg-canvas');
+            if (canvas) { canvas.remove(); }
+        } catch(e) {}
+    </script>
+    """, height=0)
     
     with st.sidebar:
         st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
@@ -976,6 +985,7 @@ else:
                     up_str = "0x"
                     hari_str = "Masa Aktif: Habis"
                 else:
+                    paket_str = paket # <--- INI BARIS YANG DITAMBAHKAN
                     ai_val = st.session_state.get('user_kuota_ai', 0)
                     up_val = st.session_state.get('user_kuota_upload', 0)
                     ai_str = f"{ai_val}x"

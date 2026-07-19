@@ -1059,6 +1059,87 @@ else:
         render_sidebar_profile()
         # =================================================================
 
+        # === JAM DIGITAL UNIK (LIVE WIB) ===
+        clock_html = """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        .digital-clock {
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 0 15px rgba(56, 189, 248, 0.1);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .time-display {
+            font-family: 'Orbitron', sans-serif;
+            color: #38bdf8;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .date-display {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #94a3b8;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 6px;
+            font-weight: 700;
+        }
+        .blink {
+            animation: blinker 1s linear infinite;
+            margin: 0 2px;
+            color: #7dd3fc;
+        }
+        @keyframes blinker {
+            50% { opacity: 0.2; }
+        }
+        </style>
+        <div class="digital-clock">
+            <div class="time-display">
+                <span id="hour">00</span><span class="blink">:</span><span id="minute">00</span><span class="blink">:</span><span id="second">00</span>
+            </div>
+            <div class="date-display" id="date">SENIN, 01 JAN 2026 • WIB</div>
+        </div>
+        <script>
+            function updateClock() {
+                // Ambil waktu spesifik Jakarta (WIB)
+                const now = new Date();
+                const options = { timeZone: 'Asia/Jakarta' };
+                const localeStr = now.toLocaleString('en-US', options);
+                const wibDate = new Date(localeStr);
+
+                const h = String(wibDate.getHours()).padStart(2, '0');
+                const m = String(wibDate.getMinutes()).padStart(2, '0');
+                const s = String(wibDate.getSeconds()).padStart(2, '0');
+
+                document.getElementById('hour').innerText = h;
+                document.getElementById('minute').innerText = m;
+                document.getElementById('second').innerText = s;
+
+                const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+
+                const dayName = hari[wibDate.getDay()];
+                const day = wibDate.getDate();
+                const monthName = bulan[wibDate.getMonth()];
+                const year = wibDate.getFullYear();
+
+                document.getElementById('date').innerText = dayName + ', ' + String(day).padStart(2, '0') + ' ' + monthName + ' ' + year + ' • WIB';
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+        </script>
+        """
+        components.html(clock_html, height=100)
+        # ===================================
+
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):

@@ -1410,6 +1410,45 @@ else:
             </div>
             """, unsafe_allow_html=True)
 
+        # ==========================================
+        # BAGIAN HARGA TOP-UP ECERAN
+        # ==========================================
+        st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 40px; font-weight: bold;'>🔋 Paket Top-Up Kuota (Eceran)</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 20px;'>Kehabisan kuota sebelum masa aktif habis? Beli kuota tambahan tanpa harus memperpanjang masa aktif bulanan.</p>", unsafe_allow_html=True)
+        
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            st.markdown("""
+            <div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+                <h4 style='color:#8b5cf6; margin-top:0;'>✨ Top-Up AI Summary</h4>
+                <hr style='border-color:#e2e8f0; margin:10px 0;'>
+                <div style='display:flex; justify-content:space-between; margin-bottom:12px; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+                    <span style='font-size:16px; font-weight:bold; color:#334155;'>+ 10x AI Summary</span>
+                    <span style='font-size:16px; font-weight:bold; color:#3b82f6;'>Rp 10.000</span>
+                </div>
+                <div style='display:flex; justify-content:space-between; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+                    <span style='font-size:16px; font-weight:bold; color:#334155;'>+ 25x AI Summary</span>
+                    <span style='font-size:16px; font-weight:bold; color:#3b82f6;'>Rp 20.000</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_t2:
+            st.markdown("""
+            <div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+                <h4 style='color:#10b981; margin-top:0;'>📁 Top-Up Upload MP3</h4>
+                <hr style='border-color:#e2e8f0; margin:10px 0;'>
+                <div style='display:flex; justify-content:space-between; margin-bottom:12px; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+                    <span style='font-size:16px; font-weight:bold; color:#334155;'>+ 3x Upload MP3</span>
+                    <span style='font-size:16px; font-weight:bold; color:#3b82f6;'>Rp 10.000</span>
+                </div>
+                <div style='display:flex; justify-content:space-between; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+                    <span style='font-size:16px; font-weight:bold; color:#334155;'>+ 10x Upload MP3</span>
+                    <span style='font-size:16px; font-weight:bold; color:#3b82f6;'>Rp 25.000</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
     # =====================================================================
     # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
     # =====================================================================

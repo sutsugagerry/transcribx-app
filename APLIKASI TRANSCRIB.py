@@ -1142,22 +1142,12 @@ else:
         """
         components.html(clock_html, height=100)
         # ===================================
-      # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
+     # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
         if is_admin():
-            # 1. Widget Rahasia untuk memancing Radar Auto-Refresh
-            admin_sync = st.text_input("admin_sync", key="admin_sync", label_visibility="collapsed")
-            st.markdown("""
-            <style>
-                div[data-testid="stTextInput"]:has(input[aria-label="admin_sync"]) {
-                    display: none !important;
-                }
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # Jika Radar mengirim sinyal, Streamlit akan otomatis me-rerun halaman secara halus
-            if admin_sync.startswith("SYNC_"):
-                pass 
-                
+            # Tombol Sakti untuk Refresh Manual
+            if st.button("🔄 Refresh Klien Online", use_container_width=True):
+                pass # st.button otomatis memicu rerun aplikasi dari atas ke bawah
+
             try:
                 # Pastikan pakai waktu WIB agar akurat
                 batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
@@ -1183,44 +1173,22 @@ else:
                 if count_online == 0:
                     online_list_html = "<li style='color: #94a3b8; font-style: italic; text-align: center; padding-top: 10px;'>Belum ada klien online</li>"
                     
-                admin_panel_html = f"""
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 5px;">
-                    <div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>
-                            KLIEN ONLINE ({count_online})
-                        </div>
-                        <span style="font-size: 9px; color: #94a3b8; font-weight: normal; animation: pulse 2s infinite;">Radar Aktif 📡</span>
-                    </div>
-                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 150px; overflow-y: auto;">
-                        {online_list_html}
-                    </ul>
-                </div>
-                <script>
-                // RADAR OTOMATIS: REFRESH STREAMLIT SETIAP 10 DETIK KHUSUS UNTUK ADMIN
-                setTimeout(function() {{
-                    try {{
-                        const parentDoc = window.parent.document;
-                        const inputEl = parentDoc.querySelector('input[aria-label="admin_sync"]');
-                        if (inputEl) {{
-                            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                            nativeInputValueSetter.call(inputEl, "SYNC_" + Date.now());
-                            inputEl.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                            inputEl.dispatchEvent(new KeyboardEvent('keydown', {{ bubbles: true, cancelable: true, keyCode: 13, key: 'Enter' }}));
-                        }}
-                    }} catch (e) {{}}
-                }}, 10000); // 10000 ms = 10 Detik
-                </script>
-                <style>
-                @keyframes ping-dot {{ 75%, 100% {{ transform: scale(2.5); opacity: 0; }} }}
-                @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
-                ul::-webkit-scrollbar {{ width: 4px; }}
-                ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }}
-                ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
-                </style>
-                """
-                # MENGGUNAKAN COMPONENTS.HTML AGAR JAVASCRIPT BISA BERJALAN
-                components.html(admin_panel_html, height=260)
+                admin_panel_html = f"""<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
+<div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+<div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>
+KLIEN ONLINE TERKINI ({count_online})
+</div>
+<ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 180px; overflow-y: auto;">
+{online_list_html}
+</ul>
+</div>
+<style>
+@keyframes ping-dot {{ 75%, 100% {{ transform: scale(2.5); opacity: 0; }} }}
+ul::-webkit-scrollbar {{ width: 4px; }}
+ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }}
+ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
+</style>"""
+                st.markdown(admin_panel_html, unsafe_allow_html=True)
             except Exception as e:
                 pass
         # ===================================================

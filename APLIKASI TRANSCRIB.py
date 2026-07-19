@@ -970,7 +970,7 @@ else:
         components.html(germic_html, height=250)
         st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
         
-      profile_placeholder = st.empty() # Wadah dinamis
+      profile_placeholder = st.empty()
         
         def render_sidebar_profile():
             if st.session_state.get("logged_in"):

@@ -191,8 +191,11 @@ def get_user_login_history(uid):
 
 def record_login(uid, email):
     try:
-        db.collection("users").document(uid).collection("login_history").add({"timestamp": datetime.now().isoformat(), "email": email, "platform": "Streamlit Cloud"})
-        db.collection("users").document(uid).update({"last_login": datetime.now().isoformat(), "login_count": firestore.Increment(1)})
+        # Mengambil waktu UTC murni lalu ditambah 7 jam (WIB) secara matematis
+        waktu_wib = (datetime.utcnow() + timedelta(hours=7)).isoformat()
+        
+        db.collection("users").document(uid).collection("login_history").add({"timestamp": waktu_wib, "email": email, "platform": "Streamlit Cloud"})
+        db.collection("users").document(uid).update({"last_login": waktu_wib, "login_count": firestore.Increment(1)})
     except: pass
 
 def delete_user(uid, email):

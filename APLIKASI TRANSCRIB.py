@@ -191,11 +191,10 @@ def get_user_login_history(uid):
 
 def record_login(uid, email):
     try:
-        # Mengambil waktu UTC murni lalu ditambah 7 jam (WIB) secara matematis
         waktu_wib = (datetime.utcnow() + timedelta(hours=7)).isoformat()
-        
         db.collection("users").document(uid).collection("login_history").add({"timestamp": waktu_wib, "email": email, "platform": "Streamlit Cloud"})
-        db.collection("users").document(uid).update({"last_login": waktu_wib, "login_count": firestore.Increment(1)})
+        # Tambahkan status is_online: True saat login
+        db.collection("users").document(uid).update({"last_login": waktu_wib, "login_count": firestore.Increment(1), "is_online": True})
     except: pass
 
 def delete_user(uid, email):
@@ -207,7 +206,11 @@ def delete_user(uid, email):
     except Exception as e: return False, f"Gagal menghapus user: {str(e)}"
 
 def get_active_users_count():
-    try: return len(list(db.collection("users").where("last_login", ">=", (datetime.now() - timedelta(hours=1)).isoformat()).stream()))
+    try: 
+        batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
+        users = db.collection("users").where("last_login", ">=", batas_waktu).stream()
+        # Hitung jumlah user yang login 1 jam terakhir DAN belum klik logout
+        return sum(1 for u in users if u.to_dict().get("is_online", True))
     except: return 0
 
 def reset_user_kuota(uid, paket):
@@ -1139,11 +1142,11 @@ else:
         """
         components.html(clock_html, height=100)
         # ===================================
-       # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
+      # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
         if is_admin():
             try:
-                # Ambil data klien yang login dalam 1 jam terakhir
-                batas_waktu = (datetime.now() - timedelta(hours=1)).isoformat()
+                # Pastikan pakai waktu WIB agar akurat
+                batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
                 active_users_ref = db.collection("users").where("last_login", ">=", batas_waktu).stream()
                 
                 online_list_html = ""
@@ -1151,19 +1154,21 @@ else:
                 
                 for doc in active_users_ref:
                     u_data = doc.to_dict()
-                    email_klien = u_data.get("email", "-")
                     
-                    # Agar rapi, potong nama email jika terlalu panjang
+                    # CEK APAKAH USER SUDAH KLIK LOGOUT
+                    if u_data.get("is_online", True) == False:
+                        continue # Lewati user ini dari daftar online karena sudah logout
+                        
+                    email_klien = u_data.get("email", "-")
                     display_email = email_klien if len(email_klien) <= 22 else email_klien[:19] + "..."
                     
-                    # JADIKAN 1 BARIS LURUS AGAR TIDAK DIBACA SEBAGAI CODE BLOCK OLEH MARKDOWN
+                    # SATU BARIS LURUS TANPA SPASI INDENTASI DI AWAL HTML
                     online_list_html += f"<li style='margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;'><span style='color: #10b981; font-size: 14px;'>●</span> {display_email}</li>"
                     count_online += 1
                     
                 if count_online == 0:
                     online_list_html = "<li style='color: #94a3b8; font-style: italic; text-align: center; padding-top: 10px;'>Belum ada klien online</li>"
                     
-                # HILANGKAN SPASI INDENTASI DI HTML AGAR RAPI
                 admin_panel_html = f"""<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 10px; margin-bottom: 20px;">
 <div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
 <div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>
@@ -1187,6 +1192,13 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):
+            # === SET OFFLINE DI FIREBASE SEBELUM KELUAR ===
+            try:
+                uid = st.session_state.get("user_uid")
+                if uid:
+                    db.collection("users").document(uid).update({"is_online": False})
+            except: pass
+            # ============================================
             st.session_state.clear()
             st.session_state["logged_in"] = False
             st.rerun()

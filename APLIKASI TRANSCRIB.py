@@ -721,7 +721,7 @@ if not st.session_state["logged_in"]:
         with col_f3: 
             st.markdown(glass_card.format(icon="🕸️", title="Auto Mindmap Visual", desc="Ubah diskusi kompleks menjadi Peta Konsep visual (Markmap & Cytoscape) yang interaktif, profesional, dan siap diunduh HD."), unsafe_allow_html=True)
 
-       # ==========================================
+        # ==========================================
         # BAGIAN HARGA PAKET (GLASSMORPHISM)
         # ==========================================
         st.markdown("""
@@ -1187,7 +1187,7 @@ else:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        tab_edit, tab_extend, tab_history, tab_danger = st.tabs(["✏️ Ubah Paket", "📅 Perpanjang Masa Aktif", "🔍 Riwayat & Reset", "❌ Hapus Akun"])
+                        tab_edit, tab_extend, tab_topup, tab_history, tab_danger = st.tabs(["✏️ Ubah Paket", "📅 Perpanjang Masa Aktif", "🔋 Top-Up Kuota", "🔍 Riwayat & Reset", "❌ Hapus Akun"])
                         
                         with tab_edit:
                             st.caption("Mengubah paket akan mengatur ulang kuota sesuai paket baru dan mereset masa aktif menjadi 30 hari dari sekarang.")
@@ -1267,7 +1267,7 @@ else:
                                         st.rerun()
                                     else:
                                         st.warning("⚠️ Masukkan nominal top-up lebih dari 0.")
-                                    
+                                        
                         with tab_history:
                             col_h1, col_h2 = st.columns([1, 1.5], gap="large")
                             with col_h1:
@@ -1336,13 +1336,13 @@ else:
             st.markdown("""
             <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
-                <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <h4 style='color:#3b82f6;'>Rp 35.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin.</p>
                 <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>5x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>1x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>✅ <b>8x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload File Audio (Max 45 menit)</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
@@ -1352,13 +1352,14 @@ else:
             <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative; transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
                 <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
-                <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <h4 style='color:#2563eb;'>Rp 69.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, atau profesional.</p>
                 <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>3x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>✅ <b>25x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>5x</b> Upload File Audio (Max 45 menit)</li>
+                    <li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
@@ -1367,13 +1368,13 @@ else:
             st.markdown("""
             <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
-                <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <h4 style='color:#e11d48;'>Rp 149.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass atau institusi.</p>
                 <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>30x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>10x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>✅ <b>60x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>15x</b> Upload File Audio (Max 45 menit)</li>
                     <li>🌟 <b>Prioritas Support</b> via WhatsApp</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
@@ -1572,8 +1573,8 @@ else:
                     const copyBtn = document.getElementById('copyBtn');
                     const clearBtn = document.getElementById('clearBtn');
                     const downloadTxtBtn = document.getElementById('downloadTxtBtn');
-                    const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn'); // REFERENSI TOMBOL BARU
-                    const downloadDocxBtn = document.getElementById('downloadDocxBtn'); // <-- TAMBAHAN BARU
+                    const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn');
+                    const downloadDocxBtn = document.getElementById('downloadDocxBtn');
                     const aiBtn = document.getElementById('aiBtn');
                     const apiKeyInput = document.getElementById('apiKeyInput');
                     const aiContent = document.getElementById('aiContent');
@@ -1585,7 +1586,7 @@ else:
                     const visualizer = document.getElementById('visualizer');
                     const canvasCtx = visualizer.getContext('2d');
 
-                    let lastAiData = null; // MENYIMPAN DATA JSON AI
+                    let lastAiData = null;
 
                     if (window.mermaid) {
                         mermaid.initialize({ startOnLoad: false, theme: 'default' });
@@ -1597,7 +1598,6 @@ else:
                     const brainText = document.getElementById('aiBrainText');
                     let brainParticles = [];
                     let isThinking = false;
-                    let brainAnimationId;
                     let timeOscillator = 0;
 
                     function initBrain() {
@@ -1676,7 +1676,7 @@ else:
                                 }
                             }
                         }
-                        brainAnimationId = requestAnimationFrame(drawBrain);
+                        requestAnimationFrame(drawBrain);
                     }
 
                     if (brainCanvas) {
@@ -1912,9 +1912,6 @@ else:
                         a.click();
                     };
                     
-                    // ==========================================
-                    // LOGIKA TOMBOL DOWNLOAD NOTULENSI FULL
-                    // ==========================================
                     downloadNotulensiBtn.onclick = function() {
                         if (!lastAiData) { alert('Belum ada data notulensi! Silakan Generate AI Summary terlebih dahulu.'); return; }
                         
@@ -1956,7 +1953,8 @@ else:
                         transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
                         lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = "";
                         lastAiData = null;
-                        downloadNotulensiBtn.style.display = 'none'; // Sembunyikan tombol notulensi
+                        downloadNotulensiBtn.style.display = 'none';
+                        downloadDocxBtn.style.display = 'none';
                     };
 
                     function getTranscriptText() {
@@ -1971,13 +1969,9 @@ else:
                         }
                     };
 
-                    // ==========================================
-                    // LOGIKA TOMBOL DOWNLOAD DOCX (FROM JS) + GAMBAR LENGKAP & ANTI POTONG
-                    // ==========================================
                     downloadDocxBtn.onclick = async function() {
                         if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
                         
-                        // 1. Ubah Status Tombol Jadi Loading
                         const originalBtnText = downloadDocxBtn.innerHTML;
                         downloadDocxBtn.innerHTML = "⏳ Memproses Gambar & Dokumen...";
                         downloadDocxBtn.disabled = true;
@@ -1985,13 +1979,11 @@ else:
                         try {
                             const d = lastAiData.notulensi_rapat || {};
                             
-                            // Setup Tanggal & Waktu
                             const now = new Date();
                             const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
                             const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
                             const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
                             
-                            // 2. TANGKAP GAMBAR CYTOSCAPE
                             let cyImageHtml = "";
                             if (window.cyInstance) {
                                 try {
@@ -2002,7 +1994,6 @@ else:
                                 } catch (err) { console.error("Gagal screenshot Cytoscape:", err); }
                             }
 
-                            // 3. TANGKAP GAMBAR MERMAID
                             let mermaidImageHtml = "";
                             const mermaidContainer = document.getElementById('merContainerLive'); 
                             if (mermaidContainer && mermaidContainer.querySelector('svg')) {
@@ -2012,7 +2003,6 @@ else:
                                     const origH = mermaidContainer.style.height;
                                     const origOverflow = mermaidContainer.style.overflow;
                                     
-                                    // Deteksi lebar asli dari SVG Mermaid
                                     const bboxMermaid = svgMermaid.getBBox();
                                     const mWidth = Math.max(bboxMermaid.width + 100, 800);
                                     const mHeight = Math.max(bboxMermaid.height + 100, 600);
@@ -2033,7 +2023,6 @@ else:
                                 } catch (err) { console.error("Gagal screenshot Mermaid:", err); }
                             }
 
-                            // 4. TANGKAP GAMBAR MARKMAP (DISEMPURNAKAN AGAR TIDAK TERPOTONG)
                             let markmapImageHtml = "";
                             const markmapContainer = document.getElementById('markmapLiveWrapper');
                             const markmapSvg = markmapContainer ? markmapContainer.querySelector('svg') : null;
@@ -2048,25 +2037,20 @@ else:
                                     const g = markmapSvg.querySelector('g');
                                     const originalTransform = g ? g.getAttribute('transform') : null;
                                     
-                                    // Reset transform untuk menghindari efek zoom/pan pengguna saat ini
                                     if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
                                     
-                                    // Beri jeda sangat kecil agar DOM merender transform baru
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                     
-                                    // Dapatkan Bounding Box ASLI dari elemen G
                                     const bbox = g ? g.getBBox() : markmapSvg.getBBox();
                                     const padding = 60;
                                     const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
                                     const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
 
-                                    // Terapkan ukuran baru ke kontainer dan atur ulang viewBox
                                     markmapContainer.style.width = trueWidth + 'px';
                                     markmapContainer.style.height = trueHeight + 'px';
                                     markmapContainer.style.overflow = 'visible';
                                     markmapSvg.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
 
-                                    // Lakukan Screenshot
                                     const canvasMarkmap = await html2canvas(markmapContainer, { 
                                         scale: 2, 
                                         useCORS: true, 
@@ -2079,7 +2063,6 @@ else:
                                     <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">C. Markmap (Peta Konsep Detail)</p>
                                     <img src="${mmBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
 
-                                    // Kembalikan ke kondisi semula
                                     markmapContainer.style.width = origW;
                                     markmapContainer.style.height = origH;
                                     markmapContainer.style.overflow = origOverflow;
@@ -2090,7 +2073,6 @@ else:
                                 } catch (err) { console.error("Gagal screenshot Markmap:", err); }
                             }
 
-                            // 5. RENDER TABEL ACTION ITEMS
                             let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
                             if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
                                 actionItemsHtml = `
@@ -2105,13 +2087,11 @@ else:
                                 </table>`;
                             }
 
-                            // 6. GABUNGKAN SEMUA KE DALAM TEMPLATE HTML MS WORD
                             let content = `
                             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                             <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
                             <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
                                 
-                                <!-- KOP SURAT -->
                                 <table style="width: 100%; border: none; border-collapse: collapse;">
                                     <tr>
                                         <td style="width: 50%; text-align: left; vertical-align: top; border: none; padding: 0;">
@@ -2129,13 +2109,11 @@ else:
                                     ________________________________________________________________________________
                                 </div>
 
-                                <!-- JUDUL & AGENDA -->
                                 <div style="text-align: center; margin-bottom: 20px;">
                                     <span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br>
                                     <span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
                                 </div>
                                 
-                                <!-- TABEL METADATA -->
                                 <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;">
                                     <tr>
                                         <td style="width: 1.5in;"><b>Hari / Tanggal</b></td>
@@ -2163,31 +2141,26 @@ else:
                                     </tr>
                                 </table>
                                 
-                                <!-- 1. RINGKASAN EKSEKUTIF -->
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>
                                 ${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}
                                 <br>
 
-                                <!-- 2. POKOK PEMBAHASAN / JALANNYA DISKUSI -->
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p>
                                 <ul style="margin-top: 0;">
                                     ${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}
                                 </ul>
                                 <br>
 
-                                <!-- 3. KEPUTUSAN RAPAT -->
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p>
                                 <ol style="margin-top: 0;">
                                     ${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}
                                 </ol>
                                 <br>
 
-                                <!-- 4. TINDAK LANJUT -->
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>
                                 ${actionItemsHtml}
                                 <br>
                                 
-                                <!-- 5. LAMPIRAN VISUALISASI GAMBAR -->
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 10px;"><b>5. LAMPIRAN VISUALISASI AI</b></p>
                                 ${cyImageHtml}
                                 ${mermaidImageHtml}
@@ -2195,7 +2168,6 @@ else:
                                 
                                 <br><br>
                                 
-                                <!-- TANDA TANGAN -->
                                 <p style="text-align: right;">
                                     Jakarta, ${tanggalFooterStr}<br><br><br><br>
                                     ( Tim Notulen SmartDose )
@@ -2203,7 +2175,6 @@ else:
                             </body>
                             </html>`;
                             
-                            // 7. PROSES DOWNLOAD
                             const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
@@ -2217,14 +2188,11 @@ else:
                             console.error("Error generating DOCX:", error);
                             alert("Terjadi kesalahan saat memproses gambar ke dalam dokumen.");
                         } finally {
-                            // 8. KEMBALIKAN TOMBOL KE SEMULA
                             downloadDocxBtn.innerHTML = originalBtnText;
                             downloadDocxBtn.disabled = false;
                         }
                     };
 
-                    
-                    // DOWNLOAD MERMAID LIVE (SCROLLABLE & HD)                  
                     window.dlMermaidLive = function() {
                         const mDiv = document.getElementById('mermaidLive');
                         const container = document.getElementById('merContainerLive');
@@ -2234,13 +2202,11 @@ else:
                         const btn = document.getElementById('dlBtnMermaidLive');
                         if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
                     
-                        // Hitung ukuran asli
                         const bbox = svgEl.getBBox();
                         const padding = 40;
                         const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
                         const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                     
-                        // Backup style asli
                         const origSvgW = svgEl.style.width;
                         const origSvgH = svgEl.style.height;
                         const origSvgMaxW = svgEl.style.maxWidth;
@@ -2248,8 +2214,7 @@ else:
                         const origClasses = mDiv.className;
                         const origContainerOverflow = container.style.overflow;
                     
-                        // RESET CSS sementara agar flexbox tidak memotong gambar
-                        mDiv.className = ''; // Copot Tailwind class (flex, justify-center, dll)
+                        mDiv.className = ''; 
                         mDiv.style.width = trueWidth + 'px';
                         mDiv.style.height = trueHeight + 'px';
                         mDiv.style.backgroundColor = '#ffffff';
@@ -2261,10 +2226,8 @@ else:
                         
                         container.style.overflow = 'visible';
                     
-                        // Proses Foto
                         html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
                         .then(canvas => {
-                            // Kembalikan semua style ke kondisi semula
                             svgEl.style.width = origSvgW;
                             svgEl.style.height = origSvgH;
                             svgEl.style.maxWidth = origSvgMaxW;
@@ -2283,7 +2246,7 @@ else:
                             if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
                         });
                     };
-                    // DOWNLOAD MARKMAP LIVE
+                    
                     window.dlMarkmapLive = function() {
                         const container = document.getElementById('markmapLiveWrapper');
                         const svgEl = container.querySelector('svg'); if (!svgEl) return;
@@ -2323,7 +2286,6 @@ else:
                         const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
                         if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                         
-                        // Notifikasi sementara sebelum data hasil muncul
                         aiContent.innerHTML = `
                             <div class="p-4 bg-yellow-50 text-yellow-700 rounded-xl mb-4 border border-yellow-200 animate-pulse">
                                 <strong>⏳ AI sedang membaca transkrip...</strong>
@@ -2393,10 +2355,9 @@ else:
                             });
                             const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
                             
-                            // MENYIMPAN DATA UNTUK DOWNLOAD NOTULENSI
                             lastAiData = data;
                             downloadNotulensiBtn.style.display = 'inline-flex';
-                            downloadDocxBtn.style.display = 'inline-flex'; // <-- TAMBAHAN BARU: Munculkan tombol DOCX
+                            downloadDocxBtn.style.display = 'inline-flex';
                             
                             let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
                                 `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
@@ -2442,13 +2403,11 @@ else:
                                 });
                             }, 100);
 
-                            // SANITASI MERMAID (Mencegah Syntax Error)
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
                                 if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
                                     rawMer = `graph LR\\n` + rawMer;
                                 }
-                                // Paksa hapus semua kutip dan kurung aneh
                                 rawMer = rawMer.replace(/`/g, "").replace(/\\[([A-Z0-9]+)\\]/g, "($1)");
                                 
                                 const mDiv = document.getElementById('mermaidLive'); 
@@ -2502,7 +2461,7 @@ else:
             is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
 
             if not is_allowed_to_upload:
-                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
+                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk top-up atau upgrade paket.")
             else:
                 if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
                     if not llm_key: 
@@ -2522,7 +2481,6 @@ else:
                                     f.write(uploaded_file.getvalue())
                                 
                                 # 2. Potong audio menggunakan FFmpeg langsung di disk (Chunk 10 menit / 600 detik)
-                                # Kami ubah ke format MP3 bitrate rendah (64k) agar proses upload API nanti sangat ringan
                                 status_text = st.empty()
                                 status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
                                 output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
@@ -2533,7 +2491,6 @@ else:
                                     "-c:a", "libmp3lame", "-b:a", "64k",
                                     output_pattern
                                 ]
-                                # Jalankan perintah tanpa loading ke python memory
                                 subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                                 
                                 # 3. Proses file yang sudah dipotong
@@ -2552,7 +2509,6 @@ else:
                                     for i, chunk_file in enumerate(chunk_files):
                                         status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
                                         
-                                        # Buka per chunk, baca bytes-nya, lalu tutup. Jauh lebih hemat RAM.
                                         with open(chunk_file, "rb") as f:
                                             files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
                                             response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
@@ -2591,7 +2547,7 @@ else:
                 if not llm_key: 
                     st.warning("⚠️ Masukkan API Key LiteLLM!")
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
-                    st.error("❌ Kuota AI Summary habis!")
+                    st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
                 else:
                     # =========================================================
                     # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
@@ -2665,16 +2621,13 @@ else:
                                     data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
                                     data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
                                     
-                                    # Pastikan struktur JSON notulensi_rapat aman jika format dari AI sedikit meleset
                                     if "notulensi_rapat" not in data_teks:
                                         data_teks["notulensi_rapat"] = {}
                                         
-                                    # Menginjeksi visual mapping ke dalam kerangka notulensi
                                     data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
                                     data_teks["markmap_code"] = data_visual.get("markmap_code", "")
                                     data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
 
-                                    # Simpan hasil akhir ke session state
                                     st.session_state["offline_summary"] = data_teks
                                     
                                     if not is_admin():
@@ -2694,7 +2647,6 @@ else:
             col_t1, col_t2 = st.columns([3, 1])
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            # Merangkai seluruh isi JSON ke dalam format teks laporan
             txt_report = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n"
             txt_report += "========================================\n\n"
             
@@ -2722,7 +2674,6 @@ else:
                 txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
 
             with col_t2: 
-                # Tombol Download TXT Lama
                 st.download_button(
                     label="📝 Download Laporan (TXT)", 
                     data=txt_report, 
@@ -2731,7 +2682,6 @@ else:
                     use_container_width=True
                 )
                 
-                # TOMBOL DOWNLOAD DOCX BARU
                 try:
                     docx_file = generate_notulensi_docx(data)
                     st.download_button(
@@ -2849,20 +2799,17 @@ else:
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
                             setTimeout(() => {{
-                                // Hitung ukuran asli
                                 const bbox = svgEl.getBBox(); 
                                 const padding = 40;
                                 const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
                                 const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                                 
-                                // Backup style asli
                                 const origSvgW = svgEl.style.width;
                                 const origSvgH = svgEl.style.height;
                                 const origSvgMaxW = svgEl.style.maxWidth;
                                 const origDivCssText = mDiv.style.cssText;
                                 const origContainerOverflow = container ? container.style.overflow : '';
                                 
-                                // RESET CSS sementara agar flexbox tidak memotong gambar
                                 mDiv.style.width = trueWidth + 'px';
                                 mDiv.style.height = trueHeight + 'px';
                                 mDiv.style.display = 'block';
@@ -2875,10 +2822,8 @@ else:
                                 
                                 if (container) container.style.overflow = 'visible';
                                 
-                                // Proses Foto
                                 html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
                                 .then(canvas => {{
-                                    // Kembalikan semua style ke kondisi semula
                                     svgEl.style.width = origSvgW;
                                     svgEl.style.height = origSvgH;
                                     svgEl.style.maxWidth = origSvgMaxW;

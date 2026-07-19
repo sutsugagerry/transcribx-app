@@ -1022,6 +1022,7 @@ else:
                 <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
                 <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
                 <div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+                <div style="font-size: 12px; margin-bottom: 5px;">🎙️ <b>Transcribe:</b> ∞ Unlimited</div>
                 <div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
                 <div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
                 </div>

@@ -2549,6 +2549,14 @@ else:
                     if not llm_key: 
                         st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
                     else:
+                        # =========================================================
+                        # POTONG KUOTA UPLOAD TEPAT DI AWAL SAAT TOMBOL DIKLIK
+                        # =========================================================
+                        if not is_admin():
+                            st.session_state["user_kuota_upload"] -= 1
+                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                        # =========================================================
+
                         with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
                             temp_dir = tempfile.mkdtemp()
                             input_path = None
@@ -2607,9 +2615,7 @@ else:
                                     if success_transcription and full_transcript.strip():
                                         status_text.success("✅ Seluruh audio berhasil ditranskrip!")
                                         st.session_state["offline_transcript"] = full_transcript.strip()
-                                        if not is_admin():
-                                            st.session_state["user_kuota_upload"] -= 1
-                                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                                        # Kuota upload SUDAH dipotong di awal, jadi kode pemotongan lama di sini sudah Dihapus
                                         
                             except subprocess.CalledProcessError as e:
                                 st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")

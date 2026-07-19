@@ -138,9 +138,9 @@ db = firestore.client()
 # DATA PAKET LANGGANAN & HELPER DOCX
 # =====================================================================
 PAKET_LANGGANAN = {
-    "BASIC": {"ai_limit": 5, "upload_limit": 1, "durasi_hari": 30},
-    "EXECUTIVE": {"ai_limit": 10, "upload_limit": 3, "durasi_hari": 30},
-    "MASTER": {"ai_limit": 30, "upload_limit": 10, "durasi_hari": 30},
+    "BASIC": {"ai_limit": 8, "upload_limit": 1, "durasi_hari": 30},
+    "EXECUTIVE": {"ai_limit": 25, "upload_limit": 5, "durasi_hari": 30},
+    "MASTER": {"ai_limit": 60, "upload_limit": 15, "durasi_hari": 30},
     "NON-AKTIF": {"ai_limit": 0, "upload_limit": 0, "durasi_hari": 0}
 }
 
@@ -157,7 +157,12 @@ def hitung_sisa_hari(tanggal_berakhir_str):
     try:
         tanggal_berakhir = datetime.fromisoformat(tanggal_berakhir_str) if isinstance(tanggal_berakhir_str, str) else tanggal_berakhir_str.replace(tzinfo=None)
         selisih = tanggal_berakhir - datetime.now()
-        return selisih.days if selisih.days > 0 else 0
+        
+        # Gunakan math.ceil untuk membulatkan total detik ke atas
+        # 86400 adalah jumlah detik dalam 1 hari
+        sisa = math.ceil(selisih.total_seconds() / 86400)
+        
+        return sisa if sisa > 0 else 0
     except: return 0
 
 def cek_dan_update_status_kadaluarsa(uid, user_data):
@@ -721,7 +726,7 @@ if not st.session_state["logged_in"]:
         with col_f3: 
             st.markdown(glass_card.format(icon="🕸️", title="Auto Mindmap Visual", desc="Ubah diskusi kompleks menjadi Peta Konsep visual (Markmap & Cytoscape) yang interaktif, profesional, dan siap diunduh HD."), unsafe_allow_html=True)
 
-       # ==========================================
+        # ==========================================
         # BAGIAN HARGA PAKET (GLASSMORPHISM)
         # ==========================================
         st.markdown("""
@@ -755,13 +760,13 @@ if not st.session_state["logged_in"]:
             st.markdown("""
             <div class="pricing-card">
                 <h3 style="color:#94a3b8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket BASIC</h3>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 29.000</h2>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 35.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>5x</b> AI Summary & Mindmap</li>
-                    <li>✅ <b>1x</b> Upload Audio (Max 30mnt)</li>
+                    <li>✅ <b>8x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload Audio (Max 45mnt)</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
@@ -773,13 +778,14 @@ if not st.session_state["logged_in"]:
             <div class="pricing-card">
                 <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; padding:6px 18px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(239,68,68,0.4); letter-spacing:0.5px;">🔥 BEST SELLER</div>
                 <h3 style="color:#38bdf8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">EXECUTIVE</h3>
-                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 49.000</h2>
+                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 69.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>3x</b> Upload Audio (Max 30mnt)</li>
+                    <li>✅ <b>25x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>5x</b> Upload Audio (Max 45mnt)</li>
+                    <li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -790,13 +796,13 @@ if not st.session_state["logged_in"]:
             <div class="pricing-card">
                 <h3 style="color:#fb7185; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket MASTER</h3>
                 <p style="color:#fca5a5; font-size:12px; margin:0 0 8px 0; font-weight:bold;">VIP / ENTERPRISE</p>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 129.000</h2>
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 149.000</h2>
                 <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
                 <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>30x</b> AI Summary & Mindmap</li>
-                    <li>✅ <b>10x</b> Upload Audio (Max 30mnt)</li>
+                    <li>✅ <b>60x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>15x</b> Upload Audio (Max 45mnt)</li>
                     <li>🌟 <b>Prioritas Support</b> via WA 24/7</li>
                 </ul>
             </div>
@@ -891,24 +897,33 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA (SETELAH LOGIN)
 # =====================================================================
 else:
-    components.html("""
-    <script>
-        const canvas = window.parent.document.getElementById('node-bg-canvas');
-        if (canvas) { canvas.remove(); }
-    </script>
-    """, height=0)
-
+    # Membunuh paksa canvas background dari sisi CSS
     st.markdown("""
     <style>
+    #node-bg-canvas { 
+        display: none !important; 
+        opacity: 0 !important; 
+        visibility: hidden !important; 
+    }
     .stApp {
-        background: white;
-        animation: none;
+        background: #ffffff !important;
+        animation: none !important;
     }
     [data-testid="stSidebar"] {
         display: flex !important;
     }
     </style>
     """, unsafe_allow_html=True)
+    
+    # Fallback script Javascript
+    components.html("""
+    <script>
+        try {
+            const canvas = window.parent.document.getElementById('node-bg-canvas');
+            if (canvas) { canvas.remove(); }
+        } catch(e) {}
+    </script>
+    """, height=0)
     
     with st.sidebar:
         st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
@@ -965,6 +980,20 @@ else:
                 up_str = "♾️ Unlimited"
                 hari_str = "Status: Permanen"
             else:
+                # === SINKRONISASI REAL-TIME KE FIREBASE MUTLAK ===
+                try:
+                    uid = st.session_state.get("user_uid")
+                    if uid:
+                        fresh_data = db.collection("users").document(uid).get().to_dict()
+                        if fresh_data:
+                            # Paksa timpa memori lokal dengan data asli dari database
+                            st.session_state["user_kuota_ai"] = fresh_data.get("kuota_ai", 0)
+                            st.session_state["user_kuota_upload"] = fresh_data.get("kuota_upload", 0)
+                            st.session_state["user_paket"] = fresh_data.get("paket", "NON-AKTIF")
+                except Exception:
+                    pass
+                # ==================================================
+                
                 paket = st.session_state.get('user_paket', 'NON-AKTIF')
                 sisa_hari = st.session_state.get('sisa_hari', 0)
                 
@@ -975,6 +1004,7 @@ else:
                     up_str = "0x"
                     hari_str = "Masa Aktif: Habis"
                 else:
+                    paket_str = paket 
                     ai_val = st.session_state.get('user_kuota_ai', 0)
                     up_val = st.session_state.get('user_kuota_upload', 0)
                     ai_str = f"{ai_val}x"
@@ -985,17 +1015,17 @@ else:
                     else: card_class = "profile-card user-active"
 
             profile_html = f"""<div class="{card_class}">
-<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
-<div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
-<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-<div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
-<div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
-<div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
-</div>
-<div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
-{hari_str}
-</div>
-</div>"""
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
+            <div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
+            <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+            <div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+            <div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
+            <div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
+            </div>
+            <div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
+            {hari_str}
+            </div>
+            </div>"""
             st.markdown(profile_html, unsafe_allow_html=True)
             
             if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
@@ -1186,7 +1216,7 @@ else:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        tab_edit, tab_extend, tab_history, tab_danger = st.tabs(["✏️ Ubah Paket", "📅 Perpanjang Masa Aktif", "🔍 Riwayat & Reset", "❌ Hapus Akun"])
+                        tab_edit, tab_extend, tab_topup, tab_history, tab_danger = st.tabs(["✏️ Ubah Paket", "📅 Perpanjang Masa Aktif", "🔋 Top-Up Kuota", "🔍 Riwayat & Reset", "❌ Hapus Akun"])
                         
                         with tab_edit:
                             st.caption("Mengubah paket akan mengatur ulang kuota sesuai paket baru dan mereset masa aktif menjadi 30 hari dari sekarang.")
@@ -1239,7 +1269,34 @@ else:
                                     st.success(f"✅ Masa aktif {selected_email} ditambah {hari_tambahan} hari!")
                                     time.sleep(1)
                                     st.rerun()
-                                    
+
+                        # ==========================================
+                        # LOGIKA BARU: TAB TOP-UP KUOTA
+                        # ==========================================
+                        with tab_topup:
+                            st.caption("Top-up atau tambah kuota AI & Upload secara eceran tanpa mengubah masa aktif paket bulanan.")
+                            with st.form("form_topup_kuota"):
+                                col_tp1, col_tp2 = st.columns(2)
+                                with col_tp1:
+                                    tambah_ai = st.number_input("➕ Tambah Kuota AI (Notulensi)", min_value=0, max_value=500, value=10)
+                                with col_tp2:
+                                    tambah_upload = st.number_input("➕ Tambah Kuota Upload (MP3)", min_value=0, max_value=50, value=3)
+                                
+                                btn_topup = st.form_submit_button("🔋 Eksekusi Top-Up", type="primary", use_container_width=True)
+                                
+                                if btn_topup:
+                                    if tambah_ai > 0 or tambah_upload > 0:
+                                        uid = selected_user['UID']
+                                        db.collection("users").document(uid).update({
+                                            "kuota_ai": firestore.Increment(tambah_ai),
+                                            "kuota_upload": firestore.Increment(tambah_upload)
+                                        })
+                                        st.success(f"✅ Top-Up Berhasil! Akun {selected_email} mendapat tambahan {tambah_ai}x AI dan {tambah_upload}x Upload.")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else:
+                                        st.warning("⚠️ Masukkan nominal top-up lebih dari 0.")
+                                        
                         with tab_history:
                             col_h1, col_h2 = st.columns([1, 1.5], gap="large")
                             with col_h1:
@@ -1308,13 +1365,13 @@ else:
             st.markdown("""
             <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
-                <h4 style='color:#3b82f6;'>Rp 29.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <h4 style='color:#3b82f6;'>Rp 35.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin.</p>
                 <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>5x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>1x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>✅ <b>8x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload File Audio (Max 45 menit)</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
@@ -1324,13 +1381,14 @@ else:
             <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative; transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
                 <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
-                <h4 style='color:#2563eb;'>Rp 49.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <h4 style='color:#2563eb;'>Rp 69.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, atau profesional.</p>
                 <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>10x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>3x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>✅ <b>25x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>5x</b> Upload File Audio (Max 45 menit)</li>
+                    <li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
             </div>
@@ -1339,13 +1397,13 @@ else:
             st.markdown("""
             <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
-                <h4 style='color:#e11d48;'>Rp 129.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <h4 style='color:#e11d48;'>Rp 149.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
                 <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass atau institusi.</p>
                 <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
                 <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
                     <li>✅ <b>Unlimited</b> Live Transcribe</li>
-                    <li>✅ <b>30x</b> Premium AI Summary & Mindmap</li>
-                    <li>✅ <b>10x</b> Upload File Audio (Max 30 menit)</li>
+                    <li>✅ <b>60x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>15x</b> Upload File Audio (Max 45 menit)</li>
                     <li>🌟 <b>Prioritas Support</b> via WhatsApp</li>
                     <li>⏳ <b>30 Hari</b> Masa Aktif</li>
                 </ul>
@@ -2485,7 +2543,7 @@ else:
             is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
 
             if not is_allowed_to_upload:
-                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk upgrade paket.")
+                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk top-up atau upgrade paket.")
             else:
                 if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
                     if not llm_key: 
@@ -2505,7 +2563,6 @@ else:
                                     f.write(uploaded_file.getvalue())
                                 
                                 # 2. Potong audio menggunakan FFmpeg langsung di disk (Chunk 10 menit / 600 detik)
-                                # Kami ubah ke format MP3 bitrate rendah (64k) agar proses upload API nanti sangat ringan
                                 status_text = st.empty()
                                 status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
                                 output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
@@ -2516,7 +2573,6 @@ else:
                                     "-c:a", "libmp3lame", "-b:a", "64k",
                                     output_pattern
                                 ]
-                                # Jalankan perintah tanpa loading ke python memory
                                 subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                                 
                                 # 3. Proses file yang sudah dipotong
@@ -2535,7 +2591,6 @@ else:
                                     for i, chunk_file in enumerate(chunk_files):
                                         status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
                                         
-                                        # Buka per chunk, baca bytes-nya, lalu tutup. Jauh lebih hemat RAM.
                                         with open(chunk_file, "rb") as f:
                                             files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
                                             response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
@@ -2574,7 +2629,7 @@ else:
                 if not llm_key: 
                     st.warning("⚠️ Masukkan API Key LiteLLM!")
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
-                    st.error("❌ Kuota AI Summary habis!")
+                    st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
                 else:
                     # =========================================================
                     # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
@@ -2648,16 +2703,13 @@ else:
                                     data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
                                     data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
                                     
-                                    # Pastikan struktur JSON notulensi_rapat aman jika format dari AI sedikit meleset
                                     if "notulensi_rapat" not in data_teks:
                                         data_teks["notulensi_rapat"] = {}
                                         
-                                    # Menginjeksi visual mapping ke dalam kerangka notulensi
                                     data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
                                     data_teks["markmap_code"] = data_visual.get("markmap_code", "")
                                     data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
 
-                                    # Simpan hasil akhir ke session state
                                     st.session_state["offline_summary"] = data_teks
                                     
                                     if not is_admin():
@@ -2677,7 +2729,6 @@ else:
             col_t1, col_t2 = st.columns([3, 1])
             with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
             
-            # Merangkai seluruh isi JSON ke dalam format teks laporan
             txt_report = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n"
             txt_report += "========================================\n\n"
             
@@ -2705,7 +2756,6 @@ else:
                 txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
 
             with col_t2: 
-                # Tombol Download TXT Lama
                 st.download_button(
                     label="📝 Download Laporan (TXT)", 
                     data=txt_report, 
@@ -2714,7 +2764,6 @@ else:
                     use_container_width=True
                 )
                 
-                # TOMBOL DOWNLOAD DOCX BARU
                 try:
                     docx_file = generate_notulensi_docx(data)
                     st.download_button(
@@ -2832,20 +2881,17 @@ else:
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
                             setTimeout(() => {{
-                                // Hitung ukuran asli
                                 const bbox = svgEl.getBBox(); 
                                 const padding = 40;
                                 const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
                                 const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
                                 
-                                // Backup style asli
                                 const origSvgW = svgEl.style.width;
                                 const origSvgH = svgEl.style.height;
                                 const origSvgMaxW = svgEl.style.maxWidth;
                                 const origDivCssText = mDiv.style.cssText;
                                 const origContainerOverflow = container ? container.style.overflow : '';
                                 
-                                // RESET CSS sementara agar flexbox tidak memotong gambar
                                 mDiv.style.width = trueWidth + 'px';
                                 mDiv.style.height = trueHeight + 'px';
                                 mDiv.style.display = 'block';
@@ -2858,10 +2904,8 @@ else:
                                 
                                 if (container) container.style.overflow = 'visible';
                                 
-                                // Proses Foto
                                 html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
                                 .then(canvas => {{
-                                    // Kembalikan semua style ke kondisi semula
                                     svgEl.style.width = origSvgW;
                                     svgEl.style.height = origSvgH;
                                     svgEl.style.maxWidth = origSvgMaxW;

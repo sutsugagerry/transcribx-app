@@ -12,6 +12,13 @@ import math
 import os
 import tempfile
 from pydub import AudioSegment
+import os
+import time
+os.environ['TZ'] = 'Asia/Jakarta'
+try:
+    time.tzset()
+except AttributeError:
+    pass
 
 # === IMPORT UNTUK EXPORT DOCX ===
 from docx import Document
@@ -1091,7 +1098,7 @@ else:
                             if sisa_hari <= 0: status_user = "non-aktif ⚠️"
                         else: sisa_hari_display = "Kadaluarsa"
                     
-                    last_login_display = last_login[:19] if isinstance(last_login, str) and len(last_login) > 19 and last_login not in ["Belum pernah login", "Tidak diketahui"] else last_login
+                    last_login_display = last_login[:19].replace("T", " ") if isinstance(last_login, str) and len(last_login) > 19 and last_login not in ["Belum pernah login", "Tidak diketahui"] else last_login
                     users_list.append({
                         "Email": email_user, "Status": status_user.split()[0], "Paket": paket_user, "Sisa AI": sisa_ai, "Sisa Upload": sisa_up,
                         "Sisa Hari": sisa_hari_display, "Last Login": last_login_display, "Login Count": login_count, "UID": doc.id, "UID_Short": doc.id[:8] + "..."
@@ -1346,7 +1353,7 @@ else:
                                 if st.button("Tampilkan Riwayat", use_container_width=True):
                                     history = get_user_login_history(selected_user['UID'])
                                     if history:
-                                        st.dataframe(pd.DataFrame([{"Waktu": h.get('timestamp', '')[:19], "Platform": h.get('platform', '-')} for h in history[:10]]), use_container_width=True, hide_index=True)
+                                        st.dataframe(pd.DataFrame([{"Waktu": h.get('timestamp', '')[:19].replace("T", " "), "Platform": h.get('platform', '-')} for h in history[:10]]), use_container_width=True, hide_index=True)
                                     else: st.info("Belum ada riwayat login.")
                         
                         with tab_danger:

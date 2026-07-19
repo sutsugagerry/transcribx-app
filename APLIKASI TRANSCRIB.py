@@ -1139,7 +1139,7 @@ else:
         """
         components.html(clock_html, height=100)
         # ===================================
-        # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
+       # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
         if is_admin():
             try:
                 # Ambil data klien yang login dalam 1 jam terakhir
@@ -1156,38 +1156,29 @@ else:
                     # Agar rapi, potong nama email jika terlalu panjang
                     display_email = email_klien if len(email_klien) <= 22 else email_klien[:19] + "..."
                     
-                    online_list_html += f"""
-                    <li style='margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;'>
-                        <span style='color: #10b981; font-size: 14px;'>●</span> {display_email}
-                    </li>"""
+                    # JADIKAN 1 BARIS LURUS AGAR TIDAK DIBACA SEBAGAI CODE BLOCK OLEH MARKDOWN
+                    online_list_html += f"<li style='margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;'><span style='color: #10b981; font-size: 14px;'>●</span> {display_email}</li>"
                     count_online += 1
                     
                 if count_online == 0:
                     online_list_html = "<li style='color: #94a3b8; font-style: italic; text-align: center; padding-top: 10px;'>Belum ada klien online</li>"
                     
-                admin_panel_html = f"""
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 10px; margin-bottom: 20px;">
-                    <div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
-                        <div style="position: relative; width: 10px; height: 10px;">
-                            <div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-                            <div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div>
-                        </div>
-                        KLIEN ONLINE TERKINI ({count_online})
-                    </div>
-                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 180px; overflow-y: auto;">
-                        {online_list_html}
-                    </ul>
-                </div>
-                <style>
-                @keyframes ping-dot {{
-                    75%, 100% {{ transform: scale(2.5); opacity: 0; }}
-                }}
-                /* Mempercantik scrollbar di daftar user online */
-                ul::-webkit-scrollbar {{ width: 4px; }}
-                ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }}
-                ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
-                </style>
-                """
+                # HILANGKAN SPASI INDENTASI DI HTML AGAR RAPI
+                admin_panel_html = f"""<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 10px; margin-bottom: 20px;">
+<div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+<div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>
+KLIEN ONLINE TERKINI ({count_online})
+</div>
+<ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 180px; overflow-y: auto;">
+{online_list_html}
+</ul>
+</div>
+<style>
+@keyframes ping-dot {{ 75%, 100% {{ transform: scale(2.5); opacity: 0; }} }}
+ul::-webkit-scrollbar {{ width: 4px; }}
+ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }}
+ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
+</style>"""
                 st.markdown(admin_panel_html, unsafe_allow_html=True)
             except Exception as e:
                 pass

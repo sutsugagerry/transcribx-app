@@ -1399,9 +1399,6 @@ else:
     # =====================================================================
     # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
     # =====================================================================
-    # =====================================================================
-    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI
-    # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
         
@@ -1610,7 +1607,7 @@ else:
             <script>
                 (function() {
                     'use strict';
-                     const canUseAi = __CAN_USE_AI__;
+                    const canUseAi = __CAN_USE_AI__;
                     
                     // ======== DOM REFS ========
                     const startBtn = document.getElementById('startBtn');
@@ -2156,17 +2153,17 @@ else:
 
                                 <div style="text-align: center; margin-bottom: 20px;">
                                     <span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br>
-                                    <span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
+                                    <span style="font-size: 12pt; font-weight: bold;">\${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
                                 </div>
                                 
                                 <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;">
                                     <tr>
                                         <td style="width: 1.5in;"><b>Hari / Tanggal</b></td>
-                                        <td style="width: 4.5in;">${tanggalStr}</td>
+                                        <td style="width: 4.5in;">\${tanggalStr}</td>
                                     </tr>
                                     <tr>
                                         <td><b>Waktu</b></td>
-                                        <td>${waktuStr}</td>
+                                        <td>\${waktuStr}</td>
                                     </tr>
                                     <tr>
                                         <td><b>Media</b></td>
@@ -2178,49 +2175,49 @@ else:
                                     </tr>
                                     <tr>
                                         <td><b>Peserta</b></td>
-                                        <td>${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td>
+                                        <td>\${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td>
                                     </tr>
                                     <tr>
                                         <td><b>Agenda</b></td>
-                                        <td>${d.agenda || '-'}</td>
+                                        <td>\${d.agenda || '-'}</td>
                                     </tr>
                                 </table>
                                 
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>
-                                ${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}
+                                \${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">\${r}</p>`).join('')}
                                 <br>
 
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p>
                                 <ul style="margin-top: 0;">
-                                    ${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}
+                                    \${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">\${j}</li>`).join('')}
                                 </ul>
                                 <br>
 
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p>
                                 <ol style="margin-top: 0;">
-                                    ${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}
+                                    \${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">\${k}</li>`).join('')}
                                 </ol>
                                 <br>
 
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>
-                                ${actionItemsHtml}
+                                \${actionItemsHtml}
                                 <br>
                                 
                                 <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 10px;"><b>5. LAMPIRAN VISUALISASI AI</b></p>
-                                ${cyImageHtml}
-                                ${mermaidImageHtml}
-                                ${markmapImageHtml}
+                                \ w${cyImageHtml}
+                                \${mermaidImageHtml}
+                                \${markmapImageHtml}
                                 
                                 <br><br>
                                 
                                 <p style="text-align: right;">
-                                    Jakarta, ${tanggalFooterStr}<br><br><br><br>
+                                    Jakarta, \${tanggalFooterStr}<br><br><br><br>
                                     ( Tim Notulen SmartDose )
                                 </p>
                             </body>
                             </html>`;
                             
-                            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+                            const blob = new Blob(['\\ufeff', content], { type: 'application/msword' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
@@ -2313,7 +2310,7 @@ else:
                             const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                             
                             container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                            svgEl.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
+                            svgEl.setAttribute('viewBox', `\${(bbox.x || 0) - padding} \${(bbox.y || 0) - padding} \${trueWidth} \${trueHeight}`);
                             
                             html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
                             .then(canvas => {
@@ -2328,7 +2325,6 @@ else:
                     };
 
                     aiBtn.onclick = async function() {
-                        // 1. Cek kuota sebelum menjalankan AI
                         if (!canUseAi) {
                             alert("❌ Kuota AI Summary Anda telah habis! Silakan lakukan Top-Up atau hubungi Admin.");
                             return;
@@ -2367,7 +2363,7 @@ else:
                         Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
                         Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).
                         
-                        Transkrip Rapat: "${transcript}"`;
+                        Transkrip Rapat: "\${transcript}"`;
 
                         const payload = {
                             model: "gemini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
@@ -2411,15 +2407,15 @@ else:
                             downloadDocxBtn.style.display = 'inline-flex';
                             
                             let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
-                                `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
+                                `<tr class="text-xs border-b"><td class="p-2 border-r">\${t.tugas}</td><td class="p-2 border-r">\${t.pic}</td><td class="p-2 border-r">\${t.deadline}</td><td class="p-2 font-bold">\${t.prioritas}</td></tr>`
                             ).join('');
                             
                             aiContent.innerHTML = `
                                 <div class="fade-in mt-6 mb-10">
-                                    <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
-                                    <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
-                                    <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
-                                    <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
+                                    <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">\${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
+                                    <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>\${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
+                                    <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">\${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
+                                    <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>\${taskRows}</tbody></table></div>
                                     <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div><p class="font-bold text-sm mb-2">Cytoscape.js</p>
@@ -2466,6 +2462,28 @@ else:
                                 mDiv.removeAttribute('data-processed');
                                 
                                 try {
+                                    mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
+                                        const svg = mDiv.querySelector('svg');
+                                        if (svg) { 
+                                            svg.style.maxWidth = 'none'; 
+                                            svg.style.height = 'auto';
+                                        }
+                                    }).catch(e => {
+                                        console.error("Mermaid error:", e);
+                                        mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Transkrip mungkin mengandung karakter ilegal.</div>";
+                                    });
+                                } catch(e) {}
+                            }, 100);
+
+                            setTimeout(() => {
+                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                const { Transformer, Markmap } = window.markmap;
+                                const { root } = new Transformer().transform(rawMm);
+                                Markmap.create('#markmapLive', null, root);
+                            }, 100);
+
+                            // Kirim sinyal potong kuota ke Python
+                            try {
                                 const parentDoc = window.parent.document;
                                 const inputEl = parentDoc.querySelector('input[aria-label="trigger_ai_live"]');
                                 if (inputEl) {

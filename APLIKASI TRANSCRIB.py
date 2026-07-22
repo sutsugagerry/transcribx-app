@@ -1624,7 +1624,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
         # ==========================================
         # MULAI PASTE DARI SINI KE BAWAH
         # ==========================================
-        import urllib.parse
+        
         
         # Ambil email user yang sedang login
         user_email_aktif = st.session_state.get('user_email', '')
@@ -1635,7 +1635,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
 
         # GANTI LINK INI DENGAN LINK PRODUK ASLI DARI LYNK.ID KAMU!
         # Saya sudah masukkan contoh link checkout kamu untuk paket Executive
-        link_basic = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
+        link_basic = f"http://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
         link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
         link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
 

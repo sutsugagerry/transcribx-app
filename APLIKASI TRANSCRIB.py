@@ -693,7 +693,7 @@ if not st.session_state["logged_in"]:
     """, height=0, width=0)
 
     # PEMBUATAN TAB DI HALAMAN DEPAN
-    tab_home, tab_login = st.tabs(["🏠 Beranda Platform", "🔐 Login Portal"])
+    tab_home, tab_login, tab_register = st.tabs(["🏠 Beranda Platform", "🔐 Login Portal", "📝 Daftar Akun Baru"])
 
     with tab_home:
         # ==========================================
@@ -914,6 +914,58 @@ if not st.session_state["logged_in"]:
                                 st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
                     else:
                         st.warning("Silakan masukkan email dan password.")
+                        with tab_register:
+        col_r1, col_r2, col_r3 = st.columns([1, 1.5, 1])
+        with col_r2:
+            st.write("")
+            st.write("")
+            st.write("")
+            st.markdown("""
+            <div style='text-align: center; margin-bottom: 20px;'>
+                <h1 class='login-title' style='font-size: 3rem;'>Daftar Akun</h1>
+                <p style='color: #94a3b8; font-size: 0.9rem;'>Buat akun baru untuk mulai menggunakan TranscribX.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            with st.form("register_form_user"):
+                st.markdown("<h3 style='text-align: center; color: #e0f2fe; margin-bottom: 15px; letter-spacing: 1px;'>Form Pendaftaran</h3>", unsafe_allow_html=True)
+                
+                email_reg_user = st.text_input("Email Address", placeholder="Masukkan email aktif Anda...")
+                pass_reg_user = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
+                pass_confirm = st.text_input("Konfirmasi Password", type="password", placeholder="Ulangi password")
+                
+                st.write("")
+                btn_reg_user = st.form_submit_button("📝 Buat Akun Sekarang", use_container_width=True, type="primary")
+                
+                if btn_reg_user:
+                    if email_reg_user and len(pass_reg_user) >= 6:
+                        if pass_reg_user == pass_confirm:
+                            with st.spinner("Membuat akun Anda..."):
+                                # Mendaftarkan ke Firebase Authentication
+                                new_user = register_firebase(email_reg_user, pass_reg_user)
+                                if "idToken" in new_user:
+                                    uid = new_user["localId"]
+                                    sekarang = datetime.now()
+                                    # Menyimpan data user baru ke Database (Default: NON-AKTIF)
+                                    db.collection("users").document(uid).set({
+                                        "email": email_reg_user, 
+                                        "status_subscription": "non-aktif", 
+                                        "paket": "NON-AKTIF",
+                                        "kuota_ai": 0, 
+                                        "kuota_upload": 0, 
+                                        "tanggal_mulai": sekarang.isoformat(),
+                                        "tanggal_berakhir": sekarang.isoformat(),
+                                        "reset_kuota_terakhir": sekarang.isoformat(),
+                                        "last_login": "Belum pernah login", 
+                                        "login_count": 0
+                                    })
+                                    st.success("✅ Pendaftaran berhasil! Silakan klik tab '🔐 Login Portal' di atas untuk masuk.")
+                                else:
+                                    st.error(f"⚠️ Gagal mendaftar: {new_user.get('error', {}).get('message', 'Terjadi kesalahan')}")
+                        else:
+                            st.warning("⚠️ Password dan Konfirmasi Password tidak cocok!")
+                    else:
+                        st.warning("⚠️ Masukkan email yang valid dan password minimal 6 karakter.")
 
 # =====================================================================
 # APLIKASI UTAMA (SETELAH LOGIN)

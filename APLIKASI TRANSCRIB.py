@@ -12,6 +12,7 @@ import math
 import os
 import tempfile
 import urllib.parse
+import random
 from pydub import AudioSegment
 
 os.environ['TZ'] = 'Asia/Jakarta'
@@ -901,6 +902,14 @@ if not st.session_state["logged_in"]:
                     else:
                         st.warning("Silakan masukkan email dan password.")
 
+   # =====================================================================
+    # TAB REGISTRASI (DENGAN PILIHAN PAKET & CAPTCHA)
+    # =====================================================================
+    # Generate angka Captcha acak jika belum ada
+    if "captcha_n1" not in st.session_state:
+        st.session_state.captcha_n1 = random.randint(1, 10)
+        st.session_state.captcha_n2 = random.randint(1, 10)
+
     with tab_register:
         col_r1, col_r2, col_r3 = st.columns([1, 1.5, 1])
         with col_r2:
@@ -917,40 +926,90 @@ if not st.session_state["logged_in"]:
             with st.form("register_form_user"):
                 st.markdown("<h3 style='text-align: center; color: #e0f2fe; margin-bottom: 15px; letter-spacing: 1px;'>Form Pendaftaran</h3>", unsafe_allow_html=True)
                 
+                # --- TAMBAHAN PILIHAN PAKET ---
+                paket_awal = st.selectbox(
+                    "📦 Pilih Paket Layanan", 
+                    ["EXECUTIVE (Rp 69.000 / 30 Hari) 🔥", "BASIC (Rp 35.000 / 30 Hari)", "MASTER (Rp 149.000 / 30 Hari) 👑", "Nanti Saja (Daftar Akun Gratis)"]
+                )
+                
                 email_reg_user = st.text_input("Email Address", placeholder="Masukkan email aktif Anda...")
                 pass_reg_user = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
                 pass_confirm = st.text_input("Konfirmasi Password", type="password", placeholder="Ulangi password")
                 
+                # --- TAMBAHAN CAPTCHA ---
+                st.markdown(f"<p style='color:#e2e8f0; font-size:14px; margin-top:10px; margin-bottom:5px;'>🛡️ Verifikasi Keamanan: <b>Berapa hasil dari {st.session_state.captcha_n1} + {st.session_state.captcha_n2} ?</b></p>", unsafe_allow_html=True)
+                captcha_answer = st.text_input("Jawaban Captcha", placeholder="Ketik angka jawaban...", label_visibility="collapsed")
+                
                 st.write("")
-                btn_reg_user = st.form_submit_button("📝 Buat Akun Sekarang", use_container_width=True, type="primary")
+                btn_reg_user = st.form_submit_button("📝 Buat Akun & Lanjut", use_container_width=True, type="primary")
                 
                 if btn_reg_user:
-                    if email_reg_user and len(pass_reg_user) >= 6:
-                        if pass_reg_user == pass_confirm:
-                            with st.spinner("Membuat akun Anda..."):
-                                new_user = register_firebase(email_reg_user, pass_reg_user)
-                                if "idToken" in new_user:
-                                    uid = new_user["localId"]
-                                    sekarang = datetime.now()
-                                    db.collection("users").document(uid).set({
-                                        "email": email_reg_user, 
-                                        "status_subscription": "non-aktif", 
-                                        "paket": "NON-AKTIF",
-                                        "kuota_ai": 0, 
-                                        "kuota_upload": 0, 
-                                        "tanggal_mulai": sekarang.isoformat(),
-                                        "tanggal_berakhir": sekarang.isoformat(),
-                                        "reset_kuota_terakhir": sekarang.isoformat(),
-                                        "last_login": "Belum pernah login", 
-                                        "login_count": 0
-                                    })
-                                    st.success("✅ Pendaftaran berhasil! Silakan klik tab '🔐 Login Portal' di atas untuk masuk.")
-                                else:
-                                    st.error(f"⚠️ Gagal mendaftar: {new_user.get('error', {}).get('message', 'Terjadi kesalahan')}")
-                        else:
-                            st.warning("⚠️ Password dan Konfirmasi Password tidak cocok!")
-                    else:
+                    expected_ans = str(st.session_state.captcha_n1 + st.session_state.captcha_n2)
+                    
+                    # Validasi Captcha
+                    if captcha_answer.strip() != expected_ans:
+                        st.error("❌ Jawaban Captcha salah! Silakan hitung dengan benar.")
+                        # Reset angka Captcha agar tidak ditebak ulang
+                        st.session_state.captcha_n1 = random.randint(1, 10)
+                        st.session_state.captcha_n2 = random.randint(1, 10)
+                    elif not email_reg_user or len(pass_reg_user) < 6:
                         st.warning("⚠️ Masukkan email yang valid dan password minimal 6 karakter.")
+                    elif pass_reg_user != pass_confirm:
+                        st.warning("⚠️ Password dan Konfirmasi Password tidak cocok!")
+                    else:
+                        with st.spinner("Mendaftarkan akun..."):
+                            new_user = register_firebase(email_reg_user, pass_reg_user)
+                            if "idToken" in new_user:
+                                uid = new_user["localId"]
+                                sekarang = datetime.now()
+                                
+                                # Simpan user baru (Selalu NON-AKTIF di awal sampai webhook lapor LUNAS)
+                                db.collection("users").document(uid).set({
+                                    "email": email_reg_user, 
+                                    "status_subscription": "non-aktif", 
+                                    "paket": "NON-AKTIF",
+                                    "kuota_ai": 0, 
+                                    "kuota_upload": 0, 
+                                    "tanggal_mulai": sekarang.isoformat(),
+                                    "tanggal_berakhir": sekarang.isoformat(),
+                                    "reset_kuota_terakhir": sekarang.isoformat(),
+                                    "last_login": "Belum pernah login", 
+                                    "login_count": 0
+                                })
+                                
+                                # REDIRECT LOGIC
+                                if "Nanti Saja" in paket_awal:
+                                    st.success("✅ Pendaftaran berhasil! Silakan masuk melalui tab '🔐 Login Portal'.")
+                                else:
+                                    st.success("✅ Akun berhasil dibuat! Selesaikan langkah terakhir di bawah.")
+                                    
+                                    email_encoded = urllib.parse.quote(email_reg_user)
+                                    link_checkout = ""
+                                    if "BASIC" in paket_awal:
+                                        link_checkout = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
+                                    elif "EXECUTIVE" in paket_awal:
+                                        link_checkout = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
+                                    elif "MASTER" in paket_awal:
+                                        link_checkout = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
+                                        
+                                    st.markdown(f"""
+                                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 20px; text-align: center; margin-top: 15px;">
+                                        <h4 style="color: #10b981; margin-top: 0;">Langkah Terakhir: Aktifkan Paket Anda</h4>
+                                        <p style="color: #94a3b8; font-size: 14px;">Klik tombol di bawah ini untuk membayar paket <b>{paket_awal.split('(')[0].strip()}</b> Anda via Lynk.id. Sistem akan otomatis mengisi kuota Anda segera setelah pembayaran selesai!</p>
+                                        <a href="{link_checkout}" target="_blank" style="text-decoration: none;">
+                                            <button style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
+                                                💳 Bayar & Aktifkan Sekarang
+                                            </button>
+                                        </a>
+                                        <p style="color: #64748b; font-size: 12px; margin-top: 15px;">Setelah melakukan pembayaran, silakan langsung menuju tab <b>🔐 Login Portal</b>.</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                # Reset captcha setelah sukses mendaftar
+                                st.session_state.captcha_n1 = random.randint(1, 10)
+                                st.session_state.captcha_n2 = random.randint(1, 10)
+                            else:
+                                st.error(f"⚠️ Gagal mendaftar: {new_user.get('error', {}).get('message', 'Terjadi kesalahan')}")
 
 # =====================================================================
 # APLIKASI UTAMA (SETELAH LOGIN)

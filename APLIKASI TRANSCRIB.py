@@ -10,6 +10,7 @@ import time
 import io
 import math
 import os
+import urllib.parse
 import tempfile
 from pydub import AudioSegment
 import os
@@ -833,7 +834,7 @@ if not st.session_state["logged_in"]:
         st.markdown("""
         <div style="text-align:center; margin-top:30px; padding:20px; background:rgba(56, 189, 248, 0.1); border-radius:12px; border:1px solid rgba(56, 189, 248, 0.3);">
             <h4 style="color:#38bdf8; margin:0;">Ingin aktivasi atau perpanjang paket?</h4>
-            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Hubungi <b>Admin (Gerry)</b> via WhatsApp untuk mendapatkan akses premium 🚀</p>
+            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Silakan <b>Login</b> terlebih dahulu melalui tab di atas untuk melakukan pembelian atau upgrade paket secara otomatis. 🚀</p>
         </div>
         """, unsafe_allow_html=True)
          
@@ -1617,6 +1618,62 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                 </div>
             </div>
             """, unsafe_allow_html=True)
+            # (Baris terakhir dari gambar kamu)
+        # """, unsafe_allow_html=True)
+
+        # ==========================================
+        # MULAI PASTE DARI SINI KE BAWAH
+        # ==========================================
+        import urllib.parse
+        
+        # Ambil email user yang sedang login
+        user_email_aktif = st.session_state.get('user_email', '')
+        email_encoded = urllib.parse.quote(user_email_aktif)
+
+        st.markdown("<hr style='margin-top: 30px; border-color:#e2e8f0;'>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #38bdf8;'>🚀 Pilih & Beli Paket Sekarang</h3>", unsafe_allow_html=True)
+
+        # GANTI LINK INI DENGAN LINK PRODUK ASLI DARI LYNK.ID KAMU!
+        # Saya sudah masukkan contoh link checkout kamu untuk paket Executive
+        link_basic = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
+        link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
+        link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
+
+        col_btn1, col_btn2, col_btn3 = st.columns(3)
+        with col_btn1:
+            st.markdown(f"""
+            <a href="{link_basic}" target="_blank" style="text-decoration: none;">
+                <button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.3s;">
+                    🛒 Beli Paket BASIC
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
+        with col_btn2:
+            st.markdown(f"""
+            <a href="{link_executive}" target="_blank" style="text-decoration: none;">
+                <button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(59,130,246,0.3); transition: 0.3s;">
+                    💳 Beli EXECUTIVE
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
+        with col_btn3:
+            st.markdown(f"""
+            <a href="{link_master}" target="_blank" style="text-decoration: none;">
+                <button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #e11d48; color: white; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(225,29,72,0.3); transition: 0.3s;">
+                    👑 Beli MASTER
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
+
+        st.write("")
+        if st.button("🔄 Cek Status Pembayaran Saya", use_container_width=True, type="secondary"):
+            with st.spinner("Menyinkronkan data dengan server pembayaran..."):
+                time.sleep(2)
+                # Fungsi ini akan menarik data terbaru dari Firebase dan langsung mengupdate UI Sidebar!
+                render_sidebar_profile() 
+                st.success("✅ Sinkronisasi selesai! Jika pembayaran berhasil, kuota Anda sudah bertambah di sidebar.")
+                time.sleep(2)
+                st.rerun()
 
     # =====================================================================
     # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI

@@ -1649,7 +1649,7 @@ else:
         st.markdown("<h3 style='text-align: center; color: #38bdf8;'>🚀 Pilih & Beli Paket Sekarang</h3>", unsafe_allow_html=True)
 
         # GANTI LINK INI DENGAN LINK PRODUK ASLI DARI LYNK.ID KAMU!
-        link_basic = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
+        link_basic = f"http://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
         link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
         link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
 

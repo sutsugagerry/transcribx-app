@@ -10,11 +10,10 @@ import time
 import io
 import math
 import os
-import urllib.parse
 import tempfile
+import urllib.parse
 from pydub import AudioSegment
-import os
-import time
+
 os.environ['TZ'] = 'Asia/Jakarta'
 try:
     time.tzset()
@@ -165,11 +164,7 @@ def hitung_sisa_hari(tanggal_berakhir_str):
     try:
         tanggal_berakhir = datetime.fromisoformat(tanggal_berakhir_str) if isinstance(tanggal_berakhir_str, str) else tanggal_berakhir_str.replace(tzinfo=None)
         selisih = tanggal_berakhir - datetime.now()
-        
-        # Gunakan math.ceil untuk membulatkan total detik ke atas
-        # 86400 adalah jumlah detik dalam 1 hari
         sisa = math.ceil(selisih.total_seconds() / 86400)
-        
         return sisa if sisa > 0 else 0
     except: return 0
 
@@ -194,7 +189,6 @@ def record_login(uid, email):
     try:
         waktu_wib = (datetime.utcnow() + timedelta(hours=7)).isoformat()
         db.collection("users").document(uid).collection("login_history").add({"timestamp": waktu_wib, "email": email, "platform": "Streamlit Cloud"})
-        # Tambahkan status is_online: True saat login
         db.collection("users").document(uid).update({"last_login": waktu_wib, "login_count": firestore.Increment(1), "is_online": True})
     except: pass
 
@@ -210,7 +204,6 @@ def get_active_users_count():
     try: 
         batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
         users = db.collection("users").where("last_login", ">=", batas_waktu).stream()
-        # Hitung jumlah user yang login 1 jam terakhir DAN belum klik logout
         return sum(1 for u in users if u.to_dict().get("is_online", True))
     except: return 0
 
@@ -266,25 +259,21 @@ def cek_reset_kuota_bulanan(uid, user_data):
 # =====================================================================
 def generate_notulensi_docx(data):
     doc = Document()
-    
-    # 1. HEADER (Menggunakan tabel tanpa border untuk layout Kiri-Kanan)
     header_table = doc.add_table(rows=1, cols=2)
     header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     header_table.autofit = True
     
-    # Kolom Kiri: Branding SmartDose
     cell_left = header_table.cell(0, 0)
     p_left = cell_left.paragraphs[0]
     run_logo = p_left.add_run("SMARTDOSE\n")
     run_logo.bold = True
     run_logo.font.size = Pt(28)
-    run_logo.font.color.rgb = RGBColor(30, 58, 138) # Warna Biru Tua
+    run_logo.font.color.rgb = RGBColor(30, 58, 138) 
     
     run_sub = p_left.add_run("Enterprise AI Transcription\nHealthcare & Productivity")
     run_sub.font.size = Pt(10)
     run_sub.font.color.rgb = RGBColor(100, 116, 139)
     
-    # Kolom Kanan: Nama Organisasi
     cell_right = header_table.cell(0, 1)
     p_right = cell_right.paragraphs[0]
     p_right.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -296,11 +285,9 @@ def generate_notulensi_docx(data):
     run_motto.italic = True
     run_motto.font.size = Pt(10)
 
-    # Garis Pemisah (Simulasi dengan paragraf border bawah/garis)
     doc.add_paragraph("_" * 80).alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph() # Spasi
+    doc.add_paragraph() 
 
-    # 2. JUDUL DOKUMEN
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_title = p_title.add_run("NOTULEN RAPAT")
@@ -314,9 +301,8 @@ def generate_notulensi_docx(data):
     run_subtitle = p_subtitle.add_run(notulensi.get('agenda', 'Koordinasi dan Pembahasan Internal'))
     run_subtitle.bold = True
     run_subtitle.font.size = Pt(12)
-    doc.add_paragraph() # Spasi
+    doc.add_paragraph() 
 
-    # 3. TABEL METADATA (Hari, Waktu, Media, dll)
     table_meta = doc.add_table(rows=6, cols=2)
     table_meta.style = 'Table Grid'
     
@@ -339,7 +325,7 @@ def generate_notulensi_docx(data):
         cell_k.paragraphs[0].runs[0].bold = True
         table_meta.cell(i, 1).text = str(val)
         
-    doc.add_paragraph() # Spasi
+    doc.add_paragraph()
 
     def add_section_header(num, title):
         p = doc.add_paragraph()
@@ -353,7 +339,6 @@ def generate_notulensi_docx(data):
         for item in items:
             doc.add_paragraph(str(item), style=style)
 
-    # 4. KONTEN NOTULENSI
     add_section_header("1", "RINGKASAN EKSEKUTIF")
     for r in data.get('ringkasan_eksekutif', []):
         doc.add_paragraph(r)
@@ -384,7 +369,6 @@ def generate_notulensi_docx(data):
     else:
         doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
 
-    # 5. FOOTER / TTD
     p_footer = doc.add_paragraph()
     p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run_footer = p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")
@@ -403,7 +387,7 @@ if "offline_summary" not in st.session_state: st.session_state["offline_summary"
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
 # =====================================================================
-# HALAMAN DEPAN (BERANDA & LOGIN)
+# HALAMAN DEPAN (BERANDA, LOGIN, REGISTRASI)
 # =====================================================================
 if not st.session_state["logged_in"]:
     st.markdown("""
@@ -416,7 +400,6 @@ if not st.session_state["logged_in"]:
         opacity: 0 !important;
         visibility: hidden !important;
     }
-    /* =============================================================== */
     
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background: transparent !important;
@@ -777,7 +760,6 @@ if not st.session_state["logged_in"]:
         
         col_p1, col_p2, col_p3 = st.columns(3)
         
-        # ===== BASIC PACKAGE =====
         with col_p1:
             st.markdown("""
             <div class="pricing-card">
@@ -794,7 +776,6 @@ if not st.session_state["logged_in"]:
             </div>
             """, unsafe_allow_html=True)
         
-        # ===== EXECUTIVE PACKAGE (BEST SELLER) =====
         with col_p2:
             st.markdown("""
             <div class="pricing-card">
@@ -812,7 +793,6 @@ if not st.session_state["logged_in"]:
             </div>
             """, unsafe_allow_html=True)
         
-        # ===== MASTER / VIP PACKAGE =====
         with col_p3:
             st.markdown("""
             <div class="pricing-card">
@@ -909,12 +889,19 @@ if not st.session_state["logged_in"]:
                                     st.success("Login berhasil! Memuat sistem...")
                                     st.rerun()
                                 else:
-                                    st.error(f"⚠️ Akun Anda sudah tidak aktif. Hubungi Admin untuk perpanjangan.")
+                                    # Ijinkan user non-aktif masuk agar mereka bisa beli paket!
+                                    st.session_state.update({
+                                        "logged_in": True, "user_email": email_login, "user_uid": uid, 
+                                        "user_paket": "NON-AKTIF", "user_kuota_ai": 0, "user_kuota_upload": 0, "sisa_hari": 0
+                                    })
+                                    st.warning("⚠️ Akun Anda belum memiliki paket aktif. Silakan beli paket di menu Info Paket.")
+                                    st.rerun()
                             else:
                                 st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
                     else:
                         st.warning("Silakan masukkan email dan password.")
-                        with tab_register:
+
+    with tab_register:
         col_r1, col_r2, col_r3 = st.columns([1, 1.5, 1])
         with col_r2:
             st.write("")
@@ -941,12 +928,10 @@ if not st.session_state["logged_in"]:
                     if email_reg_user and len(pass_reg_user) >= 6:
                         if pass_reg_user == pass_confirm:
                             with st.spinner("Membuat akun Anda..."):
-                                # Mendaftarkan ke Firebase Authentication
                                 new_user = register_firebase(email_reg_user, pass_reg_user)
                                 if "idToken" in new_user:
                                     uid = new_user["localId"]
                                     sekarang = datetime.now()
-                                    # Menyimpan data user baru ke Database (Default: NON-AKTIF)
                                     db.collection("users").document(uid).set({
                                         "email": email_reg_user, 
                                         "status_subscription": "non-aktif", 
@@ -1045,7 +1030,7 @@ else:
         st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
         
         # =================================================================
-        # MULAI DARI SINI: BUNGKUS SIDEBAR KE DALAM FUNGSI DAN ST.EMPTY
+        # BUNGKUS SIDEBAR KE DALAM FUNGSI DAN ST.EMPTY
         # =================================================================
         profile_placeholder = st.empty() # Wadah dinamis
         
@@ -1068,6 +1053,7 @@ else:
                                 st.session_state["user_kuota_ai"] = fresh_data.get("kuota_ai", 0)
                                 st.session_state["user_kuota_upload"] = fresh_data.get("kuota_upload", 0)
                                 st.session_state["user_paket"] = fresh_data.get("paket", "NON-AKTIF")
+                                st.session_state["sisa_hari"] = hitung_sisa_hari(fresh_data.get("tanggal_berakhir"))
                     except Exception:
                         pass
                     
@@ -1105,11 +1091,10 @@ else:
                 </div>
                 </div>"""
                 
-                # Masukkan ke wadah dinamis
                 with profile_placeholder.container():
                     st.markdown(profile_html, unsafe_allow_html=True)
                     if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
-                        st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
+                        st.warning("⚠️ Masa aktif hampir habis! Segera perpanjang.")
         
         # Eksekusi fungsi pertama kali saat halaman dimuat
         render_sidebar_profile()
@@ -1165,7 +1150,6 @@ else:
         </div>
         <script>
             function updateClock() {
-                // Ambil waktu spesifik Jakarta (WIB)
                 const now = new Date();
                 const options = { timeZone: 'Asia/Jakarta' };
                 const localeStr = now.toLocaleString('en-US', options);
@@ -1194,15 +1178,13 @@ else:
         </script>
         """
         components.html(clock_html, height=100)
-        # ===================================
-     # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
+        
+        # === FITUR ADMIN: MONITORING KLIEN ONLINE ===
         if is_admin():
-            # Tombol Sakti untuk Refresh Manual
             if st.button("🔄 Refresh Klien Online", use_container_width=True):
-                pass # st.button otomatis memicu rerun aplikasi dari atas ke bawah
+                pass 
 
             try:
-                # Pastikan pakai waktu WIB agar akurat
                 batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
                 active_users_ref = db.collection("users").where("last_login", ">=", batas_waktu).stream()
                 
@@ -1211,15 +1193,12 @@ else:
                 
                 for doc in active_users_ref:
                     u_data = doc.to_dict()
-                    
-                    # CEK APAKAH USER SUDAH KLIK LOGOUT
                     if u_data.get("is_online", True) == False:
-                        continue # Lewati user ini dari daftar
+                        continue 
                         
                     email_klien = u_data.get("email", "-")
                     display_email = email_klien if len(email_klien) <= 22 else email_klien[:19] + "..."
                     
-                    # SATU BARIS LURUS TANPA SPASI INDENTASI DI AWAL HTML
                     online_list_html += f"<li style='margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;'><span style='color: #10b981; font-size: 14px;'>●</span> {display_email}</li>"
                     count_online += 1
                     
@@ -1227,35 +1206,32 @@ else:
                     online_list_html = "<li style='color: #94a3b8; font-style: italic; text-align: center; padding-top: 10px;'>Belum ada klien online</li>"
                     
                 admin_panel_html = f"""<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
-<div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
-<div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>
-KLIEN ONLINE TERKINI ({count_online})
-</div>
-<ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 180px; overflow-y: auto;">
-{online_list_html}
-</ul>
-</div>
-<style>
-@keyframes ping-dot {{ 75%, 100% {{ transform: scale(2.5); opacity: 0; }} }}
-ul::-webkit-scrollbar {{ width: 4px; }}
-ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }}
-ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
-</style>"""
+                <div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+                <div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>
+                KLIEN ONLINE ({count_online})
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 180px; overflow-y: auto;">
+                {online_list_html}
+                </ul>
+                </div>
+                <style>
+                @keyframes ping-dot {{ 75%, 100% {{ transform: scale(2.5); opacity: 0; }} }}
+                ul::-webkit-scrollbar {{ width: 4px; }}
+                ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }}
+                ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
+                </style>"""
                 st.markdown(admin_panel_html, unsafe_allow_html=True)
             except Exception as e:
                 pass
-        # ===================================================
 
     colA, colB = st.columns([8, 1])
     with colB:
         if st.button("🚪 Logout", use_container_width=True):
-            # === SET OFFLINE DI FIREBASE SEBELUM KELUAR ===
             try:
                 uid = st.session_state.get("user_uid")
                 if uid:
                     db.collection("users").document(uid).update({"is_online": False})
             except: pass
-            # ============================================
             st.session_state.clear()
             st.session_state["logged_in"] = False
             st.rerun()
@@ -1263,7 +1239,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
     st.title("🎙️ TranscribX: SmartDose Enterprise Transcription")
 
     if is_admin():
-        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman", "💳 Info Paket Langganan"])
         tab_admin, tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3]
         
         with tab_admin:
@@ -1328,7 +1304,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
 
             st.markdown("<br>", unsafe_allow_html=True)
             
-            with st.expander("➕ Registrasi Akun Klien Baru", expanded=False):
+            with st.expander("➕ Registrasi Akun Klien Baru (Manual)", expanded=False):
                 with st.form("admin_register_form", clear_on_submit=True):
                     col_reg1, col_reg2, col_reg3 = st.columns(3)
                     with col_reg1: email_reg = st.text_input("Email Klien Baru", placeholder="email@klien.com")
@@ -1402,18 +1378,13 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                         except: pass
                     return ''
                 
-                # Memastikan seluruh dataframe bertipe string untuk menghindari error PyArrow
                 df_display = df_display.astype(str)
-
                 try: 
                     styled_df = df_display.style.map(color_status, subset=['📊 Status']).map(color_sisa_hari, subset=['⏳ Sisa Hari'])
                 except AttributeError: 
-                    # Fallback untuk versi Pandas lama
                     styled_df = df_display.style.applymap(color_status, subset=['📊 Status']).applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
                 
-                # Tampilkan tabel tanpa menggunakan backend PyArrow
                 st.dataframe(styled_df, use_container_width=True, hide_index=True, height=350)
-                
             else: 
                 st.info("🔍 Tidak ada user yang sesuai dengan filter.")
                 
@@ -1446,8 +1417,8 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                                 col_e1, col_e2 = st.columns([3, 1])
                                 with col_e1:
                                     new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"], 
-                                                           index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0,
-                                                           label_visibility="collapsed")
+                                                             index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0,
+                                                             label_visibility="collapsed")
                                 with col_e2:
                                     btn_update_paket = st.form_submit_button("💾 Simpan", type="primary", use_container_width=True)
                                 
@@ -1492,9 +1463,6 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                                     time.sleep(1)
                                     st.rerun()
 
-                        # ==========================================
-                        # LOGIKA BARU: TAB TOP-UP KUOTA
-                        # ==========================================
                         with tab_topup:
                             st.caption("Top-up atau tambah kuota AI & Upload secara eceran tanpa mengubah masa aktif paket bulanan.")
                             with st.form("form_topup_kuota"):
@@ -1571,15 +1539,15 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
             else: st.info("Tidak ada klien yang terdaftar atau sesuai filter untuk dikelola.")
 
     else:
-        tabs = st.tabs(["🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tabs = st.tabs(["🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman", "💳 Info Paket Langganan"])
         tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2]
 
     # =====================================================================
-    # TAB INFO PAKET LANGGANAN
+    # TAB INFO PAKET LANGGANAN (USER BIASA)
     # =====================================================================
     with tab_paket:
         st.markdown("### 📊 Pilihan Paket Langganan TranscribX")
-        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai. Hubungi admin untuk upgrade.")
+        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai. Klik tombol beli di bawah untuk upgrade secara otomatis.")
         st.write("")
         
         col_p1, col_p2, col_p3 = st.columns(3)
@@ -1670,15 +1638,10 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            # (Baris terakhir dari gambar kamu)
-        # """, unsafe_allow_html=True)
 
         # ==========================================
-        # MULAI PASTE DARI SINI KE BAWAH
+        # TOMBOL CHECKOUT OTOMATIS LYNK.ID
         # ==========================================
-        
-        
-        # Ambil email user yang sedang login
         user_email_aktif = st.session_state.get('user_email', '')
         email_encoded = urllib.parse.quote(user_email_aktif)
 
@@ -1686,8 +1649,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
         st.markdown("<h3 style='text-align: center; color: #38bdf8;'>🚀 Pilih & Beli Paket Sekarang</h3>", unsafe_allow_html=True)
 
         # GANTI LINK INI DENGAN LINK PRODUK ASLI DARI LYNK.ID KAMU!
-        # Saya sudah masukkan contoh link checkout kamu untuk paket Executive
-        link_basic = f"http://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
+        link_basic = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
         link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
         link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
 
@@ -1721,7 +1683,6 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
         if st.button("🔄 Cek Status Pembayaran Saya", use_container_width=True, type="secondary"):
             with st.spinner("Menyinkronkan data dengan server pembayaran..."):
                 time.sleep(2)
-                # Fungsi ini akan menarik data terbaru dari Firebase dan langsung mengupdate UI Sidebar!
                 render_sidebar_profile() 
                 st.success("✅ Sinkronisasi selesai! Jika pembayaran berhasil, kuota Anda sudah bertambah di sidebar.")
                 time.sleep(2)
@@ -1733,11 +1694,9 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
         
-        # === 1. LOGIKA PENGURANGAN KUOTA DARI JAVASCRIPT ===
         kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
         can_use_ai = is_admin() or kuota_ai_sekarang > 0
         
-        # Widget rahasia untuk menerima sinyal "sukses" dari iframe JavaScript
         trigger_val = st.text_input("trigger_ai_live", key="trigger_ai_live", label_visibility="collapsed")
         st.markdown("""
         <style>
@@ -1747,16 +1706,13 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
         </style>
         """, unsafe_allow_html=True)
 
-        # Jika JavaScript mengirimkan sinyal DEDUCT (Berhasil generate AI)
         if trigger_val.startswith("DEDUCT_"):
             if st.session_state.get("last_deduct_id") != trigger_val:
                 st.session_state["last_deduct_id"] = trigger_val
                 if not is_admin() and st.session_state["user_kuota_ai"] > 0:
-                    # Kurangi kuota dan update ke Firebase
                     st.session_state["user_kuota_ai"] -= 1
                     db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
-                st.rerun() # Refresh halaman agar metrik sidebar langsung terupdate
-        # ===================================================
+                st.rerun() 
 
         st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
         st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
@@ -2539,7 +2495,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                                 ${mermaidImageHtml}
                                 ${markmapImageHtml}
                                 
-                                <br><br>
+                               <br><br>
                                 
                                 <p style="text-align: right;">
                                     Jakarta, ${tanggalFooterStr}<br><br><br><br>
@@ -2548,7 +2504,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                             </body>
                             </html>`;
                             
-                            const blob = new Blob(['\\ufeff', content], { type: 'application/msword' });
+                            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
@@ -2839,7 +2795,6 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
         </body>
         </html>
         """
-        # Inject status kuota ke dalam JavaScript
         html_code = html_code.replace("__CAN_USE_AI__", "true" if can_use_ai else "false")
         
         components.html(html_code, height=1600, scrolling=True)
@@ -3086,7 +3041,7 @@ ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}
                 st.download_button(
                     label="📝 Download Laporan (TXT)", 
                     data=txt_report, 
-                    file_name=f"Notulensi_{datetime.now().strftime('%Y%m%d')}.txt", 
+                    file_name=f"Notulensi_{datetime.now().strftime('%Y%m%d')}.txt",
                     mime="text/plain", 
                     use_container_width=True
                 )

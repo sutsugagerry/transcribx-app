@@ -2456,7 +2456,7 @@ else:
                             setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
                                 
-                                function parseMarkdownToSunburst(md) {
+                               function parseMarkdownToSunburst(md) {
                                         const lines = md.split('\\n');
                                         let root = { name: "Tema Rapat", children: [] };
                                         let stack = [ {level: -1, node: root} ];
@@ -2513,23 +2513,36 @@ else:
                                     }
 
                                     const sunburstData = parseMarkdownToSunburst(rawMm);
-                                    const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
                                     
-                                    if (sunburstData.length === 1 && sunburstData[0].children) {
-                                        sunburstData[0].itemStyle = { color: '#1e293b' };
-                                        sunburstData[0].children.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
-                                    } else {
-                                        sunburstData.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
-                                    }
+                                    // Palet Warna ECharts Native
+                                    const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
 
                                     var chartDom = document.getElementById('sunburstLiveContainer');
                                     window.sunburstChartLive = echarts.init(chartDom);
+                                    
                                     var option = {
+                                        color: colorPalette, // ECharts otomatis mewarnai ranting sesuai warna induk
                                         tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
                                         series: {
-                                            type: 'sunburst', data: sunburstData, radius: [0, '95%'], sort: undefined, emphasis: { focus: 'ancestor' },
-                                            itemStyle: { borderRadius: 5, borderWidth: 1.5, borderColor: '#ffffff' },
-                                            label: { show: true, formatter: '{b}', width: 85, overflow: 'break', minAngle: 12, fontSize: 11, fontWeight: 'bold', fontFamily: 'sans-serif', color: '#ffffff', textBorderColor: 'rgba(0,0,0,0.6)', textBorderWidth: 2 }
+                                            type: 'sunburst', 
+                                            data: sunburstData, 
+                                            radius: [0, '95%'], 
+                                            sort: undefined, 
+                                            emphasis: { focus: 'ancestor' },
+                                            itemStyle: { borderRadius: 4, borderWidth: 1.5, borderColor: '#ffffff' },
+                                            label: { 
+                                                show: true, 
+                                                formatter: '{b}', 
+                                                minAngle: 18, // Sembunyikan label jika slice terlalu sempit (kunci anti-numpuk)
+                                                width: 80, // Batasi panjang teks
+                                                overflow: 'truncate', // Potong teks pakai elipsis (...) jangan turun ke bawah
+                                                fontSize: 10, 
+                                                fontWeight: 'bold', 
+                                                fontFamily: 'sans-serif', 
+                                                color: '#ffffff', 
+                                                textBorderColor: 'rgba(0,0,0,0.8)', 
+                                                textBorderWidth: 2 
+                                            }
                                         }
                                     };
                                     window.sunburstChartLive.setOption(option);

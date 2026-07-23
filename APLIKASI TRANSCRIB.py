@@ -2457,7 +2457,7 @@ else:
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
                                 
                                 function parseMarkdownToSunburst(md) {
-                                        const lines = md.split('\n');
+                                        const lines = md.split('\\n');
                                         let root = { name: "Tema Rapat", children: [] };
                                         let stack = [ {level: -1, node: root} ];
 
@@ -2468,8 +2468,8 @@ else:
                                             let level = 0;
                                             let text = "";
 
-                                            let matchHeader = line.match(/^(\s*)(#+)\s+(.*)/);
-                                            let matchList = line.match(/^(\s*)[-*]\s+(.*)/);
+                                            let matchHeader = line.match(/^(\\s*)(#+)\\s+(.*)/);
+                                            let matchList = line.match(/^(\\s*)[-*]\\s+(.*)/);
 
                                             if (matchHeader) {
                                                 level = matchHeader[2].length;
@@ -2482,7 +2482,7 @@ else:
                                                 continue;
                                             }
 
-                                            text = text.replace(/\*\*/g, '').replace(/_/g, '').trim();
+                                            text = text.replace(/\\*\\*/g, '').replace(/_/g, '').trim();
                                             let newNode = { name: text, children: [] };
 
                                             while (stack.length > 1) {

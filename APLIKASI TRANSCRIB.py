@@ -2548,73 +2548,67 @@ else:
                             }, 100);
 
                             // INIT MARKMAP
-                            setTimeout(() => {
+                                setTimeout(() => {
+                                    let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                    const { Transformer, Markmap } = window.markmap;
+                                    const { root } = new Transformer().transform(rawMm);
+                                    Markmap.create('#markmapLive', null, root);
+                                }, 100);
+    
+                                setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                const { Transformer, Markmap } = window.markmap;
-                                const { root } = new Transformer().transform(rawMm);
-                                Markmap.create('#markmapLive', null, root);
-                            }, 100);
-
-                            // INIT TREE HIERARCHY ECHARTS (Pengganti Sunburst ke arah Kanan)
-                            setTimeout(() => {
-                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                const lines = rawMm.split('\\n');
+                                const lines = rawMm.split('\n');
                                 let rootNode = { name: "Tema Rapat", children: [] };
                                 let stack = [ {level: 0, node: rootNode} ];
-
+    
                                 for (let i = 0; i < lines.length; i++) {
                                     let line = lines[i];
                                     let trimmed = line.trimStart();
                                     if (!trimmed) continue;
                                     let level = 0; let text = "";
-                                    let matchHeader = trimmed.match(/^(#+)\\s+(.*)/);
+                                    let matchHeader = trimmed.match(/^(#+)\s+(.*)/);
                                     if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
                                     else {
-                                        let matchList = trimmed.match(/^[-*]\\s+(.*)/);
+                                        let matchList = trimmed.match(/^[-*]\s+(.*)/);
                                         if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
                                     }
                                     if (!text) continue;
-                                    text = text.replace(/\\*\\*/g, '').trim();
+                                    text = text.replace(/\*\*/g, '').trim();
                                     let newNode = { name: text, value: 1, children: [] };
                                     while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
                                     let parent = stack[stack.length - 1].node;
                                     parent.children.push(newNode);
                                     stack.push({ level: level, node: newNode });
                                 }
-
-                                var chartDom = document.getElementById('sunburstLiveContainer');
-                                window.sunburstChartLive = echarts.init(chartDom);
+                                
+                                function assignValues(node) {
+                                    if (node.children.length === 0) { node.value = 1; } 
+                                    else { node.children.forEach(assignValues); }
+                                }
+                                assignValues(rootNode);
+                                
+                                const sunburstData = rootNode.children.length > 0 ? rootNode.children : [{name: "Data tidak tersedia", value: 1}];
+                                const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
+                                
+                                if (sunburstData.length === 1 && sunburstData[0].children) {
+                                    sunburstData[0].itemStyle = { color: '#1e293b' };
+                                    sunburstData[0].children.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
+                                } else {
+                                    sunburstData.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
+                                }
+    
+                                var chartDom = document.getElementById('sunburstOfflineContainer');
+                                window.sunburstChartOffline = echarts.init(chartDom);
                                 var option = {
-                                    tooltip: { trigger: 'item', triggerOn: 'mousemove' },
-                                    series: [
-                                        {
-                                            type: 'tree',
-                                            data: [rootNode],
-                                            top: '5%', left: '15%', bottom: '5%', right: '30%',
-                                            symbolSize: 10,
-                                            label: {
-                                                position: 'left', verticalAlign: 'middle', align: 'right',
-                                                fontSize: 12, color: '#1e293b', fontWeight: 'bold',
-                                                backgroundColor: '#f8fafc', padding: [4, 8], borderRadius: 4,
-                                                borderWidth: 1, borderColor: '#cbd5e1'
-                                            },
-                                            leaves: {
-                                                label: {
-                                                    position: 'right', verticalAlign: 'middle', align: 'left',
-                                                    backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 'normal',
-                                                    borderWidth: 1, borderColor: '#bae6fd'
-                                                }
-                                            },
-                                            expandAndCollapse: true,
-                                            initialTreeDepth: 3,
-                                            animationDuration: 550,
-                                            animationDurationUpdate: 750,
-                                            lineStyle: { color: '#94a3b8', width: 2, curveness: 0.6 }
-                                        }
-                                    ]
+                                    tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
+                                    series: {
+                                        type: 'sunburst', data: sunburstData, radius: [0, '95%'], sort: undefined, emphasis: { focus: 'ancestor' },
+                                        itemStyle: { borderRadius: 5, borderWidth: 1.5, borderColor: '#ffffff' },
+                                        label: { show: true, formatter: '{b}', width: 85, overflow: 'break', minAngle: 12, fontSize: 11, fontWeight: 'bold', fontFamily: 'sans-serif', color: '#ffffff', textBorderColor: 'rgba(0,0,0,0.6)', textBorderWidth: 2 }
+                                    }
                                 };
-                                window.sunburstChartLive.setOption(option);
-                                window.addEventListener('resize', function() { window.sunburstChartLive.resize(); });
+                                window.sunburstChartOffline.setOption(option);
+                                window.addEventListener('resize', function() { window.sunburstChartOffline.resize(); });
                             }, 100);
 
                         } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
@@ -2778,53 +2772,11 @@ else:
                     """
                     components.html(time_travel_html, height=520, scrolling=True)
                 # --- END UI TIME-TRAVEL ---
-
-                st.session_state["offline_transcript"] = st.text_area("Edit Raw Text (Hanya jika diperlukan untuk Summary AI):", value=st.session_state["offline_transcript"], height=150)
-                if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                    if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM!")
-                    elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
-                    else:
-                        if not is_admin():
-                            st.session_state["user_kuota_ai"] -= 1
-                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
-                            render_sidebar_profile()
-
-                        with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
-                            prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan WAJIB kembalikan output HANYA dalam format JSON. JANGAN menyalin ulang atau membuat transkrip dialog penuh.
-                            STRUKTUR JSON: {{ "ringkasan_eksekutif": ["..."], "notulensi_rapat": {{ "agenda": "...", "peserta": ["..."], "jalannya_diskusi": ["..."], "keputusan": ["..."], "rencana_tindak_lanjut": [{{"tugas": "...", "pic": "...", "deadline": "...", "prioritas": "..."}}] }} }}
-                            Transkrip: "{st.session_state['offline_transcript']}" """
-                            res1 = None
-                            try:
-                                res1 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json={"model":"gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt1 }], "temperature": 0.2, "response_format": { "type": "json_object" }})
-                                if res1.status_code != 200: st.error(f"Error AI (Tahap 1): {res1.status_code}"); res1 = None
-                            except Exception as e: st.error(f"Koneksi LLM Gagal (Tahap 1): {str(e)}")
-
-                        if res1:
-                            with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep..."):
-                                prompt2 = f"""Anda Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB HANYA JSON.
-                                ATURAN MERMAID: 1. Hasilkan flowchart berstruktur pohon (graph LR). 2. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi. 3. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
-                                STRUKTUR JSON: {{ "hubungan_topik": [{{"sumber": "...", "target": "...", "relasi": "..."}}], "visual_mindmap": "graph LR\\nA[\"Topik Utama\"] --> B[\"Sub Topik\"]", "markmap_code": "# Topik Utama\\n## Sub Topik" }}
-                                Transkrip: "{st.session_state['offline_transcript']}" """
-                                try:
-                                    res2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json={"model":"gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt2 }], "temperature": 0.2, "response_format": { "type": "json_object" }})
-                                    if res2.status_code == 200:
-                                        data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
-                                        data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
-                                        if "notulensi_rapat" not in data_teks: data_teks["notulensi_rapat"] = {}
-                                        data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
-                                        data_teks["markmap_code"] = data_visual.get("markmap_code", "")
-                                        data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
-                                        st.session_state["offline_summary"] = data_teks
-                                        st.success("✅ Analisis AI Lengkap & Selesai!")
-                                    else: st.error(f"Error AI (Tahap 2): {res2.status_code}")
-                                except Exception as e: st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
-
-           if st.session_state.get("offline_summary"):
+if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")
             st.markdown("### 📋 Laporan Notulensi AI (Offline)")
             
-            # Template HTML+JS menggunakan raw string (r"") agar tidak conflict dengan escape character Python
             html_template_offline = r"""
             <!DOCTYPE html>
             <html>
@@ -2860,7 +2812,6 @@ else:
                 <script>
                     (function() {
                         'use strict';
-                        // INJEKSI DATA JSON DARI PYTHON
                         const data = __JSON_DATA__;
                         const lastAiData = data;
                         
@@ -2900,7 +2851,7 @@ else:
                                 <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMOffline" onclick="dlMarkmapOffline()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapOfflineWrapper" style="width:100%; height:500px;"><svg id="markmapOffline" style="width:100%; height:100%;"></svg></div></div></div>
                                 
                                 <div class="mt-4">
-                                    <p class="font-bold text-sm mb-2">🌳 Tree Hierarchy Chart (Anatomi Rapat Sebelah Kanan)</p>
+                                    <p class="font-bold text-sm mb-2">☀️ Sunburst Hierarchy Chart (Anatomi Rapat)</p>
                                     <div class="relative bg-white border rounded-xl overflow-hidden p-2">
                                         <button onclick="dlSunburstOffline()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button>
                                         <div id="sunburstOfflineContainer" style="width:100%; height:600px;"></div>
@@ -2957,63 +2908,62 @@ else:
                             Markmap.create('#markmapOffline', null, root);
                         }, 100);
 
-                        // INIT TREE HIERARCHY ECHARTS
+                        // INIT SUNBURST ECHARTS
                         setTimeout(() => {
                             let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                            const lines = rawMm.split('\n');
-                            let rootNode = { name: "Tema Rapat", children: [] };
-                            let stack = [ {level: 0, node: rootNode} ];
+                            
+                            function parseMarkdownToSunburst(md) {
+                                const lines = md.split('\n');
+                                let root = { name: "Tema Rapat", children: [] };
+                                let stack = [ {level: 0, node: root} ];
 
-                            for (let i = 0; i < lines.length; i++) {
-                                let line = lines[i];
-                                let trimmed = line.trimStart();
-                                if (!trimmed) continue;
-                                let level = 0; let text = "";
-                                let matchHeader = trimmed.match(/^(#+)\s+(.*)/);
-                                if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
-                                else {
-                                    let matchList = trimmed.match(/^[-*]\s+(.*)/);
-                                    if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
+                                for (let i = 0; i < lines.length; i++) {
+                                    let line = lines[i];
+                                    let trimmed = line.trimStart();
+                                    if (!trimmed) continue;
+                                    let level = 0; let text = "";
+                                    let matchHeader = trimmed.match(/^(#+)\s+(.*)/);
+                                    if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
+                                    else {
+                                        let matchList = trimmed.match(/^[-*]\s+(.*)/);
+                                        if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
+                                    }
+                                    if (!text) continue;
+                                    text = text.replace(/\*\*/g, '').trim();
+                                    let newNode = { name: text, value: 1, children: [] };
+                                    while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
+                                    let parent = stack[stack.length - 1].node;
+                                    parent.children.push(newNode);
+                                    stack.push({ level: level, node: newNode });
                                 }
-                                if (!text) continue;
-                                text = text.replace(/\*\*/g, '').trim();
-                                let newNode = { name: text, value: 1, children: [] };
-                                while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
-                                let parent = stack[stack.length - 1].node;
-                                parent.children.push(newNode);
-                                stack.push({ level: level, node: newNode });
+
+                                function assignValues(node) {
+                                    if (node.children.length === 0) { node.value = 1; } 
+                                    else { node.children.forEach(assignValues); }
+                                }
+                                assignValues(root);
+                                return root.children.length > 0 ? root.children : [{name: "Data tidak tersedia", value: 1}];
+                            }
+
+                            const sunburstData = parseMarkdownToSunburst(rawMm);
+                            const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
+                            
+                            if (sunburstData.length === 1 && sunburstData[0].children) {
+                                sunburstData[0].itemStyle = { color: '#1e293b' };
+                                sunburstData[0].children.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
+                            } else {
+                                sunburstData.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
                             }
 
                             var chartDom = document.getElementById('sunburstOfflineContainer');
                             window.sunburstChartOffline = echarts.init(chartDom);
                             var option = {
-                                tooltip: { trigger: 'item', triggerOn: 'mousemove' },
-                                series: [
-                                    {
-                                        type: 'tree',
-                                        data: [rootNode],
-                                        top: '5%', left: '15%', bottom: '5%', right: '30%',
-                                        symbolSize: 10,
-                                        label: {
-                                            position: 'left', verticalAlign: 'middle', align: 'right',
-                                            fontSize: 12, color: '#1e293b', fontWeight: 'bold',
-                                            backgroundColor: '#f8fafc', padding: [4, 8], borderRadius: 4,
-                                            borderWidth: 1, borderColor: '#cbd5e1'
-                                        },
-                                        leaves: {
-                                            label: {
-                                                position: 'right', verticalAlign: 'middle', align: 'left',
-                                                backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 'normal',
-                                                borderWidth: 1, borderColor: '#bae6fd'
-                                            }
-                                        },
-                                        expandAndCollapse: true,
-                                        initialTreeDepth: 3,
-                                        animationDuration: 550,
-                                        animationDurationUpdate: 750,
-                                        lineStyle: { color: '#94a3b8', width: 2, curveness: 0.6 }
-                                    }
-                                ]
+                                tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
+                                series: {
+                                    type: 'sunburst', data: sunburstData, radius: [0, '95%'], sort: undefined, emphasis: { focus: 'ancestor' },
+                                    itemStyle: { borderRadius: 5, borderWidth: 1.5, borderColor: '#ffffff' },
+                                    label: { show: true, formatter: '{b}', width: 85, overflow: 'break', minAngle: 12, fontSize: 11, fontWeight: 'bold', fontFamily: 'sans-serif', color: '#ffffff', textBorderColor: 'rgba(0,0,0,0.6)', textBorderWidth: 2 }
+                                }
                             };
                             window.sunburstChartOffline.setOption(option);
                             window.addEventListener('resize', function() { window.sunburstChartOffline.resize(); });
@@ -3097,7 +3047,7 @@ else:
                             if (window.sunburstChartOffline) {
                                 const a = document.createElement('a');
                                 a.href = window.sunburstChartOffline.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#ffffff' });
-                                a.download = 'Tree_Hierarchy_Offline.png';
+                                a.download = 'Sunburst_Offline.png';
                                 a.click();
                             }
                         };
@@ -3110,7 +3060,7 @@ else:
                             text += "🌟 RINGKASAN EKSEKUTIF:\n";
                             (lastAiData.ringkasan_eksekutif || []).forEach(r => text += "- " + r + "\n");
                             text += "\n📌 AGENDA: " + (d.agenda || "-") + "\n";
-                            text += "👥 PESERTA: " + (d.peserta ? d.peserta.join(', ') : "-") + "\n\n";
+                            text += "👥 PESERTA: " + (d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : "-") + "\n\n";
                             if (d.transkrip_dialog && d.transkrip_dialog.length > 0) {
                                 text += "💬 TRANSKRIP DIALOG:\n";
                                 d.transkrip_dialog.forEach(l => text += l + "\n");
@@ -3213,15 +3163,15 @@ else:
                                     } catch (err) { console.error("Gagal screenshot Markmap:", err); }
                                 }
 
-                                // --- 4. CAPTURE TREE ECHARTS ---
+                                // --- 4. CAPTURE SUNBURST ECHARTS ---
                                 let sunburstImageHtml = "";
                                 if (window.sunburstChartOffline) {
                                     try {
-                                        const sbBase64 = window.sunburstChartOffline.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                                        const sbBase64 = window.sunburstChartOffline.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#ffffff' });
                                         sunburstImageHtml = `
-                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">D. Tree Hierarchy (Anatomi Rapat Sebelah Kanan)</p>
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">D. Sunburst Hierarchy (Anatomi Rapat)</p>
                                         <img src="${sbBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-                                    } catch (err) { console.error("Gagal screenshot Tree Echarts:", err); }
+                                    } catch (err) { console.error("Gagal screenshot Sunburst:", err); }
                                 }
 
                                 let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
@@ -3324,7 +3274,7 @@ else:
             """
             
             final_html_offline = html_template_offline.replace("__JSON_DATA__", json.dumps(data))
-            components.html(final_html_offline, height=2000, scrolling=True)
+            components.html(final_html_offline, height=2200, scrolling=True)
     # =====================================================================
     # TAB 3: SOP GENERATOR (KARS/JCI)
     # =====================================================================

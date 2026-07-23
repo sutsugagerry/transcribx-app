@@ -619,6 +619,46 @@ def generate_notulensi_docx(data):
             row_cells[3].text = str(tl.get('prioritas', '-'))
     else: doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
 
+    # --- TAMBAHAN: SECTION 5 UNTUK MENYUNTIKKAN GAMBAR VISUAL KE WORD ---
+    doc.add_paragraph() 
+    add_section_header("5", "VISUALISASI PETA KONSEP (MINDMAP)")
+    
+    mermaid_raw = data.get('visual_mindmap', '')
+    if mermaid_raw:
+        # Bersihkan sintaks Markdown dari AI
+        clean_mer = mermaid_raw.replace("```mermaid", "").replace("```", "").strip()
+        if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'): 
+            clean_mer = "graph LR\n" + clean_mer
+        # Bersihkan karakter yang bisa membuat render error
+        clean_mer = clean_mer.replace('`', '').replace('"', '').replace("'", "")
+        clean_mer = re.sub(r'\[([A-Z0-9]+)\]', r'(\1)', clean_mer)
+        
+        try:
+            # Gunakan API mermaid.ink untuk convert code text jadi gambar PNG
+            payload = {
+                "code": clean_mer,
+                "mermaid": {"theme": "default"}
+            }
+            # Convert JSON payload ke Base64
+            b64_payload = base64.b64encode(json.dumps(payload).encode('utf-8')).decode('utf-8')
+            img_url = f"https://mermaid.ink/img/{b64_payload}"
+            
+            # Request gambar dari server
+            response = requests.get(img_url, timeout=10)
+            if response.status_code == 200:
+                image_stream = io.BytesIO(response.content)
+                p_img = doc.add_paragraph()
+                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                # Tembakkan gambar PNG ke dalam file MS Word!
+                p_img.add_run().add_picture(image_stream, width=Inches(6.0))
+            else:
+                doc.add_paragraph(f"(Gambar visual gagal dimuat. Status: {response.status_code})")
+        except Exception as e:
+            doc.add_paragraph(f"(Gagal memproses gambar visualisasi: {str(e)})")
+    else:
+        doc.add_paragraph("- Tidak ada data visualisasi dari AI.", style='List Bullet')
+    # ----------------------------------------------------------------------
+
     p_footer = doc.add_paragraph()
     p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run_footer = p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")

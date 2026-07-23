@@ -510,36 +510,58 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
     return doc_html, word_wrapper
 
 # =====================================================================
-# FUNGSI BANTUAN UNTUK GENERATE GAMBAR MERMAID VIA KROKI API
+# FUNGSI BANTUAN UNTUK GENERATE GAMBAR API (MERMAID, NETWORK, MINDMAP)
 # =====================================================================
 def get_mermaid_png_bytes(mermaid_code):
     try:
-        import requests
-        import io
-        
-        # Bersihkan kode mermaid
+        import requests, io
         mermaid_code = mermaid_code.replace("```mermaid", "").replace("```", "").strip()
         if not mermaid_code.lower().startswith('graph') and not mermaid_code.lower().startswith('flowchart') and not mermaid_code.lower().startswith('mindmap'):
             mermaid_code = "graph LR\n" + mermaid_code
-            
-        # Panggil API Kroki untuk render Mermaid ke PNG
-        response = requests.post(
-            "https://kroki.io/mermaid/png", 
-            data=mermaid_code.encode('utf-8'), 
-            headers={"Content-Type": "text/plain"},
-            timeout=15
-        )
-        
-        if response.status_code == 200:
-            return io.BytesIO(response.content)
-        return None
-    except Exception as e:
-        print(f"Error generating Mermaid PNG: {e}")
-        return None
+        res = requests.post("https://kroki.io/mermaid/png", data=mermaid_code.encode('utf-8'), headers={"Content-Type": "text/plain"}, timeout=15)
+        if res.status_code == 200: return io.BytesIO(res.content)
+    except Exception as e: print(f"Error Mermaid: {e}")
+    return None
 
+def get_network_png_bytes(hubungan_topik):
+    if not hubungan_topik: return None
+    dot = 'digraph G {\n rankdir=LR;\n node [shape=box, style="filled,rounded", fillcolor="#f43f5e", fontcolor="white", fontname="Arial"];\n edge [color="#cbd5e1", fontname="Arial", fontsize=10];\n'
+    for rel in hubungan_topik:
+        sumber = str(rel.get('sumber', '')).replace('"', '')
+        target = str(rel.get('target', '')).replace('"', '')
+        relasi = str(rel.get('relasi', '')).replace('"', '')
+        dot += f'  "{sumber}" -> "{target}" [label="{relasi}"];\n'
+    dot += '}'
+    try:
+        import requests, io
+        res = requests.post("https://kroki.io/graphviz/png", data=dot.encode('utf-8'), headers={"Content-Type": "text/plain"}, timeout=15)
+        if res.status_code == 200: return io.BytesIO(res.content)
+    except Exception as e: print(f"Error Network: {e}")
+    return None
+
+def get_mindmap_png_bytes(markmap_code):
+    if not markmap_code: return None
+    puml = "@startmindmap\n<style>\nmindmapDiagram { node { BackgroundColor #a7f3d0 } }\n</style>\n"
+    for line in markmap_code.split('\n'):
+        line = line.strip()
+        if not line: continue
+        if line.startswith('#'):
+            level = len(line) - len(line.lstrip('#'))
+            text = line.lstrip('# ').strip()
+            puml += '*' * level + f" {text}\n"
+        elif line.startswith('- ') or line.startswith('* '):
+            text = line[2:].strip()
+            puml += '**' + f" {text}\n"
+    puml += "@endmindmap"
+    try:
+        import requests, io
+        res = requests.post("https://kroki.io/plantuml/png", data=puml.encode('utf-8'), headers={"Content-Type": "text/plain"}, timeout=15)
+        if res.status_code == 200: return io.BytesIO(res.content)
+    except Exception as e: print(f"Error Mindmap: {e}")
+    return None
 
 # =====================================================================
-# FUNGSI GENERATE DOCX (REVISI DENGAN GAMBAR MINDMAP TERLAMPIR)
+# FUNGSI GENERATE DOCX (REVISI DENGAN 3 GAMBAR VISUALISASI)
 # =====================================================================
 def generate_notulensi_docx(data):
     doc = Document()
@@ -555,7 +577,7 @@ def generate_notulensi_docx(data):
     run_logo = p_left.add_run("SMARTDOSE\n")
     run_logo.bold = True
     run_logo.font.size = Pt(28)
-    run_logo.font.color.rgb = RGBColor(30, 58, 138) # Warna Biru Tua
+    run_logo.font.color.rgb = RGBColor(30, 58, 138)
     
     run_sub = p_left.add_run("Enterprise AI Transcription\nHealthcare & Productivity")
     run_sub.font.size = Pt(10)
@@ -575,7 +597,7 @@ def generate_notulensi_docx(data):
 
     # Garis Pemisah 
     doc.add_paragraph("_" * 80).alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph() # Spasi
+    doc.add_paragraph()
 
     # 2. JUDUL DOKUMEN
     p_title = doc.add_paragraph()
@@ -591,21 +613,17 @@ def generate_notulensi_docx(data):
     run_subtitle = p_subtitle.add_run(notulensi.get('agenda', 'Koordinasi dan Pembahasan Internal'))
     run_subtitle.bold = True
     run_subtitle.font.size = Pt(12)
-    doc.add_paragraph() # Spasi
+    doc.add_paragraph()
 
     # 3. TABEL METADATA (Hari, Waktu, Media, dll)
     table_meta = doc.add_table(rows=6, cols=2)
     table_meta.style = 'Table Grid'
-    
     for row in table_meta.rows:
         row.cells[0].width = Inches(1.5)
         row.cells[1].width = Inches(4.5)
 
     peserta_val = notulensi.get('peserta', [])
-    if isinstance(peserta_val, list):
-        peserta_str = ", ".join(peserta_val)
-    else:
-        peserta_str = str(peserta_val)
+    peserta_str = ", ".join(peserta_val) if isinstance(peserta_val, list) else str(peserta_val)
 
     meta_data = [
         ("Hari / Tanggal", datetime.now().strftime("%A, %d %B %Y")),
@@ -622,7 +640,7 @@ def generate_notulensi_docx(data):
         cell_k.paragraphs[0].runs[0].bold = True
         table_meta.cell(i, 1).text = str(val)
         
-    doc.add_paragraph() # Spasi
+    doc.add_paragraph()
 
     def add_section_header(num, title):
         p = doc.add_paragraph()
@@ -633,13 +651,11 @@ def generate_notulensi_docx(data):
 
     def add_bullet_points(items, is_numbered=False):
         style = 'List Number' if is_numbered else 'List Bullet'
-        for item in items:
-            doc.add_paragraph(str(item), style=style)
+        for item in items: doc.add_paragraph(str(item), style=style)
 
     # 4. KONTEN NOTULENSI
     add_section_header("1", "RINGKASAN EKSEKUTIF")
-    for r in data.get('ringkasan_eksekutif', []):
-        doc.add_paragraph(r)
+    for r in data.get('ringkasan_eksekutif', []): doc.add_paragraph(r)
 
     add_section_header("2", "POKOK PEMBAHASAN / JALANNYA DISKUSI")
     add_bullet_points(notulensi.get('jalannya_diskusi', []))
@@ -652,11 +668,10 @@ def generate_notulensi_docx(data):
     if tindak_lanjut:
         table_tl = doc.add_table(rows=1, cols=4)
         table_tl.style = 'Table Grid'
-        hdr_cells = table_tl.rows[0].cells
         headers = ['Tugas', 'PIC', 'Deadline', 'Prioritas']
         for i, header in enumerate(headers):
-            hdr_cells[i].text = header
-            hdr_cells[i].paragraphs[0].runs[0].bold = True
+            table_tl.rows[0].cells[i].text = header
+            table_tl.rows[0].cells[i].paragraphs[0].runs[0].bold = True
             
         for tl in tindak_lanjut:
             row_cells = table_tl.add_row().cells
@@ -667,24 +682,48 @@ def generate_notulensi_docx(data):
     else:
         doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
 
-    # --- PENYEMATAN GAMBAR MINDMAP SECARA OTOMATIS KE DALAM WORD ---
+    # 5. PENYEMATAN MULTI-GAMBAR VISUALISASI SECARA OTOMATIS
     doc.add_paragraph()
     add_section_header("5", "VISUALISASI PETA KONSEP RAPAT")
-    mermaid_code = data.get('visual_mindmap', '')
     
+    # --- A. Mermaid ---
+    doc.add_paragraph("A. Diagram Alur Utama (Mermaid)").bold = True
+    mermaid_code = data.get('visual_mindmap', '')
     if mermaid_code:
         img_bytes = get_mermaid_png_bytes(mermaid_code)
-        if img_bytes:
-            doc.add_picture(img_bytes, width=Inches(6.0))
-        else:
-            doc.add_paragraph("(Gagal memuat gambar visualisasi dari server. Harap cek koneksi internet.)")
-    else:
-        doc.add_paragraph("(Tidak ada data visualisasi)")
+        if img_bytes: doc.add_picture(img_bytes, width=Inches(6.0))
+        else: doc.add_paragraph("(Gagal memuat gambar Mermaid dari server)")
+    else: doc.add_paragraph("(Data Mermaid kosong)")
+
+    # --- B. Cytoscape (via Graphviz) ---
+    doc.add_paragraph("B. Hubungan Topik (Network Graph)").bold = True
+    hubungan_topik = notulensi.get('hubungan_topik', [])
+    if hubungan_topik:
+        net_bytes = get_network_png_bytes(hubungan_topik)
+        if net_bytes: doc.add_picture(net_bytes, width=Inches(6.0))
+        else: doc.add_paragraph("(Gagal memuat gambar Network dari server)")
+    else: doc.add_paragraph("(Data Hubungan Topik kosong)")
+
+    # --- C. Markmap (via PlantUML Mindmap) ---
+    doc.add_paragraph("C. Peta Konsep (Mindmap)").bold = True
+    markmap_code = data.get('markmap_code', '')
+    if markmap_code:
+        mm_bytes = get_mindmap_png_bytes(markmap_code)
+        if mm_bytes: doc.add_picture(mm_bytes, width=Inches(6.0))
+        else: doc.add_paragraph("(Gagal memuat gambar Mindmap dari server)")
+    else: doc.add_paragraph("(Data Markmap kosong)")
+
+    # Note untuk Sunburst
+    p_note = doc.add_paragraph()
+    run_note = p_note.add_run("\n*Catatan Tambahan: Grafik Sunburst (Anatomi Rapat) dikomputasi eksklusif pada engine Javascript sisi klien (browser) dan tidak dapat diekstrak otomatis melalui generator dokumen backend ini tanpa client-side intervensi.")
+    run_note.italic = True
+    run_note.font.size = Pt(9)
+    run_note.font.color.rgb = RGBColor(100, 116, 139)
 
     # 6. FOOTER / TTD
     p_footer = doc.add_paragraph()
     p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run_footer = p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")
+    p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")
     
     doc_io = io.BytesIO()
     doc.save(doc_io)

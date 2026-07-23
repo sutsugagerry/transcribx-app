@@ -313,7 +313,7 @@ skinparam ArrowFontStyle bold
 """
     return f"@startuml\n{modern_theme}\n{puml_code}\n@enduml"
 
-def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_nip):
+def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_nip, logo_url):
     data_cover = full_data.get('cover', {})
     data_flow = full_data.get('flow', {})
     pelaksana_list = data_flow.get('pelaksana_list', ["Petugas"])
@@ -406,7 +406,7 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
         <table style="border-collapse:collapse; width:100%; border:1px solid black; margin-bottom:20px;">
             <tr>
                 <td rowspan="6" style="text-align:center; width:45%; padding:15px; border:1px solid black;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Coat_of_arms_of_Jakarta.svg/1280px-Coat_of_arms_of_Jakarta.svg.png" width="120" style="display:block; margin:0 auto 10px auto;">
+                    <img src="{logo_url}" width="80" height="80" style="width:80px; height:80px; object-fit:contain; display:block; margin:0 auto 10px auto;">
                     <div style="font-weight:bold; font-size:11pt;">RS {rs_name.upper()}</div>
                 </td>
                 <td style="width:20%; border:1px solid black; padding:5px;">Nomor SOP</td>
@@ -2066,6 +2066,7 @@ else:
         else:
             with st.expander("🔑 Kredensial & Info Rumah Sakit", expanded=True):
                 api_key_sop = st.text_input("LiteLLM / Gemini API Key", type="password", help="Masukkan API Key Anda", key="api_sop")
+                logo_url = st.text_input("Link Logo Instansi (Copy Image Address)", value="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Coat_of_arms_of_Jakarta.svg/1280px-Coat_of_arms_of_Jakarta.svg.png", help="Paste link gambar logo (pastikan link berakhiran .png / .jpg)")
                 col_i1, col_i2 = st.columns(2)
                 with col_i1:
                     rs_name = st.text_input("Nama Instansi/RS", value="RSUD CONTOH")
@@ -2128,7 +2129,7 @@ else:
                             data_flow = json.loads(clean_json_response(response_flow.json()['choices'][0]['message']['content']))
 
                         st.toast("✅ Dokumen SOP Berhasil Dibuat!", icon="🎉")
-                        preview_html, word_html = render_akreditasi_output({"cover": data_cover, "flow": data_flow}, rs_name, title, no_dok, dir_name, dir_nip)
+                        preview_html, word_html = render_akreditasi_output({"cover": data_cover, "flow": data_flow}, rs_name, title, no_dok, dir_name, dir_nip, logo_url)
 
                         st.markdown("---")
                         st.subheader("📄 Preview Dokumen SOP")

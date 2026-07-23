@@ -2819,225 +2819,512 @@ else:
                                     else: st.error(f"Error AI (Tahap 2): {res2.status_code}")
                                 except Exception as e: st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
 
-            if st.session_state.get("offline_summary"):
-                data = st.session_state["offline_summary"]
-                st.markdown("---")
-                col_t1, col_t2 = st.columns([3, 1])
-                with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
+           if st.session_state.get("offline_summary"):
+            data = st.session_state["offline_summary"]
+            st.markdown("---")
+            st.markdown("### 📋 Laporan Notulensi AI (Offline)")
+            
+            # Template HTML+JS menggunakan raw string (r"") agar tidak conflict dengan escape character Python
+            html_template_offline = r"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+                <style>
+                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 0; color: #1e293b; }
+                    .btn-custom { font-family: inherit; color: white; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                    .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+                    .btn-green { background: #10b981; } .btn-green:hover { background: #059669; }
+                    .btn-ai { background: #ef4444; } .btn-ai:hover { background: #dc2626; }
+                    .fade-in { animation: fadeIn 0.5s ease; }
+                    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                </style>
+            </head>
+            <body>
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px; margin-top: 10px;">
+                    <button id="downloadNotulensiBtn" class="btn-custom btn-green">📑 Download Full TXT</button>
+                    <button id="downloadDocxBtn" class="btn-custom btn-ai">📄 Download Resmi (DOCX)</button>
+                </div>
                 
-                txt_report = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n========================================\n\n🌟 RINGKASAN EKSEKUTIF:\n"
-                for r in data.get('ringkasan_eksekutif', []): txt_report += f"- {r}\n"
-                notulensi = data.get('notulensi_rapat', {})
-                txt_report += f"\n📌 AGENDA: {notulensi.get('agenda', '-')}\n👥 PESERTA: {', '.join(notulensi.get('peserta', [])) if isinstance(notulensi.get('peserta'), list) else notulensi.get('peserta', '-')}\n\n🗣️ JALANNYA DISKUSI:\n"
-                for d in notulensi.get('jalannya_diskusi', []): txt_report += f"- {d}\n"
-                txt_report += "\n✅ KEPUTUSAN:\n"
-                for k in notulensi.get('keputusan', []): txt_report += f"- {k}\n"
-                txt_report += "\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\n"
-                for t in notulensi.get('rencana_tindak_lanjut', []): txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
+                <div id="aiContent" class="w-full"></div>
 
-                with col_t2: 
-                    st.download_button("📝 Download Laporan (TXT)", data=txt_report, file_name=f"Notulensi_{datetime.now().strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
-                    try: st.download_button("📄 Download Resmi (DOCX)", data=generate_notulensi_docx(data), file_name=f"Notulen_SmartDose_{datetime.now().strftime('%Y%m%d')}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
-                    except Exception as e: st.error(f"Gagal memuat DOCX: {e}")
-
-                with st.container(border=True):
-                    st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
-                    st.markdown("<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>", unsafe_allow_html=True)
-                    colA, colB = st.columns(2)
-                    colA.markdown(f"**📌 AGENDA:** {data['notulensi_rapat'].get('agenda', '-')}")
-                    colB.markdown(f"**👥 PESERTA:** {', '.join(data['notulensi_rapat'].get('peserta', []))}")
-                    if 'transkrip_dialog' in data['notulensi_rapat']:
-                        st.markdown("**💬 TRANSKRIP DIALOG:**")
-                        dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #cbd5e1; max-height:350px; overflow-y:auto;'>"
-                        for line in data['notulensi_rapat'].get('transkrip_dialog', []):
-                            if ":" in line:
-                                spk, txt = line.split(":", 1)
-                                dialog_html += f"<div style='margin-bottom:12px;'><span style='font-size:12px; font-weight:bold; color:#475569;'>{spk.strip()}</span><div style='background-color:#e0f2fe; padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:#1e293b; margin-top:2px;'>{txt.strip()}</div></div>"
-                            else: dialog_html += f"<div style='margin-bottom:8px; font-style:italic; color:#64748b; font-size:13px;'>{line}</div>"
-                        st.markdown(dialog_html + "</div>", unsafe_allow_html=True)
-                    st.markdown("**🗣️ JALANNYA DISKUSI:**")
-                    st.markdown("<div style='background-color:#fff; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;'><ul>" + "".join([f"<li style='margin-bottom:6px;'>- {d}</li>" for d in data['notulensi_rapat'].get('jalannya_diskusi', [])]) + "</ul></div>", unsafe_allow_html=True)
-                    st.markdown("**📅 ACTION ITEMS:**")
-                    st.table(pd.DataFrame(data['notulensi_rapat'].get('rencana_tindak_lanjut', [])))
-
-               # Ambil raw string Mermaid
-                clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
-                
-                # Pastikan diawali dengan tipe grafiknya
-                if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'): 
-                    clean_mer = "graph LR\n" + clean_mer
-                
-                # PENTING: JANGAN hapus double quote (") karena Mermaid butuh double quote untuk string berisikan spasi / tanda kurung
-                clean_mer = clean_mer.replace('`', '').replace("'", "")
-                
-                # Tambahkan proteksi Regex seperti di Live Transkrip (opsional agar makin tangguh)
-                clean_mer = re.sub(r'\[([A-Z0-9]+)\]', r'(\1)', clean_mer)
-
-                mer_json_str = json.dumps(clean_mer)
-                markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
-                hubungan_json = json.dumps(data['notulensi_rapat'].get('hubungan_topik', []))
-                
-                st.markdown("### 🕸️ Visualisasi Terintegrasi")
-                col_v1, col_v2 = st.columns(2)
-                with col_v1:
-                    st.markdown("**Cytoscape.js Network**")
-                    components.html(f"""<!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head><body style="margin:0; padding:10px; background:#f8fafc; position:relative;"><button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button><div id="cy" style="width:100%; height:400px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px;"></div><script>const rawData = {hubungan_json}; const cyElements = []; const nodesSet = new Set(); rawData.forEach(rel => {{ if (!nodesSet.has(rel.sumber)) {{ nodesSet.add(rel.sumber); cyElements.push({{ data: {{ id: rel.sumber, label: rel.sumber }} }}); }} if (!nodesSet.has(rel.target)) {{ nodesSet.add(rel.target); cyElements.push({{ data: {{ id: rel.target, label: rel.target }} }}); }} cyElements.push({{ data: {{ source: rel.sumber, target: rel.target, label: rel.relasi }} }}); }}); var cy = cytoscape({{ container: document.getElementById('cy'), elements: cyElements, style: [ {{ selector: 'node', style: {{ 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top' }} }}, {{ selector: 'edge', style: {{ 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '10px' }} }} ], layout: {{ name: 'cose' }} }}); function dlCy() {{ const a = document.createElement('a'); a.href = cy.png({{full: true, scale: 4, bg: 'white'}}); a.download = 'Cytoscape.png'; a.click(); }}</script></body></html>""", height=450)
-                with col_v2:
-                    st.markdown("**Mermaid (Mindmap)**")
-                    components.html(f"""<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script></head><body style="margin:0; padding:10px; background:#f8fafc; position:relative;"><button id="dlBtn" onclick="downloadMermaidImage('merContainer', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button><div style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff; position:relative;"><div id="merContainerWrap" style="width:100%; height:100%; overflow:auto; border-radius:8px;"><pre class="mermaid" id="merContainer" style="background:transparent; margin:0; display:flex; justify-content:center; align-items:center;"></pre></div></div><script>document.getElementById('merContainer').textContent = {mer_json_str}; mermaid.initialize({{ startOnLoad: false, theme: 'default' }}); try {{ mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{ const svgEl = document.querySelector('.mermaid svg'); if (svgEl) {{ svgEl.style.maxWidth = 'none'; svgEl.style.height = 'auto'; }} }}).catch(e => {{ document.getElementById('merContainerWrap').innerHTML = "<div style='padding:20px; font-size:12px; background:#fee2e2; color:#991b1b; border-radius:8px;'><b style='font-size:14px;'>⚠️ Format gambar dari AI kurang sempurna.</b><br>Berikut teks struktur aslinya agar data tidak hilang:<br><br><pre style='white-space:pre-wrap; font-family:monospace;'>" + {mer_json_str} + "</pre></div>"; }}); }} catch(e) {{}} window.downloadMermaidImage = function(wrapperId, title) {{ const mDiv = document.getElementById(wrapperId); const container = document.getElementById('merContainerWrap'); const svgEl = mDiv.querySelector('svg'); if (!svgEl) return; const btn = document.getElementById('dlBtn'); const originalText = btn.innerHTML; btn.innerHTML = "⏳..."; btn.disabled = true; setTimeout(() => {{ const bbox = svgEl.getBBox(); const padding = 40; const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2; const origSvgW = svgEl.style.width; const origSvgH = svgEl.style.height; const origSvgMaxW = svgEl.style.maxWidth; const origDivCssText = mDiv.style.cssText; const origContainerOverflow = container ? container.style.overflow : ''; mDiv.style.width = trueWidth + 'px'; mDiv.style.height = trueHeight + 'px'; mDiv.style.display = 'block'; mDiv.style.backgroundColor = '#ffffff'; mDiv.style.margin = '0 auto'; svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px'; svgEl.style.maxWidth = 'none'; if (container) container.style.overflow = 'visible'; html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }}).then(canvas => {{ svgEl.style.width = origSvgW; svgEl.style.height = origSvgH; svgEl.style.maxWidth = origSvgMaxW; mDiv.style.cssText = origDivCssText; if (container) container.style.overflow = origContainerOverflow; const link = document.createElement('a'); link.download = 'Mermaid_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click(); btn.innerHTML = originalText; btn.disabled = false; }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}); }}, 500); }};</script></body></html>""", height=450)
-
-                st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
-                components.html(f"""<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script><script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script><script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script></head><body style="margin:0; padding:10px; background:#f8fafc; position:relative;"><button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button><div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;"><svg id="markmap" style="width:100%; height:100%;"></svg></div><script>const markdown = {markmap_json_str}; const {{ Transformer, Markmap }} = window.markmap; const {{ root }} = new Transformer().transform(markdown); Markmap.create('#markmap', null, root); window.downloadMarkmapImage = function(wrapperId, title) {{ const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return; const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML; btn.innerHTML = "⏳..."; btn.disabled = true; const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow; const g = svgEl.querySelector('g'); const originalTransform = g ? g.getAttribute('transform') : null; if (g) g.setAttribute('transform', 'translate(50,50) scale(1)'); setTimeout(() => {{ const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50; const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2); container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible'; svgEl.setAttribute('viewBox', `${{(bbox.x || 0) - padding}} ${{(bbox.y || 0) - padding}} ${{trueWidth}} ${{trueHeight}}`); html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }}).then(canvas => {{ container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow; if (g && originalTransform) g.setAttribute('transform', originalTransform); const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click(); btn.innerHTML = originalText; btn.disabled = false; }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}); }}, 500); }};</script></body></html>""", height=600)
-              # =====================================================================
-                # FITUR BARU: SUNBURST HIERARCHY CHART (RODA ANATOMI RAPAT)
-                # =====================================================================
-                st.markdown("### ☀️ Sunburst Hierarchy Chart (Anatomi Rapat)")
-                st.markdown("Klik pada salah satu potongan diagram untuk melakukan *Zoom-In*. Arahkan kursor (*hover*) untuk membaca teks lengkap.")
-                
-                # Kita oper data Markdown milik Markmap ke JS agar dikonversi jadi hierarki Sunburst yang sangat detail (Deep Layer)
-                components.html(f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-                </head>
-                <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <div id="sunburst-chart" style="width:100%; height:600px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"></div>
-                    <script>
-                        // 1. Ambil data markdown yang detail dari AI
-                        const rawMarkdown = {markmap_json_str};
+                <script>
+                    (function() {
+                        'use strict';
+                        // INJEKSI DATA JSON DARI PYTHON
+                        const data = __JSON_DATA__;
+                        const lastAiData = data;
                         
-                        // 2. Parser cerdas untuk mengubah Markdown menjadi struktur Tree (Cabang) ECharts
-                        function parseMarkdownToSunburst(md) {{
-                            const lines = md.split('\\n');
-                            let root = {{ name: "Root", children: [] }};
-                            let stack = [ {{level: 0, node: root}} ];
+                        const aiContent = document.getElementById('aiContent');
+                        const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn');
+                        const downloadDocxBtn = document.getElementById('downloadDocxBtn');
 
-                            for (let i = 0; i < lines.length; i++) {{
+                        if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+                        let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
+                            `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
+                        ).join('');
+                        
+                        aiContent.innerHTML = `
+                            <div class="fade-in mt-2 mb-10">
+                                <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
+                                <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
+                                <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
+                                <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
+                                <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><p class="font-bold text-sm mb-2">Cytoscape.js</p>
+                                        <div class="relative bg-white border rounded-xl p-2">
+                                            <button onclick="dlCyOffline()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                            <div id="cyOfflineContainer" style="width:100%; height:380px;"></div>
+                                        </div>
+                                    </div>
+                                    <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
+                                        <div class="relative bg-white border rounded-xl" style="height:396px;">
+                                            <button id="dlBtnMermaidOffline" onclick="dlMermaidOffline()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                            <div id="merContainerOffline" style="width:100%; height:100%; overflow:auto; border-radius:12px;">
+                                                <pre id="mermaidOffline" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMOffline" onclick="dlMarkmapOffline()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapOfflineWrapper" style="width:100%; height:500px;"><svg id="markmapOffline" style="width:100%; height:100%;"></svg></div></div></div>
+                                
+                                <div class="mt-4">
+                                    <p class="font-bold text-sm mb-2">🌳 Tree Hierarchy Chart (Anatomi Rapat Sebelah Kanan)</p>
+                                    <div class="relative bg-white border rounded-xl overflow-hidden p-2">
+                                        <button onclick="dlSunburstOffline()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button>
+                                        <div id="sunburstOfflineContainer" style="width:100%; height:600px;"></div>
+                                    </div>
+                                </div>
+                            </div>`;
+
+                        // INIT CYTOSCAPE
+                        setTimeout(() => {
+                            const nodesSet = new Set(); const cyElements = [];
+                            (data.notulensi_rapat.hubungan_topik || []).forEach(rel => {
+                                if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
+                                if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
+                                cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
+                            });
+                            window.cyInstanceOffline = cytoscape({
+                                container: document.getElementById('cyOfflineContainer'), elements: cyElements,
+                                style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '11px', 'text-valign': 'top' } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '9px' } }],
+                                layout: { name: 'cose', padding: 20 }
+                            });
+                        }, 100);
+
+                        // INIT MERMAID
+                        setTimeout(() => {
+                            let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
+                            if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
+                                rawMer = `graph LR\n` + rawMer;
+                            }
+                            rawMer = rawMer.replace(/`/g, "").replace(/\[([A-Z0-9]+)\]/g, "($1)");
+                            
+                            const mDiv = document.getElementById('mermaidOffline'); 
+                            mDiv.textContent = rawMer; 
+                            mDiv.removeAttribute('data-processed');
+                            
+                            try {
+                                mermaid.run({ querySelector: '#mermaidOffline' }).then(() => {
+                                    const svg = mDiv.querySelector('svg');
+                                    if (svg) { 
+                                        svg.style.maxWidth = 'none'; 
+                                        svg.style.height = 'auto';
+                                    }
+                                }).catch(e => {
+                                    console.error("Mermaid error:", e);
+                                    mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Transkrip mungkin mengandung karakter ilegal.</div>";
+                                });
+                            } catch(e) {}
+                        }, 100);
+
+                        // INIT MARKMAP
+                        setTimeout(() => {
+                            let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                            const { Transformer, Markmap } = window.markmap;
+                            const { root } = new Transformer().transform(rawMm);
+                            Markmap.create('#markmapOffline', null, root);
+                        }, 100);
+
+                        // INIT TREE HIERARCHY ECHARTS
+                        setTimeout(() => {
+                            let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                            const lines = rawMm.split('\n');
+                            let rootNode = { name: "Tema Rapat", children: [] };
+                            let stack = [ {level: 0, node: rootNode} ];
+
+                            for (let i = 0; i < lines.length; i++) {
                                 let line = lines[i];
                                 let trimmed = line.trimStart();
                                 if (!trimmed) continue;
-
-                                let level = 0;
-                                let text = "";
-
-                                // Cek apakah baris adalah Heading (#) atau Bullet (-)
-                                let matchHeader = trimmed.match(/^(#+)\\s+(.*)/);
-                                if (matchHeader) {{
-                                    level = matchHeader[1].length;
-                                    text = matchHeader[2];
-                                }} else {{
-                                    let matchList = trimmed.match(/^[-*]\\s+(.*)/);
-                                    if (matchList) {{
-                                        level = stack[stack.length - 1].level + 1;
-                                        text = matchList[1];
-                                    }}
-                                }}
-
+                                let level = 0; let text = "";
+                                let matchHeader = trimmed.match(/^(#+)\s+(.*)/);
+                                if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
+                                else {
+                                    let matchList = trimmed.match(/^[-*]\s+(.*)/);
+                                    if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
+                                }
                                 if (!text) continue;
-
-                                // Bersihkan teks dari sisa-sisa karakter markdown seperti **
-                                text = text.replace(/\\*\\*/g, '').trim();
-                                let newNode = {{ name: text, children: [] }};
-
-                                while (stack.length > 1 && stack[stack.length - 1].level >= level) {{
-                                    stack.pop();
-                                }}
-
+                                text = text.replace(/\*\*/g, '').trim();
+                                let newNode = { name: text, value: 1, children: [] };
+                                while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
                                 let parent = stack[stack.length - 1].node;
                                 parent.children.push(newNode);
-                                stack.push({{ level: level, node: newNode }});
-                            }}
+                                stack.push({ level: level, node: newNode });
+                            }
 
-                            // Beri value pada ujung rantai agar ukuran pie proporsional
-                            function assignValues(node) {{
-                                if (node.children.length === 0) {{
-                                    node.value = 1;
-                                }} else {{
-                                    node.children.forEach(assignValues);
-                                }}
-                            }}
-                            assignValues(root);
+                            var chartDom = document.getElementById('sunburstOfflineContainer');
+                            window.sunburstChartOffline = echarts.init(chartDom);
+                            var option = {
+                                tooltip: { trigger: 'item', triggerOn: 'mousemove' },
+                                series: [
+                                    {
+                                        type: 'tree',
+                                        data: [rootNode],
+                                        top: '5%', left: '15%', bottom: '5%', right: '30%',
+                                        symbolSize: 10,
+                                        label: {
+                                            position: 'left', verticalAlign: 'middle', align: 'right',
+                                            fontSize: 12, color: '#1e293b', fontWeight: 'bold',
+                                            backgroundColor: '#f8fafc', padding: [4, 8], borderRadius: 4,
+                                            borderWidth: 1, borderColor: '#cbd5e1'
+                                        },
+                                        leaves: {
+                                            label: {
+                                                position: 'right', verticalAlign: 'middle', align: 'left',
+                                                backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 'normal',
+                                                borderWidth: 1, borderColor: '#bae6fd'
+                                            }
+                                        },
+                                        expandAndCollapse: true,
+                                        initialTreeDepth: 3,
+                                        animationDuration: 550,
+                                        animationDurationUpdate: 750,
+                                        lineStyle: { color: '#94a3b8', width: 2, curveness: 0.6 }
+                                    }
+                                ]
+                            };
+                            window.sunburstChartOffline.setOption(option);
+                            window.addEventListener('resize', function() { window.sunburstChartOffline.resize(); });
+                        }, 100);
 
-                            return root.children.length > 0 ? root.children : [{{name: "Data tidak tersedia", value: 1}}];
-                        }}
+                        // --- DOWNLOAD BUTTON EVENT HANDLERS ---
+                        
+                        window.dlCyOffline = function() {
+                            if (window.cyInstanceOffline) {
+                                const a = document.createElement('a'); 
+                                a.href = window.cyInstanceOffline.png({full: true, scale: 4, bg: 'white'}); 
+                                a.download = 'Cytoscape_Offline.png'; a.click();
+                            }
+                        };
 
-                        const sunburstData = parseMarkdownToSunburst(rawMarkdown);
+                        window.dlMermaidOffline = function() {
+                            const mDiv = document.getElementById('mermaidOffline');
+                            const container = document.getElementById('merContainerOffline');
+                            const svgEl = mDiv.querySelector('svg');
+                            if (!svgEl) return;
+                            const btn = document.getElementById('dlBtnMermaidOffline');
+                            if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                        
+                            const bbox = svgEl.getBBox(); const padding = 40;
+                            const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
+                            const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                        
+                            const origSvgW = svgEl.style.width; const origSvgH = svgEl.style.height; const origSvgMaxW = svgEl.style.maxWidth;
+                            const origDivCssText = mDiv.style.cssText; const origClasses = mDiv.className; const origContainerOverflow = container.style.overflow;
+                        
+                            mDiv.className = ''; mDiv.style.width = trueWidth + 'px'; mDiv.style.height = trueHeight + 'px';
+                            mDiv.style.backgroundColor = '#ffffff'; mDiv.style.display = 'block'; 
+                            svgEl.style.width = trueWidth + 'px'; svgEl.style.height = trueHeight + 'px'; svgEl.style.maxWidth = 'none';
+                            container.style.overflow = 'visible';
+                        
+                            html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
+                            .then(canvas => {
+                                svgEl.style.width = origSvgW; svgEl.style.height = origSvgH; svgEl.style.maxWidth = origSvgMaxW;
+                                mDiv.className = origClasses; mDiv.style.cssText = origDivCssText; container.style.overflow = origContainerOverflow;
+                                
+                                const link = document.createElement('a'); link.download = 'Mermaid_Offline.png'; 
+                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                            }).catch((e) => { 
+                                console.error("Download Error:", e);
+                                if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
+                            });
+                        };
 
-                        // === PERBAIKAN WARNA DITAMBAHKAN DI SINI ===
-                        // Palet warna warni yang memanjakan mata
-                        const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
+                        window.dlMarkmapOffline = function() {
+                            const container = document.getElementById('markmapOfflineWrapper');
+                            const svgEl = container.querySelector('svg'); if (!svgEl) return;
+                            const btn = document.getElementById('dlBtnMMOffline');
+                            if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                            
+                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                            const g = svgEl.querySelector('g'); const originalTransform = g ? g.getAttribute('transform') : null;
+                            if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                            
+                            setTimeout(() => {
+                                const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 60;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                                const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                                svgEl.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
+                                
+                                html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                                .then(canvas => {
+                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    if (g && originalTransform) g.setAttribute('transform', originalTransform);
+                                    
+                                    const link = document.createElement('a'); link.download = 'Markmap_Offline.png';
+                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; }
+                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; } });
+                            }, 500);
+                        };
 
-                        // Jika root utama cuma 1 (Tema Rapat), kita warnai sub-topiknya agar berbeda
-                        if (sunburstData.length === 1 && sunburstData[0].children) {{
-                            sunburstData[0].itemStyle = {{ color: '#1e293b' }}; // Tema utama berwarna gelap/navy
-                            sunburstData[0].children.forEach((child, index) => {{
-                                child.itemStyle = {{ color: colorPalette[index % colorPalette.length] }};
-                            }});
-                        }} else {{
-                            // Jika root lebih dari 1
-                            sunburstData.forEach((child, index) => {{
-                                child.itemStyle = {{ color: colorPalette[index % colorPalette.length] }};
-                            }});
-                        }}
-                        // ===========================================
+                        window.dlSunburstOffline = function() {
+                            if (window.sunburstChartOffline) {
+                                const a = document.createElement('a');
+                                a.href = window.sunburstChartOffline.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#ffffff' });
+                                a.download = 'Tree_Hierarchy_Offline.png';
+                                a.click();
+                            }
+                        };
 
-                        // 3. Render Grafik ECharts
-                        var chartDom = document.getElementById('sunburst-chart');
-                        var myChart = echarts.init(chartDom);
-                        var option = {{
-                            toolbox: {{
-                                show: true,
-                                feature: {{
-                                    saveAsImage: {{
-                                        show: true,
-                                        title: 'Save PNG',
-                                        name: 'Sunburst_Anatomi_Rapat',
-                                        pixelRatio: 3, 
-                                        iconStyle: {{ borderColor: '#10b981', borderWidth: 2 }}
-                                    }}
-                                }},
-                                right: 20,
-                                top: 20
-                            }},
-                            tooltip: {{ 
-                                trigger: 'item',
-                                formatter: function (info) {{ 
-                                    return '<div style="max-width:300px; white-space:normal; font-family:sans-serif; font-size:13px; line-height:1.5;">' + info.name + '</div>'; 
-                                }}
-                            }},
-                            series: {{
-                                type: 'sunburst',
-                                data: sunburstData,
-                                radius: [0, '95%'],
-                                sort: undefined,
-                                emphasis: {{ focus: 'ancestor' }},
-                                itemStyle: {{ 
-                                    borderRadius: 5, 
-                                    borderWidth: 1.5, 
-                                    borderColor: '#ffffff' 
-                                }},
-                                label: {{ 
-                                    show: true, 
-                                    formatter: '{{b}}', 
-                                    width: 85,
-                                    overflow: 'break',
-                                    minAngle: 12, 
-                                    fontSize: 11, 
-                                    fontWeight: 'bold',
-                                    fontFamily: 'sans-serif',
-                                    color: '#ffffff', 
-                                    textBorderColor: 'rgba(0,0,0,0.6)', 
-                                    textBorderWidth: 2 
-                                }}
-                            }}
-                        }};
-                        myChart.setOption(option);
-                        window.addEventListener('resize', function() {{ myChart.resize(); }});
-                    </script>
-                </body>
-                </html>
-                """, height=620)
+                        downloadNotulensiBtn.onclick = function() {
+                            if (!lastAiData) return;
+                            const d = lastAiData.notulensi_rapat || {};
+                            let text = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n";
+                            text += "========================================\n\n";
+                            text += "🌟 RINGKASAN EKSEKUTIF:\n";
+                            (lastAiData.ringkasan_eksekutif || []).forEach(r => text += "- " + r + "\n");
+                            text += "\n📌 AGENDA: " + (d.agenda || "-") + "\n";
+                            text += "👥 PESERTA: " + (d.peserta ? d.peserta.join(', ') : "-") + "\n\n";
+                            if (d.transkrip_dialog && d.transkrip_dialog.length > 0) {
+                                text += "💬 TRANSKRIP DIALOG:\n";
+                                d.transkrip_dialog.forEach(l => text += l + "\n");
+                                text += "\n";
+                            }
+                            text += "🗣️ JALANNYA DISKUSI:\n";
+                            (d.jalannya_diskusi || []).forEach(j => text += "- " + j + "\n");
+                            text += "\n✅ KEPUTUSAN:\n";
+                            (d.keputusan || []).forEach(k => text += "- " + k + "\n");
+                            text += "\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\n";
+                            (d.rencana_tindak_lanjut || []).forEach(t => { text += `- ${t.tugas} | ${t.pic} | ${t.deadline} | ${t.prioritas}\n`; });
+
+                            const blob = new Blob([text], { type: 'text/plain' });
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = 'Notulensi_Offline_' + Date.now() + '.txt';
+                            a.click();
+                        };
+
+                        downloadDocxBtn.onclick = async function() {
+                            if (!lastAiData) return;
+                            const originalBtnText = downloadDocxBtn.innerHTML;
+                            downloadDocxBtn.innerHTML = "⏳ Memproses Gambar & Dokumen...";
+                            downloadDocxBtn.disabled = true;
+
+                            try {
+                                const d = lastAiData.notulensi_rapat || {};
+                                const now = new Date();
+                                const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+                                const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                                const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+                                
+                                // --- 1. CAPTURE CYTOSCAPE (NETWORK) ---
+                                let cyImageHtml = "";
+                                if (window.cyInstanceOffline) {
+                                    try {
+                                        const cyBase64 = window.cyInstanceOffline.png({full: true, scale: 2, bg: 'white'});
+                                        cyImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">A. Cytoscape Network (Hubungan Topik)</p>
+                                        <img src="${cyBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+                                    } catch (err) { console.error("Gagal screenshot Cytoscape:", err); }
+                                }
+
+                                // --- 2. CAPTURE MERMAID (MINDMAP 1) ---
+                                let mermaidImageHtml = "";
+                                const mermaidContainer = document.getElementById('merContainerOffline'); 
+                                if (mermaidContainer && mermaidContainer.querySelector('svg')) {
+                                    try {
+                                        const svgMermaid = mermaidContainer.querySelector('svg');
+                                        const origW = mermaidContainer.style.width; const origH = mermaidContainer.style.height; const origOverflow = mermaidContainer.style.overflow;
+                                        const bboxMermaid = svgMermaid.getBBox(); const padding = 40;
+                                        const mWidth = Math.max(bboxMermaid.width + padding*2, mermaidContainer.clientWidth);
+                                        const mHeight = Math.max(bboxMermaid.height + padding*2, mermaidContainer.clientHeight);
+
+                                        mermaidContainer.style.width = mWidth + 'px'; mermaidContainer.style.height = mHeight + 'px';
+                                        mermaidContainer.style.overflow = 'visible'; mermaidContainer.style.backgroundColor = '#ffffff';
+                                        svgMermaid.style.width = mWidth + 'px'; svgMermaid.style.height = mHeight + 'px'; svgMermaid.style.maxWidth = 'none';
+
+                                        const canvasMermaid = await html2canvas(mermaidContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: mWidth, height: mHeight });
+                                        const merBase64 = canvasMermaid.toDataURL('image/png');
+                                        mermaidImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">B. Mermaid (Mindmap Struktur)</p>
+                                        <img src="${merBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+                                        
+                                        mermaidContainer.style.width = origW; mermaidContainer.style.height = origH; mermaidContainer.style.overflow = origOverflow;
+                                        svgMermaid.style.width = '100%'; svgMermaid.style.height = '100%';
+                                    } catch (err) { console.error("Gagal screenshot Mermaid:", err); }
+                                }
+
+                                // --- 3. CAPTURE MARKMAP (MINDMAP 2) ---
+                                let markmapImageHtml = "";
+                                const markmapContainer = document.getElementById('markmapOfflineWrapper');
+                                const markmapSvg = markmapContainer ? markmapContainer.querySelector('svg') : null;
+                                if (markmapContainer && markmapSvg) {
+                                    try {
+                                        const origW = markmapContainer.style.width; const origH = markmapContainer.style.height; const origOverflow = markmapContainer.style.overflow;
+                                        const origViewBox = markmapSvg.getAttribute('viewBox');
+                                        const g = markmapSvg.querySelector('g'); const originalTransform = g ? g.getAttribute('transform') : null;
+                                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                                        
+                                        await new Promise(resolve => setTimeout(resolve, 150));
+                                        
+                                        const bbox = g ? g.getBBox() : markmapSvg.getBBox(); const padding = 60;
+                                        const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                                        const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+
+                                        markmapContainer.style.width = trueWidth + 'px'; markmapContainer.style.height = trueHeight + 'px';
+                                        markmapContainer.style.overflow = 'visible'; markmapContainer.style.backgroundColor = '#ffffff';
+                                        markmapSvg.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
+
+                                        const canvasMarkmap = await html2canvas(markmapContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight });
+                                        const mmBase64 = canvasMarkmap.toDataURL('image/png');
+                                        markmapImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">C. Markmap (Peta Konsep Detail)</p>
+                                        <img src="${mmBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+
+                                        markmapContainer.style.width = origW; markmapContainer.style.height = origH; markmapContainer.style.overflow = origOverflow;
+                                        if (origViewBox) markmapSvg.setAttribute('viewBox', origViewBox); else markmapSvg.removeAttribute('viewBox');
+                                        if (g && originalTransform) g.setAttribute('transform', originalTransform);
+                                    } catch (err) { console.error("Gagal screenshot Markmap:", err); }
+                                }
+
+                                // --- 4. CAPTURE TREE ECHARTS ---
+                                let sunburstImageHtml = "";
+                                if (window.sunburstChartOffline) {
+                                    try {
+                                        const sbBase64 = window.sunburstChartOffline.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                                        sunburstImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">D. Tree Hierarchy (Anatomi Rapat Sebelah Kanan)</p>
+                                        <img src="${sbBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+                                    } catch (err) { console.error("Gagal screenshot Tree Echarts:", err); }
+                                }
+
+                                let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
+                                if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
+                                    actionItemsHtml = `
+                                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt;">
+                                        <tr style="background-color: #f1f5f9;">
+                                            <th><b>Tugas</b></th><th><b>PIC</b></th><th><b>Deadline</b></th><th><b>Prioritas</b></th>
+                                        </tr>
+                                        ${d.rencana_tindak_lanjut.map(t => `
+                                        <tr>
+                                            <td>${t.tugas || '-'}</td><td>${t.pic || '-'}</td><td>${t.deadline || '-'}</td><td><b>${t.prioritas || '-'}</b></td>
+                                        </tr>`).join('')}
+                                    </table>`;
+                                }
+
+                                let content = `
+                                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                                <head><meta charset='utf-8'><title>Notulen Rapat Offline</title></head>
+                                <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
+                                    <table style="width: 100%; border: none; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="width: 50%; text-align: left; vertical-align: top; border: none; padding: 0;">
+                                                <span style="font-size: 28pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE</span><br>
+                                                <span style="font-size: 10pt; color: #64748b;">Enterprise AI Transcription<br>Healthcare & Productivity</span>
+                                            </td>
+                                            <td style="width: 50%; text-align: right; vertical-align: top; border: none; padding: 0;">
+                                                <span style="font-size: 12pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE ENTERPRISE<br>DIVISI INOVASI DIGITAL</span><br>
+                                                <span style="font-size: 10pt; font-style: italic; color: #000000;">Sistem Notulensi Cerdas & Presisi</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
+                                        ________________________________________________________________________________
+                                    </div>
+
+                                    <div style="text-align: center; margin-bottom: 20px;">
+                                        <span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br>
+                                        <span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
+                                    </div>
+                                    
+                                    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;">
+                                        <tr><td style="width: 1.5in;"><b>Hari / Tanggal</b></td><td style="width: 4.5in;">${tanggalStr}</td></tr>
+                                        <tr><td><b>Waktu</b></td><td>${waktuStr}</td></tr>
+                                        <tr><td><b>Media</b></td><td>SmartDose TranscribX (Offline)</td></tr>
+                                        <tr><td><b>Notulis</b></td><td>AI Transcription System</td></tr>
+                                        <tr><td><b>Peserta</b></td><td>${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td></tr>
+                                        <tr><td><b>Agenda</b></td><td>${d.agenda || '-'}</td></tr>
+                                    </table>
+                                    
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>
+                                    ${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}
+                                    <br>
+
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p>
+                                    <ul style="margin-top: 0;">${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}</ul>
+                                    <br>
+
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p>
+                                    <ol style="margin-top: 0;">${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}</ol>
+                                    <br>
+
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>
+                                    ${actionItemsHtml}
+                                    <br>
+                                    
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 10px;"><b>5. LAMPIRAN VISUALISASI AI</b></p>
+                                    ${cyImageHtml}
+                                    ${mermaidImageHtml}
+                                    ${markmapImageHtml}
+                                    ${sunburstImageHtml}
+                                    
+                                    <br><br>
+                                    <p style="text-align: right;">Jakarta, ${tanggalFooterStr}<br><br><br><br>( Tim Notulen SmartDose )</p>
+                                </body>
+                                </html>`;
+                                
+                                const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = 'Notulen_Offline_SmartDose_' + Date.now() + '.doc';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+
+                            } catch (error) {
+                                console.error("Error generating DOCX:", error);
+                                alert("Terjadi kesalahan saat memproses gambar ke dalam dokumen.");
+                            } finally {
+                                downloadDocxBtn.innerHTML = originalBtnText;
+                                downloadDocxBtn.disabled = false;
+                            }
+                        };
+                    })();
+                </script>
+            </body>
+            </html>
+            """
+            
+            final_html_offline = html_template_offline.replace("__JSON_DATA__", json.dumps(data))
+            components.html(final_html_offline, height=2000, scrolling=True)
     # =====================================================================
     # TAB 3: SOP GENERATOR (KARS/JCI)
     # =====================================================================

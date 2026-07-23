@@ -619,45 +619,18 @@ def generate_notulensi_docx(data):
             row_cells[3].text = str(tl.get('prioritas', '-'))
     else: doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
 
-    # --- TAMBAHAN: SECTION 5 UNTUK MENYUNTIKKAN GAMBAR VISUAL KE WORD ---
-    doc.add_paragraph() 
-    add_section_header("5", "VISUALISASI PETA KONSEP (MINDMAP)")
-    
-    mermaid_raw = data.get('visual_mindmap', '')
-    if mermaid_raw:
-        # Bersihkan sintaks Markdown dari AI
-        clean_mer = mermaid_raw.replace("```mermaid", "").replace("```", "").strip()
-        if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'): 
-            clean_mer = "graph LR\n" + clean_mer
-        # Bersihkan karakter yang bisa membuat render error
-        clean_mer = clean_mer.replace('`', '').replace('"', '').replace("'", "")
-        clean_mer = re.sub(r'\[([A-Z0-9]+)\]', r'(\1)', clean_mer)
-        
-        try:
-            # Gunakan API mermaid.ink untuk convert code text jadi gambar PNG
-            payload = {
-                "code": clean_mer,
-                "mermaid": {"theme": "default"}
-            }
-            # Convert JSON payload ke Base64
-            b64_payload = base64.b64encode(json.dumps(payload).encode('utf-8')).decode('utf-8')
-            img_url = f"https://mermaid.ink/img/{b64_payload}"
-            
-            # Request gambar dari server
-            response = requests.get(img_url, timeout=10)
-            if response.status_code == 200:
-                image_stream = io.BytesIO(response.content)
-                p_img = doc.add_paragraph()
-                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                # Tembakkan gambar PNG ke dalam file MS Word!
-                p_img.add_run().add_picture(image_stream, width=Inches(6.0))
-            else:
-                doc.add_paragraph(f"(Gambar visual gagal dimuat. Status: {response.status_code})")
-        except Exception as e:
-            doc.add_paragraph(f"(Gagal memproses gambar visualisasi: {str(e)})")
+    # --- PENYEMATAN GAMBAR MINDMAP SECARA OTOMATIS KE DALAM WORD ---
+    doc.add_paragraph()
+    add_section_header("5", "VISUALISASI PETA KONSEP RAPAT")
+    mermaid_code = data.get('visual_mindmap', '')
+    if mermaid_code:
+        img_bytes = get_mermaid_png_bytes(mermaid_code)
+        if img_bytes:
+            doc.add_picture(img_bytes, width=Inches(6.0))
+        else:
+            doc.add_paragraph("(Gagal memuat gambar visualisasi dari server. Harap cek koneksi internet.)")
     else:
-        doc.add_paragraph("- Tidak ada data visualisasi dari AI.", style='List Bullet')
-    # ----------------------------------------------------------------------
+        doc.add_paragraph("(Tidak ada data visualisasi)")
 
     p_footer = doc.add_paragraph()
     p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -1833,7 +1806,54 @@ else:
                                 lastAiData = data; 
                                 
                                 let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`).join('');
-                                aiContent.innerHTML = `<div class="fade-in mt-6 mb-10"><div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div><div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div><h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:380px;"></div></div></div><div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl" style="height:396px;"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;"><pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre></div></div></div></div><div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div></div>`;
+                                
+                                // --- TOMBOL DOWNLOAD DITAMBAHKAN DI SINI ---
+                                aiContent.innerHTML = `<div class="fade-in mt-6 mb-10">
+                                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                                    <h3 class="font-bold text-lg m-0" style="color:#1e3a8a;">📋 Laporan Notulensi AI (Live)</h3>
+                                    <button onclick="downloadLiveWord()" style="background:#2563eb; color:white; padding:8px 16px; border-radius:8px; font-weight:bold; border:none; cursor:pointer; box-shadow:0 2px 4px rgba(37,99,235,0.3);">📄 Download Word</button>
+                                </div>
+                                <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div><div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div><h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:380px;"></div></div></div><div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl" style="height:396px;"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;"><pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre></div></div></div></div><div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div></div>`;
+
+                                // --- FUNGSI GENERATOR WORD UNTUK JAVASCRIPT ---
+                                window.downloadLiveWord = function() {
+                                    if (!lastAiData) { alert("Data tidak tersedia!"); return; }
+                                    let html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Notulensi Live</title>";
+                                    html += "<style>body { font-family: Arial, sans-serif; font-size: 11pt; } table { border-collapse: collapse; width: 100%; margin-bottom:20px; } th, td { border: 1px solid #000; padding: 6px; } th { background-color: #f0f0f0; }</style></head><body>";
+                                    
+                                    html += "<h2 style='text-align:center; color:#1e3a8a;'>NOTULEN RAPAT (LIVE)</h2><hr><br>";
+                                    
+                                    html += "<h3>1. RINGKASAN EKSEKUTIF</h3><ul>";
+                                    (lastAiData.ringkasan_eksekutif || []).forEach(r => { html += "<li>" + r + "</li>"; });
+                                    html += "</ul><br>";
+                                    
+                                    html += "<h3>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</h3><ul>";
+                                    (lastAiData.notulensi_rapat.jalannya_diskusi || []).forEach(d => { html += "<li>" + d + "</li>"; });
+                                    html += "</ul><br>";
+                                    
+                                    html += "<h3>3. KEPUTUSAN RAPAT</h3><ul>";
+                                    (lastAiData.notulensi_rapat.keputusan || []).forEach(k => { html += "<li>" + k + "</li>"; });
+                                    html += "</ul><br>";
+                                    
+                                    html += "<h3>4. TINDAK LANJUT</h3><table><tr><th>Tugas</th><th>PIC</th><th>Deadline</th><th>Prioritas</th></tr>";
+                                    (lastAiData.notulensi_rapat.rencana_tindak_lanjut || []).forEach(t => {
+                                        html += "<tr><td>" + t.tugas + "</td><td>" + t.pic + "</td><td>" + t.deadline + "</td><td>" + t.prioritas + "</td></tr>";
+                                    });
+                                    html += "</table><br>";
+                                    
+                                    html += "<p style='text-align:right;'><br><br>( Tim Notulen SmartDose - Live )</p>";
+                                    html += "</body></html>";
+                                    
+                                    const blob = new Blob(['\\ufeff', html], { type: 'application/msword' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = 'Notulen_Live_' + Date.now() + '.doc';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                };
 
                                 setTimeout(() => {
                                     const nodesSet = new Set(); const cyElements = [];

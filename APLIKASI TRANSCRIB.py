@@ -2100,74 +2100,126 @@ else:
                 # FITUR BARU: SUNBURST HIERARCHY CHART (RODA ANATOMI RAPAT)
                 # =====================================================================
                 st.markdown("### ☀️ Sunburst Hierarchy Chart (Anatomi Rapat)")
-                st.markdown("Klik pada salah satu potongan diagram untuk melakukan *Zoom-In* pada sub-topik tertentu.")
+                st.markdown("Klik pada salah satu potongan diagram untuk melakukan *Zoom-In*. Arahkan kursor (*hover*) untuk membaca teks lengkap.")
                 
-                # 1. Parsing Data JSON menjadi Format Hierarki Sunburst
-                sb_children = []
-                
-                # Kategori 1: Jalannya Diskusi
-                diskusi_items = [{"name": d[:45] + "..." if len(d) > 45 else d, "value": 1} for d in data['notulensi_rapat'].get('jalannya_diskusi', [])]
-                if diskusi_items:
-                    sb_children.append({"name": "🗣️ Diskusi", "itemStyle": {"color": "#3b82f6"}, "children": diskusi_items})
-                    
-                # Kategori 2: Keputusan
-                keputusan_items = [{"name": k[:45] + "..." if len(k) > 45 else k, "value": 1} for k in data['notulensi_rapat'].get('keputusan', [])]
-                if keputusan_items:
-                    sb_children.append({"name": "✅ Keputusan", "itemStyle": {"color": "#10b981"}, "children": keputusan_items})
-                    
-                # Kategori 3: Action Items
-                task_items = []
-                for t in data['notulensi_rapat'].get('rencana_tindak_lanjut', []):
-                    label = f"[{t.get('pic', '-')}] {t.get('tugas', '')}"
-                    task_items.append({"name": label[:45] + "..." if len(label) > 45 else label, "value": 1})
-                if task_items:
-                    sb_children.append({"name": "📅 Tugas", "itemStyle": {"color": "#f59e0b"}, "children": task_items})
-                    
-                sb_data = [{
-                    "name": "🎯 Agenda\nRapat",
-                    "itemStyle": {"color": "#1e293b"},
-                    "children": sb_children
-                }]
-                
-                sb_json_str = json.dumps(sb_data)
-
-                # 2. Render 3D-like Sunburst Chart menggunakan ECharts HTML Component
+                # Kita oper data Markdown milik Markmap ke JS agar dikonversi jadi hierarki Sunburst yang sangat detail (Deep Layer)
                 components.html(f"""
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
                 </head>
-                <body style="margin:0; padding:10px; background:#f8fafc;">
-                    <div id="sunburst-chart" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"></div>
+                <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                    <div id="sunburst-chart" style="width:100%; height:600px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"></div>
                     <script>
+                        // 1. Ambil data markdown yang detail dari AI
+                        const rawMarkdown = {markmap_json_str};
+                        
+                        // 2. Parser cerdas untuk mengubah Markdown menjadi struktur Tree (Cabang) ECharts
+                        function parseMarkdownToSunburst(md) {{
+                            const lines = md.split('\\n');
+                            let root = {{ name: "Rapat", children: [] }};
+                            let stack = [ {{level: 0, node: root}} ];
+
+                            for (let i = 0; i < lines.length; i++) {{
+                                let line = lines[i];
+                                let trimmed = line.trimStart();
+                                if (!trimmed) continue;
+
+                                let level = 0;
+                                let text = "";
+
+                                // Cek apakah baris adalah Heading (#) atau Bullet (-)
+                                let matchHeader = trimmed.match(/^(#+)\\s+(.*)/);
+                                if (matchHeader) {{
+                                    level = matchHeader[1].length;
+                                    text = matchHeader[2];
+                                }} else {{
+                                    let matchList = trimmed.match(/^[-*]\\s+(.*)/);
+                                    if (matchList) {{
+                                        level = stack[stack.length - 1].level + 1;
+                                        text = matchList[1];
+                                    }}
+                                }}
+
+                                if (!text) continue;
+
+                                // Bersihkan teks dari sisa-sisa karakter markdown seperti **
+                                text = text.replace(/\\*\\*/g, '').trim();
+                                let newNode = {{ name: text, children: [] }};
+
+                                while (stack.length > 1 && stack[stack.length - 1].level >= level) {{
+                                    stack.pop();
+                                }}
+
+                                let parent = stack[stack.length - 1].node;
+                                parent.children.push(newNode);
+                                stack.push({{ level: level, node: newNode }});
+                            }}
+
+                            // Beri value pada ujung rantai agar ukuran pie proporsional
+                            function assignValues(node) {{
+                                if (node.children.length === 0) {{
+                                    node.value = 1;
+                                }} else {{
+                                    node.children.forEach(assignValues);
+                                }}
+                            }}
+                            assignValues(root);
+
+                            if (root.children.length === 1) return root.children[0].children;
+                            return root.children.length > 0 ? root.children : [{{name: "Data tidak tersedia", value: 1}}];
+                        }}
+
+                        const sunburstData = parseMarkdownToSunburst(rawMarkdown);
+
+                        // 3. Render Grafik ECharts
                         var chartDom = document.getElementById('sunburst-chart');
                         var myChart = echarts.init(chartDom);
                         var option = {{
+                            // FITUR DOWNLOAD DITAMBAHKAN DI SINI
+                            toolbox: {{
+                                show: true,
+                                feature: {{
+                                    saveAsImage: {{
+                                        show: true,
+                                        title: 'Save PNG',
+                                        name: 'Sunburst_Anatomi_Rapat',
+                                        pixelRatio: 3, // Resolusi tinggi (HD)
+                                        iconStyle: {{ borderColor: '#10b981', borderWidth: 2 }}
+                                    }}
+                                }},
+                                right: 20,
+                                top: 20
+                            }},
                             tooltip: {{ 
                                 trigger: 'item',
                                 formatter: function (info) {{ 
-                                    return '<div style="max-width:300px; white-space:normal; font-family:sans-serif; font-size:13px;"><b>' + info.name + '</b></div>'; 
+                                    return '<div style="max-width:300px; white-space:normal; font-family:sans-serif; font-size:13px; line-height:1.5;">' + info.name + '</div>'; 
                                 }}
                             }},
                             series: {{
                                 type: 'sunburst',
-                                data: {sb_json_str},
+                                data: sunburstData,
                                 radius: [0, '95%'],
                                 sort: undefined,
                                 emphasis: {{ focus: 'ancestor' }},
                                 itemStyle: {{ 
-                                    borderRadius: 6, 
-                                    borderWidth: 2, 
+                                    borderRadius: 5, 
+                                    borderWidth: 1.5, 
                                     borderColor: '#ffffff' 
                                 }},
                                 label: {{ 
                                     show: true, 
                                     formatter: '{{b}}', 
-                                    fontSize: 11, 
+                                    // Teks otomatis membungkus (word-wrap) tanpa dipotong manual
+                                    width: 85,
+                                    overflow: 'break',
+                                    minAngle: 12, // Sembunyikan teks di potongan yang terlalu kecil agar tidak tumpang tindih
+                                    fontSize: 10, 
                                     fontFamily: 'sans-serif',
                                     color: '#ffffff', 
-                                    textBorderColor: 'rgba(0,0,0,0.5)', 
+                                    textBorderColor: 'rgba(0,0,0,0.4)', 
                                     textBorderWidth: 2 
                                 }}
                             }}
@@ -2177,7 +2229,7 @@ else:
                     </script>
                 </body>
                 </html>
-                """, height=600)
+                """, height=620)
     # =====================================================================
     # TAB 3: SOP GENERATOR (KARS/JCI)
     # =====================================================================

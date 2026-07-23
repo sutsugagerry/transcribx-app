@@ -426,13 +426,36 @@ if not st.session_state["logged_in"]:
     [data-testid="stSidebar"] { display: none; }
     
     /* Override styling Tab untuk mode gelap di halaman depan */
+   /* === STYLING TAB HALAMAN DEPAN SUPER ELEGAN === */
+    div[data-testid="stTabs"] {
+        margin-bottom: 20px;
+    }
     div[data-testid="stTabs"] button {
-        color: #94a3b8 !important;
-        background-color: transparent !important;
+        color: #f1f5f9 !important; /* Warna teks putih terang */
+        background-color: rgba(30, 41, 59, 0.6) !important; /* Background transparan gelap */
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important; /* Ujung melengkung */
+        margin-right: 10px !important; /* Jarak antar tab */
+        padding: 8px 24px !important;
+        font-weight: 600 !important;
+        font-size: 15px !important;
+        transition: all 0.3s ease !important;
+    }
+    div[data-testid="stTabs"] button:hover {
+        background-color: rgba(56, 189, 248, 0.2) !important;
+        border-color: rgba(56, 189, 248, 0.5) !important;
+        transform: translateY(-2px);
     }
     div[data-testid="stTabs"] button[aria-selected="true"] {
-        color: #38bdf8 !important;
-        background-color: rgba(56, 189, 248, 0.1) !important;
+        color: #ffffff !important;
+        background-color: #3b82f6 !important; /* Warna biru solid saat aktif */
+        border: 1px solid #60a5fa !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important; /* Efek menyala */
+    }
+    /* Sembunyikan garis abu-abu bawaan Streamlit di bawah tab */
+    div[data-baseweb="tab-list"] {
+        border-bottom: none !important;
+        background-color: transparent !important;
     }
     div[data-baseweb="tab-list"] {
         background-color: rgba(15, 23, 42, 0.5) !important;

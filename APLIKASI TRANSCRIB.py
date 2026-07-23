@@ -16,7 +16,6 @@ import random
 import zlib
 import base64
 import re
-from pydub import AudioSegment
 
 os.environ['TZ'] = 'Asia/Jakarta'
 try:
@@ -1522,7 +1521,6 @@ else:
                     <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
                     <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
                     <button id="downloadTxtBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📝 Save Raw TXT</button>
-                    <button id="downloadDocxBtn" class="btn-custom btn-ai" style="padding: 6px 14px; font-size: 13px; display: none; background: #ef4444;">📄 Download Resmi (DOCX)</button>
                 </div>
 
                 <div id="transcriptBox" class="transcript-box">
@@ -1543,8 +1541,8 @@ else:
                         
                         const startBtn = document.getElementById('startBtn'); const stopBtn = document.getElementById('stopBtn');
                         const copyBtn = document.getElementById('copyBtn'); const clearBtn = document.getElementById('clearBtn');
-                        const downloadTxtBtn = document.getElementById('downloadTxtBtn'); const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn');
-                        const downloadDocxBtn = document.getElementById('downloadDocxBtn'); const aiBtn = document.getElementById('aiBtn');
+                        const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+                        const aiBtn = document.getElementById('aiBtn');
                         const apiKeyInput = document.getElementById('apiKeyInput'); const aiContent = document.getElementById('aiContent');
                         const langSelect = document.getElementById('langSelect'); const status = document.getElementById('status');
                         const indicator = document.getElementById('indicator'); const transcriptBox = document.getElementById('transcriptBox');
@@ -1705,76 +1703,10 @@ else:
                         clearBtn.onclick = function() {
                             transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
                             lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = ""; lastAiData = null;
-                            downloadNotulensiBtn.style.display = 'none'; downloadDocxBtn.style.display = 'none';
                         };
 
                         function getTranscriptText() { return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n'); }
                         window.dlCyLive = function() { if (window.cyInstance) { const a = document.createElement('a'); a.href = window.cyInstance.png({full: true, scale: 4, bg: 'white'}); a.download = 'Cytoscape_Live.png'; a.click(); } };
-
-                        downloadDocxBtn.onclick = async function() {
-                            if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
-                            const originalBtnText = downloadDocxBtn.innerHTML; downloadDocxBtn.innerHTML = "⏳ Memproses Gambar & Dokumen..."; downloadDocxBtn.disabled = true;
-                            try {
-                                const d = lastAiData.notulensi_rapat || {};
-                                const now = new Date(); const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }); const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB'; const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-                                
-                                let cyImageHtml = "";
-                                if (window.cyInstance) { try { cyImageHtml = `<p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">A. Cytoscape Network (Hubungan Topik)</p><img src="${window.cyInstance.png({full: true, scale: 2, bg: 'white'})}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`; } catch (err) {} }
-
-                                let mermaidImageHtml = ""; const mermaidContainer = document.getElementById('merContainerLive'); 
-                                if (mermaidContainer && mermaidContainer.querySelector('svg')) {
-                                    try {
-                                        const svgMermaid = mermaidContainer.querySelector('svg'); const origW = mermaidContainer.style.width; const origH = mermaidContainer.style.height; const origOverflow = mermaidContainer.style.overflow;
-                                        const bboxMermaid = svgMermaid.getBBox(); const mWidth = Math.max(bboxMermaid.width + 100, 800); const mHeight = Math.max(bboxMermaid.height + 100, 600);
-                                        mermaidContainer.style.width = mWidth + 'px'; mermaidContainer.style.height = mHeight + 'px'; mermaidContainer.style.overflow = 'visible';
-                                        const canvasMermaid = await html2canvas(mermaidContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: mWidth, height: mHeight });
-                                        mermaidImageHtml = `<p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">B. Mermaid (Mindmap Struktur)</p><img src="${canvasMermaid.toDataURL('image/png')}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-                                        mermaidContainer.style.width = origW; mermaidContainer.style.height = origH; mermaidContainer.style.overflow = origOverflow;
-                                    } catch (err) {}
-                                }
-
-                                let markmapImageHtml = ""; const markmapContainer = document.getElementById('markmapLiveWrapper'); const markmapSvg = markmapContainer ? markmapContainer.querySelector('svg') : null;
-                                if (markmapContainer && markmapSvg) {
-                                    try {
-                                        const origW = markmapContainer.style.width; const origH = markmapContainer.style.height; const origOverflow = markmapContainer.style.overflow; const origViewBox = markmapSvg.getAttribute('viewBox');
-                                        const g = markmapSvg.querySelector('g'); const originalTransform = g ? g.getAttribute('transform') : null;
-                                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)'); await new Promise(resolve => setTimeout(resolve, 100));
-                                        const bbox = g ? g.getBBox() : markmapSvg.getBBox(); const padding = 60; const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
-                                        markmapContainer.style.width = trueWidth + 'px'; markmapContainer.style.height = trueHeight + 'px'; markmapContainer.style.overflow = 'visible';
-                                        markmapSvg.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
-                                        const canvasMarkmap = await html2canvas(markmapContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight });
-                                        markmapImageHtml = `<p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">C. Markmap (Peta Konsep Detail)</p><img src="${canvasMarkmap.toDataURL('image/png')}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-                                        markmapContainer.style.width = origW; markmapContainer.style.height = origH; markmapContainer.style.overflow = origOverflow;
-                                        if (origViewBox) markmapSvg.setAttribute('viewBox', origViewBox); else markmapSvg.removeAttribute('viewBox');
-                                        if (g && originalTransform) g.setAttribute('transform', originalTransform);
-                                    } catch (err) {}
-                                }
-
-                                let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
-                                if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
-                                    actionItemsHtml = `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt;"><tr style="background-color: #f1f5f9;"><th><b>Tugas</b></th><th><b>PIC</b></th><th><b>Deadline</b></th><th><b>Prioritas</b></th></tr>${d.rencana_tindak_lanjut.map(t => `<tr><td>${t.tugas || '-'}</td><td>${t.pic || '-'}</td><td>${t.deadline || '-'}</td><td><b>${t.prioritas || '-'}</b></td></tr>`).join('')}</table>`;
-                                }
-
-                                let content = `
-                                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                                <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
-                                <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
-                                    <table style="width: 100%; border: none; border-collapse: collapse;"><tr><td style="width: 50%; text-align: left; vertical-align: top; border: none; padding: 0;"><span style="font-size: 28pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE</span><br><span style="font-size: 10pt; color: #64748b;">Enterprise AI Transcription<br>Healthcare & Productivity</span></td><td style="width: 50%; text-align: right; vertical-align: top; border: none; padding: 0;"><span style="font-size: 12pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE ENTERPRISE<br>DIVISI INOVASI DIGITAL</span><br><span style="font-size: 10pt; font-style: italic; color: #000000;">Sistem Notulensi Cerdas & Presisi</span></td></tr></table>
-                                    <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">________________________________________________________________________________</div>
-                                    <div style="text-align: center; margin-bottom: 20px;"><span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br><span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span></div>
-                                    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;"><tr><td style="width: 1.5in;"><b>Hari / Tanggal</b></td><td style="width: 4.5in;">${tanggalStr}</td></tr><tr><td><b>Waktu</b></td><td>${waktuStr}</td></tr><tr><td><b>Media</b></td><td>SmartDose TranscribX (Offline/Live)</td></tr><tr><td><b>Notulis</b></td><td>AI Transcription System</td></tr><tr><td><b>Peserta</b></td><td>${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td></tr><tr><td><b>Agenda</b></td><td>${d.agenda || '-'}</td></tr></table>
-                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}<br>
-                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p><ul style="margin-top: 0;">${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}</ul><br>
-                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p><ol style="margin-top: 0;">${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}</ol><br>
-                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>${actionItemsHtml}<br>
-                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 10px;"><b>5. LAMPIRAN VISUALISASI AI</b></p>${cyImageHtml}${mermaidImageHtml}${markmapImageHtml}<br><br>
-                                    <p style="text-align: right;">Jakarta, ${tanggalFooterStr}<br><br><br><br>( Tim Notulen SmartDose )</p>
-                                </body>
-                                </html>`;
-                                
-                                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff', content], { type: 'application/msword' })); a.download = 'Notulen_Live_SmartDose_' + Date.now() + '.doc'; a.click();
-                            } catch (error) { alert("Terjadi kesalahan saat memproses gambar ke dalam dokumen."); } finally { downloadDocxBtn.innerHTML = originalBtnText; downloadDocxBtn.disabled = false; }
-                        };
 
                         window.dlMermaidLive = function() {
                             const mDiv = document.getElementById('mermaidLive'); const container = document.getElementById('merContainerLive'); const svgEl = mDiv.querySelector('svg'); if (!svgEl) return;
@@ -1844,7 +1776,7 @@ else:
                             try {
                                 const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", { method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                                 const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
-                                lastAiData = data; downloadDocxBtn.style.display = 'inline-flex';
+                                lastAiData = data; 
                                 
                                 let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`).join('');
                                 aiContent.innerHTML = `<div class="fade-in mt-6 mb-10"><div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div><div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div><h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:380px;"></div></div></div><div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl" style="height:396px;"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;"><pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre></div></div></div></div><div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div></div>`;
@@ -1864,7 +1796,7 @@ else:
                                     if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) rawMer = `graph LR\\n` + rawMer;
                                     rawMer = rawMer.replace(/`/g, "").replace(/\\[([A-Z0-9]+)\\]/g, "($1)");
                                     const mDiv = document.getElementById('mermaidLive'); mDiv.textContent = rawMer; mDiv.removeAttribute('data-processed');
-                                    try { mermaid.run({ querySelector: '#mermaidLive' }).then(() => { const svg = mDiv.querySelector('svg'); if (svg) { svg.style.maxWidth = 'none'; svg.style.height = 'auto'; } }).catch(e => { mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid.</div>"; }); } catch(e) {}
+                                    try { mermaid.run({ querySelector: '#mermaidLive' }).then(() => { const svg = mDiv.querySelector('svg'); if (svg) { svg.style.maxWidth = 'none'; svg.style.height = 'auto'; } }).catch(e => { mDiv.innerHTML = "<div style='padding:20px; font-size:12px; background:#fee2e2; color:#991b1b; border-radius:8px;'><b style='font-size:14px;'>⚠️ Format gambar dari AI kurang sempurna.</b><br>Berikut teks struktur aslinya agar data tidak hilang:<br><br><pre style='white-space:pre-wrap; font-family:monospace;'>" + JSON.stringify(rawMer) + "</pre></div>"; }); } catch(e) {}
                                 }, 100);
 
                                 setTimeout(() => {
@@ -2039,8 +1971,13 @@ else:
 
                 clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
                 if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'): clean_mer = "graph LR\n" + clean_mer
-               clean_mer = clean_mer.replace('`', '').replace('"', '').replace("'", "")
-                mer_json_str, markmap_json_str, hubungan_json = json.dumps(clean_mer), json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip()), json.dumps(data['notulensi_rapat'].get('hubungan_topik', []))
+                
+                # Bersihkan karakter kutip yang sering merusak sistem render Mermaid
+                clean_mer = clean_mer.replace('`', '').replace('"', '').replace("'", "")
+                mer_json_str = json.dumps(clean_mer)
+                markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
+                hubungan_json = json.dumps(data['notulensi_rapat'].get('hubungan_topik', []))
+                
                 st.markdown("### 🕸️ Visualisasi Terintegrasi")
                 col_v1, col_v2 = st.columns(2)
                 with col_v1:
@@ -2155,4 +2092,3 @@ else:
                     mime="application/msword", 
                     use_container_width=True
                 )
-                    

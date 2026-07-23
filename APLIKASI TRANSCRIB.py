@@ -2154,19 +2154,20 @@ else:
                     except requests.exceptions.RequestException as e: st.error(f"❌ Kesalahan API: {str(e)}")
                     except Exception as e: st.error(f"❌ Kesalahan pemrosesan: {str(e)}")
 
-                    # ====================================================================
-                    # MUNCULKAN PREVIEW & TOMBOL DOWNLOAD DI LUAR BLOK "IF BUTTON GENERATE"
-                    # ====================================================================
-                    if st.session_state.get("sop_preview_html"):
-                        st.markdown("---")
-                        st.subheader("📄 Preview Dokumen SOP")
-                        st.components.v1.html(st.session_state["sop_preview_html"], height=1000, scrolling=True)
-                        
-                        st.download_button(
-                            label="📄 DOWNLOAD WORD (SOP)", 
-                            data=st.session_state["sop_word_html"].encode('utf-8-sig'), 
-                            file_name=f"SOP_{st.session_state['sop_title'].replace(' ', '_')}.doc", 
-                            mime="application/msword", 
-                            use_container_width=True
-                        )
+            # ====================================================================
+            # MUNCULKAN PREVIEW & TOMBOL DOWNLOAD DI LUAR BLOK "IF BUTTON GENERATE"
+            # PERHATIKAN: Posisi 'if' ini harus sejajar dengan 'if st.button(...)' di atas!
+            # ====================================================================
+            if st.session_state.get("sop_preview_html"):
+                st.markdown("---")
+                st.subheader("📄 Preview Dokumen SOP")
+                st.components.v1.html(st.session_state["sop_preview_html"], height=1000, scrolling=True)
+                
+                st.download_button(
+                    label="📄 DOWNLOAD WORD (SOP)", 
+                    data=st.session_state["sop_word_html"].encode('utf-8-sig'), 
+                    file_name=f"SOP_{st.session_state['sop_title'].replace(' ', '_')}.doc", 
+                    mime="application/msword", 
+                    use_container_width=True
+                )
                     

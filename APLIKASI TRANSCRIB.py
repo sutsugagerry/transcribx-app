@@ -1522,7 +1522,6 @@ else:
                     <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
                     <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
                     <button id="downloadTxtBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📝 Save Raw TXT</button>
-                    <button id="downloadNotulensiBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px; display: none;">📑 Download Full Notulensi</button>
                     <button id="downloadDocxBtn" class="btn-custom btn-ai" style="padding: 6px 14px; font-size: 13px; display: none; background: #ef4444;">📄 Download Resmi (DOCX)</button>
                 </div>
 
@@ -1702,19 +1701,6 @@ else:
                             const text = Array.from(lines).map(line => line.innerText).join('\\n');
                             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = 'Transkrip_Live_' + Date.now() + '.txt'; a.click();
                         };
-                        
-                        downloadNotulensiBtn.onclick = function() {
-                            if (!lastAiData) { alert('Belum ada data notulensi! Silakan Generate AI Summary terlebih dahulu.'); return; }
-                            const d = lastAiData.notulensi_rapat || {};
-                            let text = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\\n========================================\\n\\n🌟 RINGKASAN EKSEKUTIF:\\n";
-                            (lastAiData.ringkasan_eksekutif || []).forEach(r => text += "- " + r + "\\n");
-                            text += "\\n📌 AGENDA: " + (d.agenda || "-") + "\\n👥 PESERTA: " + (d.peserta ? d.peserta.join(', ') : "-") + "\\n\\n";
-                            if (d.transkrip_dialog && d.transkrip_dialog.length > 0) { text += "💬 TRANSKRIP DIALOG:\\n"; d.transkrip_dialog.forEach(l => text += l + "\\n"); text += "\\n"; }
-                            text += "🗣️ JALANNYA DISKUSI:\\n"; (d.jalannya_diskusi || []).forEach(j => text += "- " + j + "\\n");
-                            text += "\\n✅ KEPUTUSAN:\\n"; (d.keputusan || []).forEach(k => text += "- " + k + "\\n");
-                            text += "\\n📅 ACTION ITEMS:\\n"; (d.rencana_tindak_lanjut || []).forEach(t => { text += `- ${t.tugas} | ${t.pic} | ${t.deadline} | ${t.prioritas}\\n`; });
-                            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = 'Notulensi_Lengkap_' + Date.now() + '.txt'; a.click();
-                        };
 
                         clearBtn.onclick = function() {
                             transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
@@ -1858,7 +1844,7 @@ else:
                             try {
                                 const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", { method: "POST", headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                                 const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
-                                lastAiData = data; downloadNotulensiBtn.style.display = 'inline-flex'; downloadDocxBtn.style.display = 'inline-flex';
+                                lastAiData = data; downloadDocxBtn.style.display = 'inline-flex';
                                 
                                 let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`).join('');
                                 aiContent.innerHTML = `<div class="fade-in mt-6 mb-10"><div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div><div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div><div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div><h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="font-bold text-sm mb-2">Cytoscape.js</p><div class="relative bg-white border rounded-xl p-2"><button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="cyLiveContainer" style="width:100%; height:380px;"></div></div></div><div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p><div class="relative bg-white border rounded-xl" style="height:396px;"><button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button><div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;"><pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre></div></div></div></div><div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div></div>`;

@@ -180,9 +180,10 @@ def delete_user(uid, email):
 
 def get_active_users_count():
     try: 
-        batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
-        users = db.collection("users").where("last_login", ">=", batas_waktu).stream()
-        return sum(1 for u in users if u.to_dict().get("is_online", True))
+        # Cek siapa saja yang aktif dalam 5 menit terakhir
+        batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(minutes=5)).isoformat()
+        users = db.collection("users").where("last_active", ">=", batas_waktu).stream()
+        return sum(1 for u in users)
     except: return 0
 
 def reset_user_kuota(uid, paket):
@@ -1016,6 +1017,15 @@ if not st.session_state["logged_in"]:
 # APLIKASI UTAMA (SETELAH LOGIN)
 # =====================================================================
 else:
+# --- TAMBAHKAN BLOK KODE INI ---
+    try:
+        if st.session_state.get("user_uid"):
+            waktu_wib = (datetime.utcnow() + timedelta(hours=7)).isoformat()
+            db.collection("users").document(st.session_state["user_uid"]).update({
+                "last_active": waktu_wib,
+                "is_online": True
+            })
+    except: pass
     st.markdown("""
     <style>
     #node-bg-canvas { display: none !important; opacity: 0 !important; visibility: hidden !important; }
@@ -1130,8 +1140,9 @@ else:
         if is_admin():
             if st.button("🔄 Refresh Klien Online", use_container_width=True): pass 
             try:
-                batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(hours=1)).isoformat()
-                active_users_ref = db.collection("users").where("last_login", ">=", batas_waktu).stream()
+                # GANTI MENJADI KODE BARU INI:
+                batas_waktu_online = (datetime.utcnow() + timedelta(hours=7) - timedelta(minutes=5)).isoformat()
+                active_users_ref = db.collection("users").where("last_active", ">=", batas_waktu_online).stream()
                 online_list_html, count_online = "", 0
                 for doc in active_users_ref:
                     u_data = doc.to_dict()

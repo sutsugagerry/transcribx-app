@@ -318,6 +318,17 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
     data_flow = full_data.get('flow', {})
     pelaksana_list = data_flow.get('pelaksana_list', ["Petugas"])
     steps = data_flow.get('langkah', [])
+    # --- TAMBAHAN: CONVERT LOGO KE BASE64 AGAR TIDAK RUSAK DI WORD ---
+    logo_b64_html = logo_url
+    if logo_url.startswith("http"):
+        try:
+            res_logo = requests.get(logo_url, timeout=5)
+            if res_logo.status_code == 200:
+                ctype = res_logo.headers.get('content-type', 'image/png')
+                b64_logo = base64.b64encode(res_logo.content).decode('utf-8')
+                logo_b64_html = f"data:{ctype};base64,{b64_logo}"
+        except:
+            pass # Jika gagal download, biarkan pakai URL asli
 
     embedded_img_html = ""
     plantuml_html = ""
@@ -406,7 +417,7 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
         <table style="border-collapse:collapse; width:100%; border:1px solid black; margin-bottom:20px;">
             <tr>
                 <td rowspan="6" style="text-align:center; width:45%; padding:15px; border:1px solid black;">
-                    <img src="{logo_url}" width="80" height="80" style="width:80px; height:80px; object-fit:contain; display:block; margin:0 auto 10px auto;">
+                    <img src="{logo_b64_html}" width="80" height="80" style="width:80px; height:80px; object-fit:contain; display:block; margin:0 auto 10px auto;">
                     <div style="font-weight:bold; font-size:11pt;">RS {rs_name.upper()}</div>
                 </td>
                 <td style="width:20%; border:1px solid black; padding:5px;">Nomor SOP</td>
@@ -624,6 +635,9 @@ if "logged_in" not in st.session_state: st.session_state["logged_in"] = False
 if "offline_transcript" not in st.session_state: st.session_state["offline_transcript"] = ""
 if "offline_summary" not in st.session_state: st.session_state["offline_summary"] = None
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
+if "sop_preview_html" not in st.session_state: st.session_state["sop_preview_html"] = None
+if "sop_word_html" not in st.session_state: st.session_state["sop_word_html"] = None
+if "sop_title" not in st.session_state: st.session_state["sop_title"] = ""
 
 if "captcha_n1" not in st.session_state:
     st.session_state.captcha_n1 = random.randint(1, 10)
@@ -2080,6 +2094,7 @@ else:
             uploaded_files_sop = st.file_uploader("Upload Dokumen Referensi (PDF/Image)", accept_multiple_files=True, key="upload_sop")
 
             if st.button("🚀 Generate SOP Akreditasi", type="primary", use_container_width=True):
+                # (Bagian validasi if-elif biarkan sama persis seperti sebelumnya)
                 if not api_key_sop: st.error("⚠️ API Key tidak ditemukan. Silakan input API Key!")
                 elif not title: st.error("⚠️ Judul SOP wajib diisi!")
                 elif len(uploaded_files_sop) > 5: st.error("⚠️ Maksimal 5 file referensi!")
@@ -2131,10 +2146,27 @@ else:
                         st.toast("✅ Dokumen SOP Berhasil Dibuat!", icon="🎉")
                         preview_html, word_html = render_akreditasi_output({"cover": data_cover, "flow": data_flow}, rs_name, title, no_dok, dir_name, dir_nip, logo_url)
 
-                        st.markdown("---")
-                        st.subheader("📄 Preview Dokumen SOP")
-                        st.components.v1.html(preview_html, height=1000, scrolling=True)
-                        st.download_button(label="📄 DOWNLOAD WORD (SOP)", data=word_html.encode('utf-8-sig'), file_name=f"SOP_{title.replace(' ', '_')}.doc", mime="application/msword", use_container_width=True)
+                        # SIMPAN HASILNYA KE MEMORI (SESSION STATE) AGAR TIDAK HILANG
+                        st.session_state["sop_preview_html"] = preview_html
+                        st.session_state["sop_word_html"] = word_html
+                        st.session_state["sop_title"] = title
 
                     except requests.exceptions.RequestException as e: st.error(f"❌ Kesalahan API: {str(e)}")
                     except Exception as e: st.error(f"❌ Kesalahan pemrosesan: {str(e)}")
+
+                    # ====================================================================
+                    # MUNCULKAN PREVIEW & TOMBOL DOWNLOAD DI LUAR BLOK "IF BUTTON GENERATE"
+                    # ====================================================================
+                    if st.session_state.get("sop_preview_html"):
+                        st.markdown("---")
+                        st.subheader("📄 Preview Dokumen SOP")
+                        st.components.v1.html(st.session_state["sop_preview_html"], height=1000, scrolling=True)
+                        
+                        st.download_button(
+                            label="📄 DOWNLOAD WORD (SOP)", 
+                            data=st.session_state["sop_word_html"].encode('utf-8-sig'), 
+                            file_name=f"SOP_{st.session_state['sop_title'].replace(' ', '_')}.doc", 
+                            mime="application/msword", 
+                            use_container_width=True
+                        )
+                    

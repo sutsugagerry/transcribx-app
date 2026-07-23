@@ -1658,64 +1658,59 @@ else:
 
         col_t1, col_t2 = st.columns(2)
         with col_t1:
-            st.markdown(f"""
-            <div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
-                <h4 style='color:#8b5cf6; margin-top:0;'>✨ Top-Up AI Summary</h4>
-                <hr style='border-color:#e2e8f0; margin:10px 0;'>
-                
-                <div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-                    <div>
-                        <div style='font-size:15px; font-weight:bold; color:#334155;'>+ 10x AI Summary</div>
-                        <div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 10.000</div>
-                    </div>
-                    <a href="{link_tp_ai_10}" target="_blank" style="text-decoration:none;">
-                        <button style="background:#8b5cf6; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
-                    </a>
-                </div>
-                
-                <div style='display:flex; align-items:center; justify-content:space-between; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-                    <div>
-                        <div style='font-size:15px; font-weight:bold; color:#334155;'>+ 25x AI Summary</div>
-                        <div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 20.000</div>
-                    </div>
-                    <a href="{link_tp_ai_25}" target="_blank" style="text-decoration:none;">
-                        <button style="background:#8b5cf6; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
-                    </a>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+<h4 style='color:#8b5cf6; margin-top:0;'>✨ Top-Up AI Summary</h4>
+<hr style='border-color:#e2e8f0; margin:10px 0;'>
+
+<div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+<div>
+<div style='font-size:15px; font-weight:bold; color:#334155;'>+ 10x AI Summary</div>
+<div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 10.000</div>
+</div>
+<a href="{link_tp_ai_10}" target="_blank" style="text-decoration:none;">
+<button style="background:#8b5cf6; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
+</a>
+</div>
+
+<div style='display:flex; align-items:center; justify-content:space-between; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+<div>
+<div style='font-size:15px; font-weight:bold; color:#334155;'>+ 25x AI Summary</div>
+<div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 20.000</div>
+</div>
+<a href="{link_tp_ai_25}" target="_blank" style="text-decoration:none;">
+<button style="background:#8b5cf6; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
+</a>
+</div>
+</div>""", unsafe_allow_html=True)
             
         with col_t2:
-            st.markdown(f"""
-            <div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
-                <h4 style='color:#10b981; margin-top:0;'>📁 Top-Up Upload MP3</h4>
-                <hr style='border-color:#e2e8f0; margin:10px 0;'>
-                
-                <div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-                    <div>
-                        <div style='font-size:15px; font-weight:bold; color:#334155;'>+ 3x Upload MP3</div>
-                        <div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 10.000</div>
-                    </div>
-                    <a href="{link_tp_mp3_3}" target="_blank" style="text-decoration:none;">
-                        <button style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
-                    </a>
-                </div>
-                
-                <div style='display:flex; align-items:center; justify-content:space-between; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-                    <div>
-                        <div style='font-size:15px; font-weight:bold; color:#334155;'>+ 10x Upload MP3</div>
-                        <div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 25.000</div>
-                    </div>
-                    <a href="{link_tp_mp3_10}" target="_blank" style="text-decoration:none;">
-                        <button style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
-                    </a>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
+<h4 style='color:#10b981; margin-top:0;'>📁 Top-Up Upload MP3</h4>
+<hr style='border-color:#e2e8f0; margin:10px 0;'>
+
+<div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+<div>
+<div style='font-size:15px; font-weight:bold; color:#334155;'>+ 3x Upload MP3</div>
+<div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 10.000</div>
+</div>
+<a href="{link_tp_mp3_3}" target="_blank" style="text-decoration:none;">
+<button style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
+</a>
+</div>
+
+<div style='display:flex; align-items:center; justify-content:space-between; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
+<div>
+<div style='font-size:15px; font-weight:bold; color:#334155;'>+ 10x Upload MP3</div>
+<div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 25.000</div>
+</div>
+<a href="{link_tp_mp3_10}" target="_blank" style="text-decoration:none;">
+<button style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button>
+</a>
+</div>
+</div>""", unsafe_allow_html=True)
             
         st.write("")
         st.info("💡 **INFO UPGRADE PAKET:** Membeli paket baru (Basic/Executive/Master) saat paket lama masih aktif akan **mereset ulang** masa aktif Anda menjadi 30 hari ke depan dan mengatur ulang kuota sesuai paket terbaru (sisa kuota lama tidak diakumulasi). Jika hanya ingin menambah kuota, gunakan fitur **Top-Up Eceran** di atas.")
-
       
 
         # ==========================================

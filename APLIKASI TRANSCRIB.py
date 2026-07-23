@@ -2096,7 +2096,7 @@ else:
 
                 st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
                 components.html(f"""<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script><script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script><script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script></head><body style="margin:0; padding:10px; background:#f8fafc; position:relative;"><button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button><div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;"><svg id="markmap" style="width:100%; height:100%;"></svg></div><script>const markdown = {markmap_json_str}; const {{ Transformer, Markmap }} = window.markmap; const {{ root }} = new Transformer().transform(markdown); Markmap.create('#markmap', null, root); window.downloadMarkmapImage = function(wrapperId, title) {{ const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return; const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML; btn.innerHTML = "⏳..."; btn.disabled = true; const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow; const g = svgEl.querySelector('g'); const originalTransform = g ? g.getAttribute('transform') : null; if (g) g.setAttribute('transform', 'translate(50,50) scale(1)'); setTimeout(() => {{ const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50; const trueWidth = Math.max(bbox.width, 800) + (padding * 2); const trueHeight = Math.max(bbox.height, 600) + (padding * 2); container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible'; svgEl.setAttribute('viewBox', `${{(bbox.x || 0) - padding}} ${{(bbox.y || 0) - padding}} ${{trueWidth}} ${{trueHeight}}`); html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }}).then(canvas => {{ container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow; if (g && originalTransform) g.setAttribute('transform', originalTransform); const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png'; link.href = canvas.toDataURL('image/png', 1.0); link.click(); btn.innerHTML = originalText; btn.disabled = false; }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }}); }}, 500); }};</script></body></html>""", height=600)
-                # =====================================================================
+               # =====================================================================
                 # FITUR BARU: SUNBURST HIERARCHY CHART (RODA ANATOMI RAPAT)
                 # =====================================================================
                 st.markdown("### ☀️ Sunburst Hierarchy Chart (Anatomi Rapat)")
@@ -2118,7 +2118,7 @@ else:
                         // 2. Parser cerdas untuk mengubah Markdown menjadi struktur Tree (Cabang) ECharts
                         function parseMarkdownToSunburst(md) {{
                             const lines = md.split('\\n');
-                            let root = {{ name: "Rapat", children: [] }};
+                            let root = {{ name: "Root", children: [] }};
                             let stack = [ {{level: 0, node: root}} ];
 
                             for (let i = 0; i < lines.length; i++) {{
@@ -2167,7 +2167,7 @@ else:
                             }}
                             assignValues(root);
 
-                            if (root.children.length === 1) return root.children[0].children;
+                            // PERBAIKAN: Langsung kembalikan root.children agar TEMA UTAMA (#) menjadi pusat lingkaran
                             return root.children.length > 0 ? root.children : [{{name: "Data tidak tersedia", value: 1}}];
                         }}
 
@@ -2177,7 +2177,6 @@ else:
                         var chartDom = document.getElementById('sunburst-chart');
                         var myChart = echarts.init(chartDom);
                         var option = {{
-                            // FITUR DOWNLOAD DITAMBAHKAN DI SINI
                             toolbox: {{
                                 show: true,
                                 feature: {{
@@ -2185,7 +2184,7 @@ else:
                                         show: true,
                                         title: 'Save PNG',
                                         name: 'Sunburst_Anatomi_Rapat',
-                                        pixelRatio: 3, // Resolusi tinggi (HD)
+                                        pixelRatio: 3, 
                                         iconStyle: {{ borderColor: '#10b981', borderWidth: 2 }}
                                     }}
                                 }},
@@ -2212,14 +2211,14 @@ else:
                                 label: {{ 
                                     show: true, 
                                     formatter: '{{b}}', 
-                                    // Teks otomatis membungkus (word-wrap) tanpa dipotong manual
                                     width: 85,
                                     overflow: 'break',
-                                    minAngle: 12, // Sembunyikan teks di potongan yang terlalu kecil agar tidak tumpang tindih
-                                    fontSize: 10, 
+                                    minAngle: 12, 
+                                    fontSize: 11, 
+                                    fontWeight: 'bold',
                                     fontFamily: 'sans-serif',
                                     color: '#ffffff', 
-                                    textBorderColor: 'rgba(0,0,0,0.4)', 
+                                    textBorderColor: 'rgba(0,0,0,0.6)', 
                                     textBorderWidth: 2 
                                 }}
                             }}

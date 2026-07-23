@@ -919,18 +919,13 @@ if not st.session_state["logged_in"]:
             st.write("")
             st.markdown("""
             <div style='text-align: center; margin-bottom: 20px;'>
-                <h1 class='login-title' style='font-size: 3rem;'>Daftar & Langganan</h1>
-                <p style='color: #94a3b8; font-size: 0.9rem;'>Pilih paket, isi data, dan langsung aktifkan layanan.</p>
+                <h1 class='login-title' style='font-size: 3rem;'>Daftar Akun</h1>
+                <p style='color: #94a3b8; font-size: 0.9rem;'>Buat akun baru untuk mulai menggunakan TranscribX.</p>
             </div>
             """, unsafe_allow_html=True)
             
             with st.form("register_form_user"):
                 st.markdown("<h3 style='text-align: center; color: #e0f2fe; margin-bottom: 15px; letter-spacing: 1px;'>Form Pendaftaran</h3>", unsafe_allow_html=True)
-                
-                paket_awal = st.selectbox(
-                    "📦 Pilih Paket Layanan (Wajib)", 
-                    ["EXECUTIVE (Rp 69.000 / 30 Hari) 🔥", "BASIC (Rp 35.000 / 30 Hari)", "MASTER (Rp 149.000 / 30 Hari) 👑"]
-                )
                 
                 email_reg_user = st.text_input("Email Address", placeholder="Masukkan email aktif Anda...")
                 pass_reg_user = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
@@ -940,7 +935,7 @@ if not st.session_state["logged_in"]:
                 captcha_answer = st.text_input("Jawaban Captcha", placeholder="Ketik angka jawaban...", label_visibility="collapsed")
                 
                 st.write("")
-                btn_reg_user = st.form_submit_button("💳 Lanjut ke Pembayaran", use_container_width=True, type="primary")
+                btn_reg_user = st.form_submit_button("📝 Buat Akun Sekarang", use_container_width=True, type="primary")
                 
                 if btn_reg_user:
                     now = datetime.now()
@@ -962,7 +957,7 @@ if not st.session_state["logged_in"]:
                         st.warning("⚠️ Password dan Konfirmasi Password tidak cocok!")
                     else:
                         st.session_state.last_reg_attempt = now
-                        with st.spinner("Memproses pesanan Anda..."):
+                        with st.spinner("Membuat akun Anda..."):
                             new_user = register_firebase(email_reg_user, pass_reg_user)
                             
                             if "idToken" in new_user:
@@ -982,16 +977,7 @@ if not st.session_state["logged_in"]:
                                     "login_count": 0
                                 })
                                 
-                                email_encoded = urllib.parse.quote(email_reg_user)
-                                if "BASIC" in paket_awal:
-                                    link_checkout = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
-                                elif "EXECUTIVE" in paket_awal:
-                                    link_checkout = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
-                                else:
-                                    link_checkout = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
-                                    
-                                st.success("✅ Berhasil! Mengarahkan Anda ke kasir pembayaran...")
-                                st.markdown(f'<meta http-equiv="refresh" content="2;url={link_checkout}">', unsafe_allow_html=True)
+                                st.success("✅ Pendaftaran berhasil! Silakan klik tab '🔐 Login Portal' di atas untuk masuk dan memilih paket.")
                                 
                                 st.session_state.captcha_n1 = random.randint(1, 10)
                                 st.session_state.captcha_n2 = random.randint(1, 10)

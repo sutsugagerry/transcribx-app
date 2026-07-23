@@ -174,13 +174,12 @@ def delete_user(uid, email):
         docs = db.collection("users").document(uid).collection("login_history").stream()
         for doc in docs: doc.reference.delete()
         db.collection("users").document(uid).delete()
-        auth.delete_user(uid) # Hapus dari Firebase Auth
+        auth.delete_user(uid) 
         return True, f"User {email} berhasil dihapus permanen dari semua sistem."
     except Exception as e: return False, f"Gagal menghapus user: {str(e)}"
 
 def get_active_users_count():
     try: 
-        # Cek siapa saja yang aktif dalam 5 menit terakhir
         batas_waktu = (datetime.utcnow() + timedelta(hours=7) - timedelta(minutes=5)).isoformat()
         users = db.collection("users").where("last_active", ">=", batas_waktu).stream()
         return sum(1 for u in users)
@@ -318,7 +317,6 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
     data_flow = full_data.get('flow', {})
     pelaksana_list = data_flow.get('pelaksana_list', ["Petugas"])
     steps = data_flow.get('langkah', [])
-    # --- TAMBAHAN: CONVERT LOGO KE BASE64 AGAR TIDAK RUSAK DI WORD ---
     logo_b64_html = logo_url
     if logo_url.startswith("http"):
         try:
@@ -328,7 +326,7 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
                 b64_logo = base64.b64encode(res_logo.content).decode('utf-8')
                 logo_b64_html = f"data:{ctype};base64,{b64_logo}"
         except:
-            pass # Jika gagal download, biarkan pakai URL asli
+            pass 
 
     embedded_img_html = ""
     plantuml_html = ""
@@ -510,235 +508,11 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
     return doc_html, word_wrapper
 
 # =====================================================================
-# FUNGSI BANTUAN UNTUK GENERATE GAMBAR API (MERMAID, NETWORK, MINDMAP)
-# =====================================================================
-def get_mermaid_png_bytes(mermaid_code):
-    try:
-        import requests, io
-        mermaid_code = mermaid_code.replace("```mermaid", "").replace("```", "").strip()
-        if not mermaid_code.lower().startswith('graph') and not mermaid_code.lower().startswith('flowchart') and not mermaid_code.lower().startswith('mindmap'):
-            mermaid_code = "graph LR\n" + mermaid_code
-        res = requests.post("https://kroki.io/mermaid/png", data=mermaid_code.encode('utf-8'), headers={"Content-Type": "text/plain"}, timeout=15)
-        if res.status_code == 200: return io.BytesIO(res.content)
-    except Exception as e: print(f"Error Mermaid: {e}")
-    return None
-
-def get_network_png_bytes(hubungan_topik):
-    if not hubungan_topik: return None
-    dot = 'digraph G {\n rankdir=LR;\n node [shape=box, style="filled,rounded", fillcolor="#f43f5e", fontcolor="white", fontname="Arial"];\n edge [color="#cbd5e1", fontname="Arial", fontsize=10];\n'
-    for rel in hubungan_topik:
-        sumber = str(rel.get('sumber', '')).replace('"', '')
-        target = str(rel.get('target', '')).replace('"', '')
-        relasi = str(rel.get('relasi', '')).replace('"', '')
-        dot += f'  "{sumber}" -> "{target}" [label="{relasi}"];\n'
-    dot += '}'
-    try:
-        import requests, io
-        res = requests.post("https://kroki.io/graphviz/png", data=dot.encode('utf-8'), headers={"Content-Type": "text/plain"}, timeout=15)
-        if res.status_code == 200: return io.BytesIO(res.content)
-    except Exception as e: print(f"Error Network: {e}")
-    return None
-
-def get_mindmap_png_bytes(markmap_code):
-    if not markmap_code: return None
-    puml = "@startmindmap\n<style>\nmindmapDiagram { node { BackgroundColor #a7f3d0 } }\n</style>\n"
-    for line in markmap_code.split('\n'):
-        line = line.strip()
-        if not line: continue
-        if line.startswith('#'):
-            level = len(line) - len(line.lstrip('#'))
-            text = line.lstrip('# ').strip()
-            puml += '*' * level + f" {text}\n"
-        elif line.startswith('- ') or line.startswith('* '):
-            text = line[2:].strip()
-            puml += '**' + f" {text}\n"
-    puml += "@endmindmap"
-    try:
-        import requests, io
-        res = requests.post("https://kroki.io/plantuml/png", data=puml.encode('utf-8'), headers={"Content-Type": "text/plain"}, timeout=15)
-        if res.status_code == 200: return io.BytesIO(res.content)
-    except Exception as e: print(f"Error Mindmap: {e}")
-    return None
-
-# =====================================================================
-# FUNGSI GENERATE DOCX (REVISI DENGAN 3 GAMBAR VISUALISASI)
-# =====================================================================
-def generate_notulensi_docx(data):
-    doc = Document()
-    
-    # 1. HEADER (Menggunakan tabel tanpa border untuk layout Kiri-Kanan)
-    header_table = doc.add_table(rows=1, cols=2)
-    header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    header_table.autofit = True
-    
-    # Kolom Kiri: Branding SmartDose
-    cell_left = header_table.cell(0, 0)
-    p_left = cell_left.paragraphs[0]
-    run_logo = p_left.add_run("SMARTDOSE\n")
-    run_logo.bold = True
-    run_logo.font.size = Pt(28)
-    run_logo.font.color.rgb = RGBColor(30, 58, 138)
-    
-    run_sub = p_left.add_run("Enterprise AI Transcription\nHealthcare & Productivity")
-    run_sub.font.size = Pt(10)
-    run_sub.font.color.rgb = RGBColor(100, 116, 139)
-    
-    # Kolom Kanan: Nama Organisasi
-    cell_right = header_table.cell(0, 1)
-    p_right = cell_right.paragraphs[0]
-    p_right.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run_org = p_right.add_run("SMARTDOSE ENTERPRISE\nDIVISI INOVASI DIGITAL\n")
-    run_org.bold = True
-    run_org.font.size = Pt(12)
-    run_org.font.color.rgb = RGBColor(30, 58, 138)
-    run_motto = p_right.add_run("Sistem Notulensi Cerdas & Presisi")
-    run_motto.italic = True
-    run_motto.font.size = Pt(10)
-
-    # Garis Pemisah 
-    doc.add_paragraph("_" * 80).alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph()
-
-    # 2. JUDUL DOKUMEN
-    p_title = doc.add_paragraph()
-    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run_title = p_title.add_run("NOTULEN RAPAT")
-    run_title.bold = True
-    run_title.font.size = Pt(16)
-    run_title.font.color.rgb = RGBColor(30, 58, 138)
-    
-    p_subtitle = doc.add_paragraph()
-    p_subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    notulensi = data.get('notulensi_rapat', {})
-    run_subtitle = p_subtitle.add_run(notulensi.get('agenda', 'Koordinasi dan Pembahasan Internal'))
-    run_subtitle.bold = True
-    run_subtitle.font.size = Pt(12)
-    doc.add_paragraph()
-
-    # 3. TABEL METADATA (Hari, Waktu, Media, dll)
-    table_meta = doc.add_table(rows=6, cols=2)
-    table_meta.style = 'Table Grid'
-    for row in table_meta.rows:
-        row.cells[0].width = Inches(1.5)
-        row.cells[1].width = Inches(4.5)
-
-    peserta_val = notulensi.get('peserta', [])
-    peserta_str = ", ".join(peserta_val) if isinstance(peserta_val, list) else str(peserta_val)
-
-    meta_data = [
-        ("Hari / Tanggal", datetime.now().strftime("%A, %d %B %Y")),
-        ("Waktu", datetime.now().strftime("%H:%M WIB")),
-        ("Media", "SmartDose TranscribX (Offline/Live)"),
-        ("Notulis", "AI Transcription System"),
-        ("Peserta", peserta_str),
-        ("Agenda", notulensi.get('agenda', '-'))
-    ]
-
-    for i, (key, val) in enumerate(meta_data):
-        cell_k = table_meta.cell(i, 0)
-        cell_k.text = key
-        cell_k.paragraphs[0].runs[0].bold = True
-        table_meta.cell(i, 1).text = str(val)
-        
-    doc.add_paragraph()
-
-    def add_section_header(num, title):
-        p = doc.add_paragraph()
-        run = p.add_run(f"{num}. {title}")
-        run.bold = True
-        run.font.size = Pt(11)
-        run.font.color.rgb = RGBColor(30, 58, 138)
-
-    def add_bullet_points(items, is_numbered=False):
-        style = 'List Number' if is_numbered else 'List Bullet'
-        for item in items: doc.add_paragraph(str(item), style=style)
-
-    # 4. KONTEN NOTULENSI
-    add_section_header("1", "RINGKASAN EKSEKUTIF")
-    for r in data.get('ringkasan_eksekutif', []): doc.add_paragraph(r)
-
-    add_section_header("2", "POKOK PEMBAHASAN / JALANNYA DISKUSI")
-    add_bullet_points(notulensi.get('jalannya_diskusi', []))
-
-    add_section_header("3", "KEPUTUSAN RAPAT")
-    add_bullet_points(notulensi.get('keputusan', []), is_numbered=True)
-
-    add_section_header("4", "TINDAK LANJUT")
-    tindak_lanjut = notulensi.get('rencana_tindak_lanjut', [])
-    if tindak_lanjut:
-        table_tl = doc.add_table(rows=1, cols=4)
-        table_tl.style = 'Table Grid'
-        headers = ['Tugas', 'PIC', 'Deadline', 'Prioritas']
-        for i, header in enumerate(headers):
-            table_tl.rows[0].cells[i].text = header
-            table_tl.rows[0].cells[i].paragraphs[0].runs[0].bold = True
-            
-        for tl in tindak_lanjut:
-            row_cells = table_tl.add_row().cells
-            row_cells[0].text = str(tl.get('tugas', '-'))
-            row_cells[1].text = str(tl.get('pic', '-'))
-            row_cells[2].text = str(tl.get('deadline', '-'))
-            row_cells[3].text = str(tl.get('prioritas', '-'))
-    else:
-        doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
-
-    # 5. PENYEMATAN MULTI-GAMBAR VISUALISASI SECARA OTOMATIS
-    doc.add_paragraph()
-    add_section_header("5", "VISUALISASI PETA KONSEP RAPAT")
-    
-    # --- A. Mermaid ---
-    doc.add_paragraph("A. Diagram Alur Utama (Mermaid)").bold = True
-    mermaid_code = data.get('visual_mindmap', '')
-    if mermaid_code:
-        img_bytes = get_mermaid_png_bytes(mermaid_code)
-        if img_bytes: doc.add_picture(img_bytes, width=Inches(6.0))
-        else: doc.add_paragraph("(Gagal memuat gambar Mermaid dari server)")
-    else: doc.add_paragraph("(Data Mermaid kosong)")
-
-    # --- B. Cytoscape (via Graphviz) ---
-    doc.add_paragraph("B. Hubungan Topik (Network Graph)").bold = True
-    hubungan_topik = notulensi.get('hubungan_topik', [])
-    if hubungan_topik:
-        net_bytes = get_network_png_bytes(hubungan_topik)
-        if net_bytes: doc.add_picture(net_bytes, width=Inches(6.0))
-        else: doc.add_paragraph("(Gagal memuat gambar Network dari server)")
-    else: doc.add_paragraph("(Data Hubungan Topik kosong)")
-
-    # --- C. Markmap (via PlantUML Mindmap) ---
-    doc.add_paragraph("C. Peta Konsep (Mindmap)").bold = True
-    markmap_code = data.get('markmap_code', '')
-    if markmap_code:
-        mm_bytes = get_mindmap_png_bytes(markmap_code)
-        if mm_bytes: doc.add_picture(mm_bytes, width=Inches(6.0))
-        else: doc.add_paragraph("(Gagal memuat gambar Mindmap dari server)")
-    else: doc.add_paragraph("(Data Markmap kosong)")
-
-    # Note untuk Sunburst
-    p_note = doc.add_paragraph()
-    run_note = p_note.add_run("\n*Catatan Tambahan: Grafik Sunburst (Anatomi Rapat) dikomputasi eksklusif pada engine Javascript sisi klien (browser) dan tidak dapat diekstrak otomatis melalui generator dokumen backend ini tanpa client-side intervensi.")
-    run_note.italic = True
-    run_note.font.size = Pt(9)
-    run_note.font.color.rgb = RGBColor(100, 116, 139)
-
-    # 6. FOOTER / TTD
-    p_footer = doc.add_paragraph()
-    p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")
-    
-    doc_io = io.BytesIO()
-    doc.save(doc_io)
-    doc_io.seek(0)
-    return doc_io
-
-# =====================================================================
 # INISIALISASI SESSION STATE
 # =====================================================================
 if "logged_in" not in st.session_state: st.session_state["logged_in"] = False
 if "offline_transcript" not in st.session_state: st.session_state["offline_transcript"] = ""
 if "offline_summary" not in st.session_state: st.session_state["offline_summary"] = None
-if "offline_segments" not in st.session_state: st.session_state["offline_segments"] = []
-if "offline_audio_b64" not in st.session_state: st.session_state["offline_audio_b64"] = ""
-if "offline_audio_mime" not in st.session_state: st.session_state["offline_audio_mime"] = ""
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 if "sop_preview_html" not in st.session_state: st.session_state["sop_preview_html"] = None
 if "sop_word_html" not in st.session_state: st.session_state["sop_word_html"] = None
@@ -758,36 +532,25 @@ if not st.session_state["logged_in"]:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap');
     
-    /* === PEMBASMI GHOST TOOLTIP CHART YANG NYANGKUT SAAT LOGOUT === */
-    #vg-tooltip-element, .vg-tooltip { display: none !important; opacity: 0 !important; visibility: hidden !important; }
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] { background: transparent !important; }
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+        background: transparent !important;
+    }
     [data-testid="stSidebar"] { display: none; }
     
-    /* === STYLING TAB HALAMAN DEPAN SUPER ELEGAN === */
-    div[data-testid="stTabs"] { margin-bottom: 20px; }
     div[data-testid="stTabs"] button {
-        color: #f1f5f9 !important;
-        background-color: rgba(30, 41, 59, 0.6) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        margin-right: 10px !important;
-        padding: 8px 24px !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-        transition: all 0.3s ease !important;
-    }
-    div[data-testid="stTabs"] button:hover {
-        background-color: rgba(56, 189, 248, 0.2) !important;
-        border-color: rgba(56, 189, 248, 0.5) !important;
-        transform: translateY(-2px);
+        color: #94a3b8 !important;
+        background-color: transparent !important;
     }
     div[data-testid="stTabs"] button[aria-selected="true"] {
-        color: #ffffff !important;
-        background-color: #3b82f6 !important;
-        border: 1px solid #60a5fa !important;
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+        color: #38bdf8 !important;
+        background-color: rgba(56, 189, 248, 0.1) !important;
     }
-    div[data-baseweb="tab-list"] { border-bottom: none !important; background-color: transparent !important; }
+    div[data-baseweb="tab-list"] {
+        background-color: rgba(15, 23, 42, 0.5) !important;
+        border-radius: 12px;
+        padding: 5px;
+        margin-bottom: 20px;
+    }
 
     div[data-testid="stForm"] {
         background: rgba(15, 23, 42, 0.4) !important;
@@ -804,10 +567,21 @@ if not st.session_state["logged_in"]:
         border: 1px solid rgba(56, 189, 248, 0.6) !important;
     }
     
-    div[data-testid="stForm"] p, div[data-testid="stForm"] label { color: #e2e8f0 !important; font-weight: 600 !important; letter-spacing: 0.5px; }
+    div[data-testid="stForm"] p, div[data-testid="stForm"] label {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px;
+    }
     
-    div[data-baseweb="input"] { background-color: rgba(30, 41, 59, 0.7) !important; border-radius: 12px !important; border: 1px solid rgba(100, 116, 139, 0.5) !important; }
-    div[data-baseweb="input"]:focus-within { border-color: #38bdf8 !important; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important; }
+    div[data-baseweb="input"] {
+        background-color: rgba(30, 41, 59, 0.7) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(100, 116, 139, 0.5) !important;
+    }
+    div[data-baseweb="input"]:focus-within {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
+    }
     div[data-baseweb="input"] input { color: #ffffff !important; }
     div[data-baseweb="input"] input::placeholder { color: #64748b !important; }
     
@@ -831,15 +605,25 @@ if not st.session_state["logged_in"]:
     
     .login-title {
         font-family: 'Balsamiq Sans', cursive; 
-        color: #FFD166; font-weight: 700; font-size: 4.5rem;
-        text-shadow: 3px 3px 0px #FF9F1C, 0px 5px 15px rgba(0, 0, 0, 0.6); margin: 0; line-height: 1;
+        color: #FFD166; 
+        font-weight: 700;
+        font-size: 4.5rem;
+        text-shadow: 3px 3px 0px #FF9F1C, 0px 5px 15px rgba(0, 0, 0, 0.6); 
+        margin: 0;
+        line-height: 1;
     }
     
     @keyframes float-login { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
     @keyframes signal-login { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
     @keyframes pulse-login { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     
-    .germic-login-wrapper { width: 140px; height: 140px; animation: float-login 4s ease-in-out infinite; margin-right: 20px; filter: drop-shadow(0px 6px 15px rgba(0,0,0,0.5)); }
+    .germic-login-wrapper {
+        width: 140px; 
+        height: 140px; 
+        animation: float-login 4s ease-in-out infinite;
+        margin-right: 20px;
+        filter: drop-shadow(0px 6px 15px rgba(0,0,0,0.5));
+    }
     .signal-wave-login { transform-origin: 50px 12px; animation: signal-login 2s infinite; }
     .signal-wave-2-login { transform-origin: 50px 12px; animation-delay: 0.6s; animation: signal-login 2s infinite; }
     .animate-pulse-login { animation: pulse-login 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
@@ -848,93 +632,180 @@ if not st.session_state["logged_in"]:
     
     components.html("""
     <script>
-        const parentWindow = window.parent; const parentDoc = parentWindow.document;
-        if (parentWindow.nodeAnimFrame) cancelAnimationFrame(parentWindow.nodeAnimFrame);
+        const parentWindow = window.parent;
+        const parentDoc = parentWindow.document;
+        
+        if (parentWindow.nodeAnimFrame) {
+            cancelAnimationFrame(parentWindow.nodeAnimFrame);
+        }
         
         let canvas = parentDoc.getElementById('node-bg-canvas');
         if (!canvas) {
-            canvas = parentDoc.createElement('canvas'); canvas.id = 'node-bg-canvas';
-            Object.assign(canvas.style, { position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', zIndex: '-1', background: 'radial-gradient(circle at center, #1e1b4b 0%, #020617 100%)' });
+            canvas = parentDoc.createElement('canvas');
+            canvas.id = 'node-bg-canvas';
+            Object.assign(canvas.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100vw',
+                height: '100vh',
+                zIndex: '-1', 
+                background: 'radial-gradient(circle at center, #1e1b4b 0%, #020617 100%)' 
+            });
             parentDoc.body.prepend(canvas);
         }
 
         const ctx = canvas.getContext('2d');
-        let w, h, points = [], edges = [], sparks = [], time = 0, maxLayer = 6; let coreX, coreY;
+        let w, h, points = [], edges = [], sparks = [], time = 0, maxLayer = 6;
+        let coreX, coreY;
 
-        function resize() { w = canvas.width = parentWindow.innerWidth; h = canvas.height = parentWindow.innerHeight; coreX = w / 2; coreY = h * 0.25; initNetwork(); }
+        function resize() {
+            w = canvas.width = parentWindow.innerWidth;
+            h = canvas.height = parentWindow.innerHeight;
+            coreX = w / 2;
+            coreY = h * 0.25; 
+            initNetwork();
+        }
 
         function initNetwork() {
-            points = []; edges = []; sparks = []; points.push({ x: coreX, y: coreY, layer: 0 });
+            points = []; edges = []; sparks = [];
+            points.push({ x: coreX, y: coreY, layer: 0 });
             for(let l = 1; l <= maxLayer; l++) {
-                let radius = l * (Math.max(w, h) / 1.8) / maxLayer; let count = l * 12; 
+                let radius = l * (Math.max(w, h) / 1.8) / maxLayer;
+                let count = l * 12; 
                 for(let i = 0; i < count; i++) {
                     let angle = (i / count) * Math.PI * 2 + (Math.random() * 0.4);
-                    points.push({ x: coreX + Math.cos(angle) * (radius + (Math.random() * 60 - 30)), y: coreY + Math.sin(angle) * (radius + (Math.random() * 60 - 30)), layer: l });
+                    points.push({
+                        x: coreX + Math.cos(angle) * (radius + (Math.random() * 60 - 30)),
+                        y: coreY + Math.sin(angle) * (radius + (Math.random() * 60 - 30)),
+                        layer: l
+                    });
                 }
             }
             for(let i = 1; i < points.length; i++) {
-                let p = points[i]; let targets = points.filter(t => t.layer === p.layer - 1);
+                let p = points[i];
+                let targets = points.filter(t => t.layer === p.layer - 1);
                 if (targets.length > 0) {
-                    let closest = targets.reduce((prev, curr) => (Math.hypot(p.x - curr.x, p.y - curr.y) < Math.hypot(p.x - prev.x, p.y - prev.y)) ? curr : prev);
+                    let closest = targets.reduce((prev, curr) => {
+                        return (Math.hypot(p.x - curr.x, p.y - curr.y) < Math.hypot(p.x - prev.x, p.y - prev.y)) ? curr : prev;
+                    });
                     edges.push({ from: p, to: closest }); 
                 }
             }
         }
 
         class Spark {
-            constructor(startNode) { this.currentNode = startNode; this.findNextEdge(); this.progress = 0; this.speed = 0.01 + Math.random() * 0.015; }
-            findNextEdge() { let nextEdges = edges.filter(e => e.from === this.currentNode); this.edge = nextEdges.length > 0 ? nextEdges[Math.floor(Math.random() * nextEdges.length)] : null; }
+            constructor(startNode) {
+                this.currentNode = startNode;
+                this.findNextEdge();
+                this.progress = 0;
+                this.speed = 0.01 + Math.random() * 0.015;
+            }
+            findNextEdge() {
+                let nextEdges = edges.filter(e => e.from === this.currentNode);
+                if (nextEdges.length > 0) {
+                    this.edge = nextEdges[Math.floor(Math.random() * nextEdges.length)];
+                } else {
+                    this.edge = null;
+                }
+            }
             update() {
                 if (!this.edge) return true; 
                 this.progress += this.speed;
-                if (this.progress >= 1) { this.currentNode = this.edge.to; this.progress = 0; this.findNextEdge(); if (!this.edge) return true; }
+                if (this.progress >= 1) {
+                    this.currentNode = this.edge.to; 
+                    this.progress = 0;
+                    this.findNextEdge(); 
+                    if (!this.edge) return true;
+                }
                 return false;
             }
             draw() {
                 if (!this.edge) return;
-                let x = this.edge.from.x + (this.edge.to.x - this.edge.from.x) * this.progress; let y = this.edge.from.y + (this.edge.to.y - this.edge.from.y) * this.progress;
-                ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fillStyle = '#38bdf8'; ctx.shadowBlur = 15; ctx.shadowColor = '#0ea5e9'; ctx.fill(); ctx.shadowBlur = 0;
+                let x = this.edge.from.x + (this.edge.to.x - this.edge.from.x) * this.progress;
+                let y = this.edge.from.y + (this.edge.to.y - this.edge.from.y) * this.progress;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#38bdf8'; 
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#0ea5e9'; 
+                ctx.fill();
+                ctx.shadowBlur = 0;
             }
         }
 
-        parentWindow.addEventListener('resize', resize); resize();
+        parentWindow.addEventListener('resize', resize);
+        resize();
 
         function animate() {
-            ctx.clearRect(0, 0, w, h); time += 0.05; ctx.lineWidth = 1;
-            edges.forEach(e => { ctx.beginPath(); ctx.moveTo(e.from.x, e.from.y); ctx.lineTo(e.to.x, e.to.y); ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)'; ctx.stroke(); });
+            ctx.clearRect(0, 0, w, h);
+            time += 0.05;
+
+            ctx.lineWidth = 1;
+            edges.forEach(e => {
+                ctx.beginPath();
+                ctx.moveTo(e.from.x, e.from.y);
+                ctx.lineTo(e.to.x, e.to.y);
+                ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)'; 
+                ctx.stroke();
+            });
 
             if (Math.random() < 0.3) {
                 let outerNodes = points.filter(p => p.layer === maxLayer || p.layer === maxLayer - 1);
-                if(outerNodes.length > 0) sparks.push(new Spark(outerNodes[Math.floor(Math.random() * outerNodes.length)]));
+                if(outerNodes.length > 0) {
+                    let startNode = outerNodes[Math.floor(Math.random() * outerNodes.length)];
+                    sparks.push(new Spark(startNode));
+                }
             }
 
-            for (let i = sparks.length - 1; i >= 0; i--) { let s = sparks[i]; if (s.update()) sparks.splice(i, 1); else s.draw(); }
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                let s = sparks[i];
+                if (s.update()) sparks.splice(i, 1);
+                else s.draw();
+            }
 
             let pulse = Math.sin(time) * 8; 
-            ctx.beginPath(); ctx.arc(coreX, coreY, 35 + pulse, 0, Math.PI * 2);
-            let grad = ctx.createRadialGradient(coreX, coreY, 5, coreX, coreY, 45 + pulse);
-            grad.addColorStop(0, '#fcd34d'); grad.addColorStop(0.4, '#f59e0b'); grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
-            ctx.fillStyle = grad; ctx.fill();
             
-            ctx.beginPath(); ctx.arc(coreX, coreY, 12 + (pulse/3), 0, Math.PI * 2);
-            ctx.fillStyle = '#fffbeb'; ctx.shadowBlur = 20; ctx.shadowColor = '#f59e0b'; ctx.fill(); ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(coreX, coreY, 35 + pulse, 0, Math.PI * 2);
+            let grad = ctx.createRadialGradient(coreX, coreY, 5, coreX, coreY, 45 + pulse);
+            grad.addColorStop(0, '#fcd34d');
+            grad.addColorStop(0.4, '#f59e0b');
+            grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(coreX, coreY, 12 + (pulse/3), 0, Math.PI * 2);
+            ctx.fillStyle = '#fffbeb';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#f59e0b';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
             parentWindow.nodeAnimFrame = requestAnimationFrame(animate);
         }
+
         animate();
 
         parentWindow.addEventListener('mousemove', (e) => {
             const face = parentDoc.getElementById('germic-login-face');
             if (face) {
-                const limit = 8; const rect = face.getBoundingClientRect();
-                const mouseX = e.clientX - (rect.left + rect.width / 2); const mouseY = e.clientY - (rect.top + rect.height / 2);
-                face.style.transform = `translate(${Math.max(Math.min(mouseX / 30, limit), -limit)}px, ${Math.max(Math.min(mouseY / 30, limit), -limit)}px)`;
+                const limit = 8;
+                const rect = face.getBoundingClientRect();
+                const mouseX = e.clientX - (rect.left + rect.width / 2); 
+                const mouseY = e.clientY - (rect.top + rect.height / 2);
+                const moveX = Math.max(Math.min(mouseX / 30, limit), -limit);
+                const moveY = Math.max(Math.min(mouseY / 30, limit), -limit);
+                face.style.transform = `translate(${moveX}px, ${moveY}px)`;
                 face.style.transition = "transform 0.1s ease-out";
             }
         });
     </script>
     """, height=0, width=0)
 
-    tab_home, tab_login, tab_register = st.tabs(["🏠 Beranda Platform", "🔐 Login Portal", "📝 Daftar Akun Baru"])
+    tab_home, tab_login = st.tabs(["🏠 Beranda Platform", "🔐 Login Portal"])
 
     with tab_home:
         st.markdown("""
@@ -943,67 +814,132 @@ if not st.session_state["logged_in"]:
                 TranscribX Enterprise
             </h1>
             <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 700px; margin: 0 auto 30px auto; line-height: 1.6;">
-                Pusat Notulensi & Edukasi Cerdas AI. Mengubah suara rapat Anda menjadi teks, ringkasan eksekutif, daftar penugasan, dan SOP Akreditasi secara instan.
+                Pusat Notulensi & Edukasi Cerdas AI. Mengubah suara rapat Anda menjadi teks, ringkasan eksekutif, daftar penugasan, dan peta konsep visual secara instan.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown("""
         <style>
-        .glass-hover-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 25px; color: white; height: 100%; transition: transform 0.3s ease; }
-        .glass-hover-card:hover { transform: translateY(-5px); }
+        .glass-hover-card {
+            background: rgba(30, 41, 59, 0.6); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(56, 189, 248, 0.3); 
+            border-radius: 16px; 
+            padding: 25px; 
+            color: white; 
+            height: 100%; 
+            transition: transform 0.3s ease;
+        }
+        .glass-hover-card:hover {
+            transform: translateY(-5px);
+        }
         </style>
         """, unsafe_allow_html=True)
         
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 20px; font-weight: bold;'>✨ Kenapa Memilih TranscribX?</h3>", unsafe_allow_html=True)
         st.write("")
         col_f1, col_f2, col_f3 = st.columns(3)
-        glass_card = "<div class='glass-hover-card'><div style='font-size: 35px; margin-bottom: 15px;'>{icon}</div><h4 style='color: #e0f2fe; margin-top: 0; font-size: 18px;'>{title}</h4><p style='color: #94a3b8; font-size: 14px; line-height: 1.6;'>{desc}</p></div>"
-        with col_f1: st.markdown(glass_card.format(icon="🎙️", title="Transkripsi Live & Cepat", desc="Tangkap kata dari rapat Zoom/YouTube dengan teknologi Speech-to-Text mutakhir secara real-time."), unsafe_allow_html=True)
-        with col_f2: st.markdown(glass_card.format(icon="🤖", title="AI Smart Summary", desc="AI otomatis membuat ringkasan eksekutif, daftar tugas (Action Items), dan Peta Konsep (Mindmap)."), unsafe_allow_html=True)
-        with col_f3: st.markdown(glass_card.format(icon="🏥", title="SOP Generator (KARS/JCI)", desc="Ubah keputusan rapat menjadi dokumen SOP resmi Akreditasi RS lengkap dengan Flowchart Swimlane otomatis."), unsafe_allow_html=True)
+        glass_card = """
+        <div class='glass-hover-card'>
+            <div style='font-size: 35px; margin-bottom: 15px;'>{icon}</div>
+            <h4 style='color: #e0f2fe; margin-top: 0; font-size: 18px;'>{title}</h4>
+            <p style='color: #94a3b8; font-size: 14px; line-height: 1.6;'>{desc}</p>
+        </div>
+        """
+        with col_f1: 
+            st.markdown(glass_card.format(icon="🎙️", title="Transkripsi Live & Cepat", desc="Tangkap setiap kata dari rapat Zoom, YouTube, atau file audio Anda dengan teknologi Speech-to-Text mutakhir secara real-time."), unsafe_allow_html=True)
+        with col_f2: 
+            st.markdown(glass_card.format(icon="🤖", title="AI Smart Summary", desc="Tidak perlu pusing membaca transkrip panjang. AI otomatis membuat ringkasan eksekutif dan mengekstrak daftar tugas (Action Items)."), unsafe_allow_html=True)
+        with col_f3: 
+            st.markdown(glass_card.format(icon="🕸️", title="Auto Mindmap Visual", desc="Ubah diskusi kompleks menjadi Peta Konsep visual (Markmap & Cytoscape) yang interaktif, profesional, dan siap diunduh HD."), unsafe_allow_html=True)
 
         st.markdown("""
         <style>
-        .pricing-card { background-color: rgba(30, 41, 59, 0.4); padding: 30px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); height: 100%; min-height: 420px; text-align: center; position: relative; display: flex; flex-direction: column; transition: transform 0.2s ease; }
-        .pricing-card:hover { transform: scale(1.02); }
+        .pricing-card {
+            background-color: rgba(30, 41, 59, 0.4); 
+            padding: 30px 20px; 
+            border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            height: 100%; 
+            min-height: 420px; 
+            text-align: center; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            transition: transform 0.2s ease;
+        }
+        .pricing-card:hover {
+            transform: scale(1.02);
+        }
         </style>
         """, unsafe_allow_html=True)
         
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 20px; font-weight: bold;'>✨ Paket Langganan Tersedia</h3>", unsafe_allow_html=True)
         st.write("")
+        
         col_p1, col_p2, col_p3 = st.columns(3)
         
         with col_p1:
-            st.markdown("""<div class="pricing-card">
+            st.markdown("""
+            <div class="pricing-card">
                 <h3 style="color:#94a3b8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket BASIC</h3>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 35.000</h2><p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p><hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 35.000</h2>
+                <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
+                <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
-                    <li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>8x</b> Premium AI Summary</li><li>❌ <del>AI SOP Generator</del></li><li>✅ <b>1x</b> Upload Audio (Max 45mnt)</li><li>⏳ <b>30 Hari</b> Masa Aktif</li>
-                </ul></div>""", unsafe_allow_html=True)
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>8x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload Audio (Max 45mnt)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col_p2:
-            st.markdown("""<div class="pricing-card">
+            st.markdown("""
+            <div class="pricing-card">
                 <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; padding:6px 18px; border-radius:20px; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(239,68,68,0.4); letter-spacing:0.5px;">🔥 BEST SELLER</div>
                 <h3 style="color:#38bdf8; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">EXECUTIVE</h3>
-                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 69.000</h2><p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p><hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
+                <h2 style="color:white; font-size:32px; margin:10px 0;">Rp 69.000</h2>
+                <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
+                <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
-                    <li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>25x</b> Premium AI Summary</li><li>✅ <b>AI SOP Generator</b></li><li>✅ <b>5x</b> Upload Audio (Max 45mnt)</li><li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
-                </ul></div>""", unsafe_allow_html=True)
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>25x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>5x</b> Upload Audio (Max 45mnt)</li>
+                    <li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col_p3:
-            st.markdown("""<div class="pricing-card">
+            st.markdown("""
+            <div class="pricing-card">
                 <h3 style="color:#fb7185; margin-top:0; font-size:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Paket MASTER</h3>
                 <p style="color:#fca5a5; font-size:12px; margin:0 0 8px 0; font-weight:bold;">VIP / ENTERPRISE</p>
-                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 149.000</h2><p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p><hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
+                <h2 style="color:#e0f2fe; font-size:36px; margin:10px 0;">Rp 149.000</h2>
+                <p style="color:#94a3b8; font-size:13px; margin:0 0 20px 0;">/ 30 hari</p>
+                <hr style="border-color:rgba(255,255,255,0.1); margin:20px 0;">
                 <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#cbd5e1; text-align:left; line-height:2.2; flex-grow:1;">
-                    <li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>60x</b> Premium AI Summary</li><li>✅ <b>AI SOP Generator</b></li><li>✅ <b>15x</b> Upload Audio (Max 45mnt)</li><li>🌟 <b>Prioritas Support</b> via WA 24/7</li>
-                </ul></div>""", unsafe_allow_html=True)
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>60x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>15x</b> Upload Audio (Max 45mnt)</li>
+                    <li>🌟 <b>Prioritas Support</b> via WA 24/7</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
          
-        st.markdown("""<div style="text-align:center; margin-top:30px; padding:20px; background:rgba(56, 189, 248, 0.1); border-radius:12px; border:1px solid rgba(56, 189, 248, 0.3);">
+        st.write("")
+        st.markdown("""
+        <div style="text-align:center; margin-top:30px; padding:20px; background:rgba(56, 189, 248, 0.1); border-radius:12px; border:1px solid rgba(56, 189, 248, 0.3);">
             <h4 style="color:#38bdf8; margin:0;">Ingin aktivasi atau perpanjang paket?</h4>
-            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Silakan <b>Daftar / Login</b> terlebih dahulu melalui tab di atas untuk melakukan pembelian paket secara otomatis. 🚀</p>
-        </div>""", unsafe_allow_html=True)
+            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Hubungi <b>Admin (Gerry)</b> via WhatsApp untuk mendapatkan akses premium 🚀</p>
+        </div>
+        """, unsafe_allow_html=True)
+         
+        st.write("")
+        st.write("")
 
     with tab_login:
         col1, col2, col3 = st.columns([1, 1.5, 1])
@@ -1011,6 +947,7 @@ if not st.session_state["logged_in"]:
             st.write("")
             st.write("")
             st.write("")
+            
             title_html = """
             <div style='display: flex; justify-content: center; align-items: center; margin-bottom: 10px;'>
                 <div class="germic-login-wrapper">
@@ -1024,7 +961,11 @@ if not st.session_state["logged_in"]:
                         <rect x="87" y="45" width="8" height="20" rx="4" fill="#1e293b"/>
                         <rect x="15" y="25" width="70" height="65" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
                         <rect x="22" y="35" width="56" height="40" rx="12" fill="#1e1b4b"/>
-                        <g id="germic-login-face"><rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/><rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/></g>
+                        <g id="germic-login-face">
+                            <rect x="33" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
+                            <rect x="55" y="45" width="12" height="15" rx="3" fill="#38bdf8"/>
+                            <rect x="42" y="65" width="16" height="3" rx="1.5" fill="#818cf8"/>
+                        </g>
                     </svg>
                 </div>
                 <h1 class='login-title'>TranscribX</h1>
@@ -1033,7 +974,11 @@ if not st.session_state["logged_in"]:
             st.markdown(title_html, unsafe_allow_html=True)
             
             with st.form("login_form"):
-                st.markdown("""<h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3><p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>""", unsafe_allow_html=True)
+                st.markdown("""
+                <h3 style='text-align: center; color: #e0f2fe; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin-bottom: 5px; letter-spacing: 1px;'>Secure Login</h3>
+                <p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;'>Portal Notulensi AI Enterprise. Masuk untuk melanjutkan.</p>
+                """, unsafe_allow_html=True)
+                
                 email_login = st.text_input("Email Address", placeholder="Ketik email Anda di sini...")
                 pass_login = st.text_input("Password", type="password", placeholder="••••••••")
                 st.write("")
@@ -1046,88 +991,40 @@ if not st.session_state["logged_in"]:
                             if "idToken" in user_data:
                                 uid = user_data["localId"]
                                 record_login(uid, email_login)
+                                
                                 if email_login in ADMIN_EMAILS_CONFIG:
                                     st.session_state.update({"logged_in": True, "user_email": email_login, "user_uid": uid, "user_paket": "ADMIN", "user_kuota_ai": 999999, "user_kuota_upload": 999999, "sisa_hari": 999999})
                                     st.success("✅ Selamat datang, Admin! Akses Unlimited diaktifkan.")
                                     st.rerun()
+                                
                                 user_db_info = check_subscription(uid)
                                 if user_db_info.get("status_subscription", "non-aktif") == "aktif":
                                     cek_reset_kuota_bulanan(uid, user_db_info)
-                                    st.session_state.update({"logged_in": True, "user_email": email_login, "user_uid": uid, "user_paket": user_db_info.get("paket", "BASIC"), "user_kuota_ai": user_db_info.get("kuota_ai", 0), "user_kuota_upload": user_db_info.get("kuota_upload", 0), "sisa_hari": hitung_sisa_hari(user_db_info.get("tanggal_berakhir")), "tanggal_berakhir": user_db_info.get("tanggal_berakhir", "")})
+                                    st.session_state.update({
+                                        "logged_in": True, "user_email": email_login, "user_uid": uid, 
+                                        "user_paket": user_db_info.get("paket", "BASIC"), "user_kuota_ai": user_db_info.get("kuota_ai", 0), 
+                                        "user_kuota_upload": user_db_info.get("kuota_upload", 0), "sisa_hari": hitung_sisa_hari(user_db_info.get("tanggal_berakhir")), 
+                                        "tanggal_berakhir": user_db_info.get("tanggal_berakhir", "")
+                                    })
                                     st.success("Login berhasil! Memuat sistem...")
                                     st.rerun()
                                 else:
-                                    st.session_state.update({"logged_in": True, "user_email": email_login, "user_uid": uid, "user_paket": "NON-AKTIF", "user_kuota_ai": 0, "user_kuota_upload": 0, "sisa_hari": 0})
-                                    st.warning("⚠️ Akun Anda belum memiliki paket aktif. Silakan beli paket di menu Info Paket.")
-                                    st.rerun()
+                                    st.error(f"⚠️ Akun Anda sudah tidak aktif. Hubungi Admin untuk perpanjangan.")
                             else:
                                 st.error(f"⚠️ {user_data.get('error', {}).get('message', 'Login gagal')}")
-                    else: st.warning("Silakan masukkan email dan password.")
-
-    with tab_register:
-        col_r1, col_r2, col_r3 = st.columns([1, 1.5, 1])
-        with col_r2:
-            st.write("")
-            st.write("")
-            st.write("")
-            st.markdown("""<div style='text-align: center; margin-bottom: 20px;'><h1 class='login-title' style='font-size: 3rem;'>Daftar Akun</h1><p style='color: #94a3b8; font-size: 0.9rem;'>Buat akun baru untuk mulai menggunakan TranscribX.</p></div>""", unsafe_allow_html=True)
-            with st.form("register_form_user"):
-                st.markdown("<h3 style='text-align: center; color: #e0f2fe; margin-bottom: 15px; letter-spacing: 1px;'>Form Pendaftaran</h3>", unsafe_allow_html=True)
-                email_reg_user = st.text_input("Email Address", placeholder="Masukkan email aktif Anda...")
-                pass_reg_user = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
-                pass_confirm = st.text_input("Konfirmasi Password", type="password", placeholder="Ulangi password")
-                st.markdown(f"<p style='color:#e2e8f0; font-size:14px; margin-top:10px; margin-bottom:5px;'>🛡️ Verifikasi Keamanan: <b>Berapa hasil dari {st.session_state.captcha_n1} + {st.session_state.captcha_n2} ?</b></p>", unsafe_allow_html=True)
-                captcha_answer = st.text_input("Jawaban Captcha", placeholder="Ketik angka jawaban...", label_visibility="collapsed")
-                st.write("")
-                btn_reg_user = st.form_submit_button("📝 Buat Akun Sekarang", use_container_width=True, type="primary")
-                
-                if btn_reg_user:
-                    now = datetime.now()
-                    expected_ans = str(st.session_state.captcha_n1 + st.session_state.captcha_n2)
-                    if (now - st.session_state.last_reg_attempt).total_seconds() < 10:
-                        st.error("⏳ Terlalu banyak permintaan! Sistem mendeteksi aktivitas mencurigakan. Silakan tunggu 10 detik.")
-                    elif captcha_answer.strip() != expected_ans:
-                        st.session_state.last_reg_attempt = now 
-                        st.error("❌ Jawaban Captcha salah! Silakan hitung dengan benar.")
-                        st.session_state.captcha_n1 = random.randint(1, 10)
-                        st.session_state.captcha_n2 = random.randint(1, 10)
-                    elif not email_reg_user or len(pass_reg_user) < 6:
-                        st.session_state.last_reg_attempt = now
-                        st.warning("⚠️ Masukkan email yang valid dan password minimal 6 karakter.")
-                    elif pass_reg_user != pass_confirm:
-                        st.session_state.last_reg_attempt = now
-                        st.warning("⚠️ Password dan Konfirmasi Password tidak cocok!")
                     else:
-                        st.session_state.last_reg_attempt = now
-                        with st.spinner("Membuat akun Anda..."):
-                            new_user = register_firebase(email_reg_user, pass_reg_user)
-                            if "idToken" in new_user:
-                                uid = new_user["localId"]
-                                sekarang = datetime.now()
-                                db.collection("users").document(uid).set({
-                                    "email": email_reg_user, "status_subscription": "non-aktif", "paket": "NON-AKTIF",
-                                    "kuota_ai": 0, "kuota_upload": 0, "tanggal_mulai": sekarang.isoformat(),
-                                    "tanggal_berakhir": sekarang.isoformat(), "reset_kuota_terakhir": sekarang.isoformat(),
-                                    "last_login": "Belum pernah login", "login_count": 0
-                                })
-                                st.success("✅ Pendaftaran berhasil! Silakan klik tab '🔐 Login Portal' di atas untuk masuk dan memilih paket.")
-                                st.session_state.captcha_n1 = random.randint(1, 10)
-                                st.session_state.captcha_n2 = random.randint(1, 10)
-                            else: st.error(f"⚠️ Gagal memproses: Email mungkin sudah terdaftar.")
+                        st.warning("Silakan masukkan email dan password.")
 
 # =====================================================================
 # APLIKASI UTAMA (SETELAH LOGIN)
 # =====================================================================
 else:
-# --- TAMBAHKAN BLOK KODE INI ---
     try:
         if st.session_state.get("user_uid"):
             waktu_wib = (datetime.utcnow() + timedelta(hours=7)).isoformat()
-            db.collection("users").document(st.session_state["user_uid"]).update({
-                "last_active": waktu_wib,
-                "is_online": True
-            })
+            db.collection("users").document(st.session_state["user_uid"]).update({"last_active": waktu_wib, "is_online": True})
     except: pass
+
     st.markdown("""
     <style>
     #node-bg-canvas { display: none !important; opacity: 0 !important; visibility: hidden !important; }
@@ -1135,10 +1032,19 @@ else:
     [data-testid="stSidebar"] { display: flex !important; }
     </style>
     """, unsafe_allow_html=True)
-    components.html("<script>try { const canvas = window.parent.document.getElementById('node-bg-canvas'); if (canvas) { canvas.remove(); } } catch(e) {}</script>", height=0)
+    
+    components.html("""
+    <script>
+        try {
+            const canvas = window.parent.document.getElementById('node-bg-canvas');
+            if (canvas) { canvas.remove(); }
+        } catch(e) {}
+    </script>
+    """, height=0)
     
     with st.sidebar:
         st.markdown("<h3 style='text-align: center; color: #475569;'>🤖 AI Assistant</h3>", unsafe_allow_html=True)
+
         germic_html = """
         <style>
             @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } }
@@ -1181,10 +1087,10 @@ else:
         components.html(germic_html, height=250)
         st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px; font-weight: bold; margin-top:-20px;'>Sistem Online</p>", unsafe_allow_html=True)
         
-        profile_placeholder = st.empty()
         def render_sidebar_profile():
             if st.session_state.get("logged_in"):
                 user_email = st.session_state.get('user_email')
+                
                 if is_admin():
                     card_class = "profile-card admin"
                     paket_str = "👑 ADMIN (Unlimited)"
@@ -1202,61 +1108,45 @@ else:
                                 st.session_state["user_paket"] = fresh_data.get("paket", "NON-AKTIF")
                                 st.session_state["sisa_hari"] = hitung_sisa_hari(fresh_data.get("tanggal_berakhir"))
                     except: pass
-                    
+
                     paket = st.session_state.get('user_paket', 'NON-AKTIF')
                     sisa_hari = st.session_state.get('sisa_hari', 0)
+                    
                     if paket == 'NON-AKTIF':
                         card_class = "profile-card user-inactive"
                         paket_str = "NON-AKTIF"
-                        ai_str, up_str = "0x", "0x"
+                        ai_str = "0x"
+                        up_str = "0x"
                         hari_str = "Masa Aktif: Habis"
                     else:
                         paket_str = paket 
-                        ai_str = f"{st.session_state.get('user_kuota_ai', 0)}x"
-                        up_str = f"{st.session_state.get('user_kuota_upload', 0)}x"
+                        ai_val = st.session_state.get('user_kuota_ai', 0)
+                        up_val = st.session_state.get('user_kuota_upload', 0)
+                        ai_str = f"{ai_val}x"
+                        up_str = f"{up_val}x"
                         hari_str = f"⏳ Sisa: {sisa_hari} hari"
-                        card_class = "profile-card user-warning" if sisa_hari <= 3 else "profile-card user-active"
+                        
+                        if sisa_hari <= 3: card_class = "profile-card user-warning"
+                        else: card_class = "profile-card user-active"
 
-                profile_html = f"""<div class="{card_class}"><div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div><div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div><div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;"><div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div><div style="font-size: 12px; margin-bottom: 5px;">🎙️ <b>Transcribe:</b> ∞ Unlimited</div><div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div><div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div></div><div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">{hari_str}</div></div>"""
-                with profile_placeholder.container():
-                    st.markdown(profile_html, unsafe_allow_html=True)
-                    if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0: st.warning("⚠️ Masa aktif hampir habis! Segera perpanjang.")
-        
+                profile_html = f"""<div class="{card_class}">
+<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div>
+<div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div>
+<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+<div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div>
+<div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div>
+<div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div>
+</div>
+<div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">
+{hari_str}
+</div>
+</div>"""
+                st.markdown(profile_html, unsafe_allow_html=True)
+                
+                if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0:
+                    st.warning("⚠️ Masa aktif hampir habis! Segera hubungi admin.")
+
         render_sidebar_profile()
-
-        clock_html = """
-        <style>@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap'); .digital-clock { background: linear-gradient(145deg, #0f172a, #1e293b); border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 0 15px rgba(56, 189, 248, 0.1); border-radius: 12px; padding: 15px 10px; text-align: center; margin-top: 5px; } .time-display { font-family: 'Orbitron', sans-serif; color: #38bdf8; font-size: 24px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px rgba(56, 189, 248, 0.6); display: flex; justify-content: center; align-items: center; } .date-display { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; font-weight: 700; } .blink { animation: blinker 1s linear infinite; margin: 0 2px; color: #7dd3fc; } @keyframes blinker { 50% { opacity: 0.2; } }</style>
-        <div class="digital-clock"><div class="time-display"><span id="hour">00</span><span class="blink">:</span><span id="minute">00</span><span class="blink">:</span><span id="second">00</span></div><div class="date-display" id="date">SENIN, 01 JAN 2026 • WIB</div></div>
-        <script>
-            function updateClock() {
-                const now = new Date(); const options = { timeZone: 'Asia/Jakarta' }; const wibDate = new Date(now.toLocaleString('en-US', options));
-                document.getElementById('hour').innerText = String(wibDate.getHours()).padStart(2, '0'); document.getElementById('minute').innerText = String(wibDate.getMinutes()).padStart(2, '0'); document.getElementById('second').innerText = String(wibDate.getSeconds()).padStart(2, '0');
-                const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']; const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-                document.getElementById('date').innerText = hari[wibDate.getDay()] + ', ' + String(wibDate.getDate()).padStart(2, '0') + ' ' + bulan[wibDate.getMonth()] + ' ' + wibDate.getFullYear() + ' • WIB';
-            }
-            setInterval(updateClock, 1000); updateClock();
-        </script>
-        """
-        components.html(clock_html, height=100)
-        
-        if is_admin():
-            if st.button("🔄 Refresh Klien Online", use_container_width=True): pass 
-            try:
-                # GANTI MENJADI KODE BARU INI:
-                batas_waktu_online = (datetime.utcnow() + timedelta(hours=7) - timedelta(minutes=5)).isoformat()
-                active_users_ref = db.collection("users").where("last_active", ">=", batas_waktu_online).stream()
-                online_list_html, count_online = "", 0
-                for doc in active_users_ref:
-                    u_data = doc.to_dict()
-                    if u_data.get("is_online", True) == False: continue 
-                    email_klien = u_data.get("email", "-")
-                    display_email = email_klien if len(email_klien) <= 22 else email_klien[:19] + "..."
-                    online_list_html += f"<li style='margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;'><span style='color: #10b981; font-size: 14px;'>●</span> {display_email}</li>"
-                    count_online += 1
-                if count_online == 0: online_list_html = "<li style='color: #94a3b8; font-style: italic; text-align: center; padding-top: 10px;'>Belum ada klien online</li>"
-                admin_panel_html = f"""<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;"><div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;"><div style="position: relative; width: 10px; height: 10px;"><div style="position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: ping-dot 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div><div style="position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: #059669; border-radius: 50%;"></div></div>KLIEN ONLINE ({count_online})</div><ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; color: #475569; max-height: 180px; overflow-y: auto;">{online_list_html}</ul></div><style>@keyframes ping-dot {{ 75%, 100% {{ transform: scale(2.5); opacity: 0; }} }} ul::-webkit-scrollbar {{ width: 4px; }} ul::-webkit-scrollbar-track {{ background: #f1f5f9; border-radius: 4px; }} ul::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 4px; }}</style>"""
-                st.markdown(admin_panel_html, unsafe_allow_html=True)
-            except: pass
 
     colA, colB = st.columns([8, 1])
     with colB:
@@ -1272,7 +1162,7 @@ else:
     st.title("🎙️ TranscribX: SmartDose Enterprise Transcription")
 
     if is_admin():
-        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture", "📁 Upload Rekaman", "📝 SOP Generator", "💳 Info Paket"])
+        tabs = st.tabs(["👑 Admin Panel", "🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "📝 SOP Generator", "💳 Info Paket Langganan"])
         tab_admin, tab1, tab2, tab_sop, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3], tabs[4]
         
         with tab_admin:
@@ -1284,7 +1174,10 @@ else:
                     user_info = doc.to_dict()
                     email_user = user_info.get("email", "-")
                     cek_dan_update_status_kadaluarsa(doc.id, user_info)
-                    user_info = db.collection("users").document(doc.id).get().to_dict()
+                    
+                    doc_refresh = db.collection("users").document(doc.id).get()
+                    user_info = doc_refresh.to_dict()
+                    
                     if email_user in ADMIN_EMAILS_CONFIG:
                         status_user, paket_user, sisa_ai, sisa_up, sisa_hari_display = "admin", "ADMIN", "∞", "∞", "∞"
                         last_login, login_count = user_info.get("last_login", "Tidak diketahui"), user_info.get("login_count", 0)
@@ -1293,6 +1186,7 @@ else:
                         paket_user = user_info.get("paket", "BASIC" if status_user == "aktif" else "-")
                         sisa_ai, sisa_up = user_info.get("kuota_ai", 0), user_info.get("kuota_upload", 0)
                         last_login, login_count = user_info.get("last_login", "Belum pernah login"), user_info.get("login_count", 0)
+                        
                         tanggal_berakhir = user_info.get("tanggal_berakhir")
                         if status_user == "aktif" and tanggal_berakhir:
                             sisa_hari = hitung_sisa_hari(tanggal_berakhir)
@@ -1301,26 +1195,47 @@ else:
                         else: sisa_hari_display = "Kadaluarsa"
                     
                     last_login_display = last_login[:19].replace("T", " ") if isinstance(last_login, str) and len(last_login) > 19 and last_login not in ["Belum pernah login", "Tidak diketahui"] else last_login
-                    users_list.append({"Email": email_user, "Status": status_user.split()[0], "Paket": paket_user, "Sisa AI": sisa_ai, "Sisa Upload": sisa_up, "Sisa Hari": sisa_hari_display, "Last Login": last_login_display, "Login Count": login_count, "UID": doc.id, "UID_Short": doc.id[:8] + "..."})
+                    users_list.append({
+                        "Email": email_user, "Status": status_user.split()[0], "Paket": paket_user, "Sisa AI": sisa_ai, "Sisa Upload": sisa_up,
+                        "Sisa Hari": sisa_hari_display, "Last Login": last_login_display, "Login Count": login_count, "UID": doc.id, "UID_Short": doc.id[:8] + "..."
+                    })
 
-            total_users, total_aktif, total_nonaktif, total_admin = len(users_list), sum(1 for u in users_list if u['Status'] == 'aktif'), sum(1 for u in users_list if 'non-aktif' in u['Status']), sum(1 for u in users_list if u['Status'] == 'admin')
+            total_users = len(users_list)
+            total_aktif = sum(1 for u in users_list if u['Status'] == 'aktif')
+            total_nonaktif = sum(1 for u in users_list if 'non-aktif' in u['Status'])
+            total_admin = sum(1 for u in users_list if u['Status'] == 'admin')
             active_now = get_active_users_count()
 
             col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-            def build_metric_card(title, value, subtext, icon, type_class): return f"""<div class="metric-card metric-{type_class}"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div><p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase;">{title}</p><h2 style="margin: 5px 0 0 0; color: #0f172a; font-size: 28px; line-height: 1;">{value}</h2><p style="margin: 8px 0 0 0; color: #10b981; font-size: 11px; font-weight: 600; background: #d1fae5; display: inline-block; padding: 2px 8px; border-radius: 10px;">{subtext}</p></div><div style="font-size: 28px; opacity: 0.9;">{icon}</div></div></div>"""
+            def build_metric_card(title, value, subtext, icon, type_class):
+                return f"""
+                <div class="metric-card metric-{type_class}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase;">{title}</p>
+                            <h2 style="margin: 5px 0 0 0; color: #0f172a; font-size: 28px; line-height: 1;">{value}</h2>
+                            <p style="margin: 8px 0 0 0; color: #10b981; font-size: 11px; font-weight: 600; background: #d1fae5; display: inline-block; padding: 2px 8px; border-radius: 10px;">{subtext}</p>
+                        </div>
+                        <div style="font-size: 28px; opacity: 0.9;">{icon}</div>
+                    </div>
+                </div>
+                """
             with col_m1: st.markdown(build_metric_card("Total Users", total_users, f"↑ {active_now} online", "👥", "total"), unsafe_allow_html=True)
             with col_m2: st.markdown(build_metric_card("Klien Aktif", total_aktif, "Paket Berjalan", "✅", "aktif"), unsafe_allow_html=True)
             with col_m3: st.markdown(build_metric_card("Non-Aktif", total_nonaktif, "Perlu Follow-up", "❌", "nonaktif"), unsafe_allow_html=True)
             with col_m4: st.markdown(build_metric_card("Admin", total_admin, "Superuser", "👑", "admin"), unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
-            with st.expander("➕ Registrasi Akun Klien Baru (Manual)", expanded=False):
+            
+            with st.expander("➕ Registrasi Akun Klien Baru", expanded=False):
                 with st.form("admin_register_form", clear_on_submit=True):
                     col_reg1, col_reg2, col_reg3 = st.columns(3)
                     with col_reg1: email_reg = st.text_input("Email Klien Baru", placeholder="email@klien.com")
                     with col_reg2: pass_reg = st.text_input("Password Klien", type="password", help="Minimal 6 karakter")
                     with col_reg3: paket_reg = st.selectbox("Pilih Paket Awal", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"])
-                    if st.form_submit_button("Daftarkan Klien", type="primary", use_container_width=True):
+                    btn_reg = st.form_submit_button("Daftarkan Klien", type="primary", use_container_width=True)
+                    
+                    if btn_reg:
                         if email_reg and len(pass_reg) >= 6:
                             if email_reg in ADMIN_EMAILS_CONFIG: st.error("⚠️ Email ini terdaftar sebagai Admin.")
                             else:
@@ -1328,7 +1243,16 @@ else:
                                     new_user = register_firebase(email_reg, pass_reg)
                                     if "idToken" in new_user:
                                         uid, sekarang = new_user["localId"], datetime.now()
-                                        db.collection("users").document(uid).set({"email": email_reg, "status_subscription": "aktif" if paket_reg != "NON-AKTIF" else "non-aktif", "paket": paket_reg, "kuota_ai": PAKET_LANGGANAN[paket_reg]["ai_limit"] if paket_reg != "NON-AKTIF" else 0, "kuota_upload": PAKET_LANGGANAN[paket_reg]["upload_limit"] if paket_reg != "NON-AKTIF" else 0, "tanggal_mulai": sekarang.isoformat(), "tanggal_berakhir": (sekarang + timedelta(days=30)).isoformat(), "reset_kuota_terakhir": sekarang.isoformat(), "last_login": "Belum pernah login", "login_count": 0})
+                                        tanggal_berakhir = sekarang + timedelta(days=30)
+                                        status_reg = "aktif" if paket_reg != "NON-AKTIF" else "non-aktif"
+                                        kuota_ai = PAKET_LANGGANAN[paket_reg]["ai_limit"] if paket_reg != "NON-AKTIF" else 0
+                                        kuota_upload = PAKET_LANGGANAN[paket_reg]["upload_limit"] if paket_reg != "NON-AKTIF" else 0
+                                        db.collection("users").document(uid).set({
+                                            "email": email_reg, "status_subscription": status_reg, "paket": paket_reg,
+                                            "kuota_ai": kuota_ai, "kuota_upload": kuota_upload, "tanggal_mulai": sekarang.isoformat(),
+                                            "tanggal_berakhir": tanggal_berakhir.isoformat(), "reset_kuota_terakhir": sekarang.isoformat(),
+                                            "last_login": "Belum pernah login", "login_count": 0
+                                        })
                                         st.success(f"✅ Akun {email_reg} berhasil dibuat!")
                                         st.rerun()
                                     else: st.error(f"⚠️ Gagal mendaftar: {new_user.get('error', {}).get('message', 'Gagal')}")
@@ -1338,11 +1262,14 @@ else:
             col_chart1, col_chart2 = st.columns(2)
             with col_chart1:
                 st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px;'><b>Distribusi Status Pengguna</b></p>", unsafe_allow_html=True)
-                st.bar_chart(pd.DataFrame([u['Status'] for u in users_list], columns=['Status']).value_counts().reset_index(name='Jumlah'), x="Status", y="Jumlah", color="#3b82f6")
+                status_counts = pd.DataFrame([u['Status'] for u in users_list], columns=['Status']).value_counts().reset_index(name='Jumlah')
+                st.bar_chart(status_counts, x="Status", y="Jumlah", color="#3b82f6")
             with col_chart2:
                 st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px;'><b>Distribusi Paket Langganan</b></p>", unsafe_allow_html=True)
                 paket_list = [u['Paket'] for u in users_list if u['Paket'] != 'ADMIN']
-                if paket_list: st.bar_chart(pd.DataFrame(paket_list, columns=['Paket']).value_counts().reset_index(name='Jumlah'), x="Paket", y="Jumlah", color="#10b981")
+                if paket_list:
+                    paket_counts = pd.DataFrame(paket_list, columns=['Paket']).value_counts().reset_index(name='Jumlah')
+                    st.bar_chart(paket_counts, x="Paket", y="Jumlah", color="#10b981")
                 else: st.info("Belum ada data paket klien.")
 
             st.markdown("---")
@@ -1359,12 +1286,29 @@ else:
 
             if filtered_users:
                 df_display = pd.DataFrame([{ "📧 Email": u['Email'], "📊 Status": str(u['Status']).upper(), "📦 Paket": u['Paket'], "💎 AI": str(u['Sisa AI']), "📤 Upload": str(u['Sisa Upload']), "⏳ Sisa Hari": str(u['Sisa Hari']), "🕒 Last Login": u['Last Login'], "🔑 ID": u['UID_Short'] } for u in filtered_users])
-                def color_status(val): return 'background-color: #dbeafe; color: #1e40af; font-weight: bold' if val == "ADMIN" else 'background-color: #d1fae5; color: #065f46; font-weight: bold' if val == "AKTIF" else 'background-color: #fee2e2; color: #991b1b; font-weight: bold' if "NON-AKTIF" in str(val) else ''
-                def color_sisa_hari(val): return 'background-color: #dbeafe; color: #1e40af; font-weight: bold' if val == "∞" else 'background-color: #fee2e2; color: #991b1b; font-weight: bold' if "Kadaluarsa" in str(val) else 'background-color: #fef3c7; color: #92400e; font-weight: bold' if "⚠️" in str(val) else 'background-color: #d1fae5; color: #065f46' if "hari" in str(val) and int(''.join(filter(str.isdigit, str(val)))) > 7 else ''
-                try: styled_df = df_display.astype(str).style.map(color_status, subset=['📊 Status']).map(color_sisa_hari, subset=['⏳ Sisa Hari'])
-                except AttributeError: styled_df = df_display.astype(str).style.applymap(color_status, subset=['📊 Status']).applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                def color_status(val):
+                    if val == "ADMIN": return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                    elif val == "AKTIF": return 'background-color: #d1fae5; color: #065f46; font-weight: bold'
+                    elif "NON-AKTIF" in str(val): return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                    return ''
+                def color_sisa_hari(val):
+                    if val == "∞": return 'background-color: #dbeafe; color: #1e40af; font-weight: bold'
+                    elif "Kadaluarsa" in str(val): return 'background-color: #fee2e2; color: #991b1b; font-weight: bold'
+                    elif "⚠️" in str(val): return 'background-color: #fef3c7; color: #92400e; font-weight: bold'
+                    elif "hari" in str(val):
+                        try:
+                            if int(''.join(filter(str.isdigit, str(val)))) > 7: return 'background-color: #d1fae5; color: #065f46'
+                        except: pass
+                    return ''
+                
+                df_display = df_display.astype(str)
+                try: styled_df = df_display.style.map(color_status, subset=['📊 Status']).map(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                except AttributeError: styled_df = df_display.style.applymap(color_status, subset=['📊 Status']).applymap(color_sisa_hari, subset=['⏳ Sisa Hari'])
+                
                 st.dataframe(styled_df, use_container_width=True, hide_index=True, height=350)
-            else: st.info("🔍 Tidak ada user yang sesuai dengan filter.")
+                
+            else: 
+                st.info("🔍 Tidak ada user yang sesuai dengan filter.")
                 
             st.markdown("---")
             st.markdown("### 🛠️ Action Center (Kelola & Edit Klien)")
@@ -1373,153 +1317,302 @@ else:
                 with st.container(border=True):
                     selected_email = st.selectbox("🎯 Pilih Akun Klien yang Ingin Dikelola:", user_options, key="action_center_select")
                     selected_user = next((u for u in filtered_users if u['Email'] == selected_email), None)
+                    
                     if selected_user:
-                        st.markdown(f"""<div style='background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 5px solid #3b82f6; margin-bottom: 20px;'><h4 style='margin: 0; color: #1e293b;'>Pengaturan: <b>{selected_user['Email']}</b></h4><div style='display: flex; gap: 20px; margin-top: 10px; font-size: 14px; color: #475569;'><span>📦 Paket: <b>{selected_user['Paket']}</b></span><span>💎 AI: <b>{selected_user['Sisa AI']}</b></span><span>📤 Upload: <b>{selected_user['Sisa Upload']}</b></span><span>⏳ Masa Aktif: <b>{selected_user['Sisa Hari']}</b></span></div></div>""", unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div style='background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 5px solid #3b82f6; margin-bottom: 20px;'>
+                            <h4 style='margin: 0; color: #1e293b;'>Pengaturan: <b>{selected_user['Email']}</b></h4>
+                            <div style='display: flex; gap: 20px; margin-top: 10px; font-size: 14px; color: #475569;'>
+                                <span>📦 Paket: <b>{selected_user['Paket']}</b></span>
+                                <span>💎 AI: <b>{selected_user['Sisa AI']}</b></span>
+                                <span>📤 Upload: <b>{selected_user['Sisa Upload']}</b></span>
+                                <span>⏳ Masa Aktif: <b>{selected_user['Sisa Hari']}</b></span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
                         tab_edit, tab_extend, tab_topup, tab_history, tab_danger = st.tabs(["✏️ Ubah Paket", "📅 Perpanjang Masa Aktif", "🔋 Top-Up Kuota", "🔍 Riwayat & Reset", "❌ Hapus Akun"])
+                        
                         with tab_edit:
                             st.caption("Mengubah paket akan mengatur ulang kuota sesuai paket baru dan mereset masa aktif menjadi 30 hari dari sekarang.")
                             with st.form("form_edit_paket"):
                                 col_e1, col_e2 = st.columns([3, 1])
-                                with col_e1: new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"], index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0, label_visibility="collapsed")
-                                if st.form_submit_button("💾 Simpan", type="primary", use_container_width=True):
+                                with col_e1:
+                                    new_paket = st.selectbox("Pilih Paket Baru", ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"], 
+                                                           index=["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"].index(selected_user['Paket']) if selected_user['Paket'] in ["BASIC", "EXECUTIVE", "MASTER", "NON-AKTIF"] else 0,
+                                                           label_visibility="collapsed")
+                                with col_e2:
+                                    btn_update_paket = st.form_submit_button("💾 Simpan", type="primary", use_container_width=True)
+                                
+                                if btn_update_paket:
                                     uid, sekarang = selected_user['UID'], datetime.now()
-                                    if new_paket != "NON-AKTIF": db.collection("users").document(uid).update({"status_subscription": "aktif", "paket": new_paket, "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"], "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"], "tanggal_mulai": sekarang.isoformat(), "tanggal_berakhir": (sekarang + timedelta(days=30)).isoformat(), "reset_kuota_terakhir": sekarang.isoformat()})
-                                    else: db.collection("users").document(uid).update({"status_subscription": "non-aktif", "paket": "NON-AKTIF", "kuota_ai": 0, "kuota_upload": 0, "tanggal_berakhir": sekarang.isoformat()})
-                                    st.success(f"✅ Paket diubah ke {new_paket}.")
-                                    time.sleep(1); st.rerun()
+                                    if new_paket != "NON-AKTIF":
+                                        db.collection("users").document(uid).update({
+                                            "status_subscription": "aktif", "paket": new_paket, "kuota_ai": PAKET_LANGGANAN[new_paket]["ai_limit"],
+                                            "kuota_upload": PAKET_LANGGANAN[new_paket]["upload_limit"], "tanggal_mulai": sekarang.isoformat(),
+                                            "tanggal_berakhir": (sekarang + timedelta(days=30)).isoformat(), "reset_kuota_terakhir": sekarang.isoformat()
+                                        })
+                                    else:
+                                        db.collection("users").document(uid).update({
+                                            "status_subscription": "non-aktif", "paket": "NON-AKTIF", "kuota_ai": 0, "kuota_upload": 0, "tanggal_berakhir": sekarang.isoformat()
+                                        })
+                                    st.success(f"✅ Paket untuk {selected_email} diubah ke {new_paket}.")
+                                    time.sleep(1)
+                                    st.rerun()
+                        
                         with tab_extend:
                             st.caption("Menambah masa aktif hari tanpa mengubah/mereset sisa kuota saat ini.")
                             with st.form("form_extend_hari"):
                                 col_x1, col_x2 = st.columns([3, 1])
-                                with col_x1: hari_tambahan = st.number_input("Tambah Masa Aktif (Hari)", min_value=1, max_value=365, value=30, label_visibility="collapsed")
-                                if st.form_submit_button("⏳ Tambah Hari", type="primary", use_container_width=True):
+                                with col_x1:
+                                    hari_tambahan = st.number_input("Tambah Masa Aktif (Hari)", min_value=1, max_value=365, value=30, label_visibility="collapsed")
+                                with col_x2:
+                                    btn_extend = st.form_submit_button("⏳ Tambah Hari", type="primary", use_container_width=True)
+                                
+                                if btn_extend:
                                     uid = selected_user['UID']
-                                    tgl_lama = db.collection("users").document(uid).get().to_dict().get("tanggal_berakhir")
-                                    try: t_baru = max(datetime.fromisoformat(tgl_lama) if isinstance(tgl_lama, str) else tgl_lama.replace(tzinfo=None), datetime.now()) + timedelta(days=hari_tambahan)
-                                    except: t_baru = datetime.now() + timedelta(days=hari_tambahan)
+                                    user_doc = db.collection("users").document(uid).get().to_dict()
+                                    sekarang, tgl_lama = datetime.now(), user_doc.get("tanggal_berakhir")
+                                    if tgl_lama:
+                                        try:
+                                            t_akhir = datetime.fromisoformat(tgl_lama) if isinstance(tgl_lama, str) else tgl_lama.replace(tzinfo=None)
+                                            t_baru = max(t_akhir, sekarang) + timedelta(days=hari_tambahan)
+                                        except: t_baru = sekarang + timedelta(days=hari_tambahan)
+                                    else: t_baru = sekarang + timedelta(days=hari_tambahan)
+                                    
                                     db.collection("users").document(uid).update({"status_subscription": "aktif", "tanggal_berakhir": t_baru.isoformat()})
-                                    st.success(f"✅ Masa aktif ditambah {hari_tambahan} hari!"); time.sleep(1); st.rerun()
+                                    st.success(f"✅ Masa aktif {selected_email} ditambah {hari_tambahan} hari!")
+                                    time.sleep(1)
+                                    st.rerun()
+
                         with tab_topup:
                             st.caption("Top-up atau tambah kuota AI & Upload secara eceran tanpa mengubah masa aktif paket bulanan.")
                             with st.form("form_topup_kuota"):
                                 col_tp1, col_tp2 = st.columns(2)
-                                with col_tp1: tambah_ai = st.number_input("➕ Tambah Kuota AI", min_value=0, max_value=500, value=10)
-                                with col_tp2: tambah_upload = st.number_input("➕ Tambah Kuota Upload", min_value=0, max_value=50, value=3)
-                                if st.form_submit_button("🔋 Eksekusi Top-Up", type="primary", use_container_width=True):
+                                with col_tp1:
+                                    tambah_ai = st.number_input("➕ Tambah Kuota AI (Notulensi)", min_value=0, max_value=500, value=10)
+                                with col_tp2:
+                                    tambah_upload = st.number_input("➕ Tambah Kuota Upload (MP3)", min_value=0, max_value=50, value=3)
+                                
+                                btn_topup = st.form_submit_button("🔋 Eksekusi Top-Up", type="primary", use_container_width=True)
+                                
+                                if btn_topup:
                                     if tambah_ai > 0 or tambah_upload > 0:
-                                        db.collection("users").document(selected_user['UID']).update({"kuota_ai": firestore.Increment(tambah_ai), "kuota_upload": firestore.Increment(tambah_upload)})
-                                        st.success("✅ Top-Up Berhasil!"); time.sleep(1); st.rerun()
-                                    else: st.warning("⚠️ Masukkan nominal top-up lebih dari 0.")
+                                        uid = selected_user['UID']
+                                        db.collection("users").document(uid).update({
+                                            "kuota_ai": firestore.Increment(tambah_ai),
+                                            "kuota_upload": firestore.Increment(tambah_upload)
+                                        })
+                                        st.success(f"✅ Top-Up Berhasil! Akun {selected_email} mendapat tambahan {tambah_ai}x AI dan {tambah_upload}x Upload.")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else:
+                                        st.warning("⚠️ Masukkan nominal top-up lebih dari 0.")
+                                        
                         with tab_history:
                             col_h1, col_h2 = st.columns([1, 1.5], gap="large")
                             with col_h1:
                                 st.markdown("<h5 style='color:#334155; margin-bottom:10px;'>🔄 Reset Kuota Manual</h5>", unsafe_allow_html=True)
+                                st.caption("Kembalikan kuota AI dan Upload ke kondisi penuh sesuai paket saat ini.")
                                 if st.button("🔄 Reset Kuota Sekarang", use_container_width=True):
-                                    if selected_user['Paket'] in PAKET_LANGGANAN: reset_user_kuota(selected_user['UID'], selected_user['Paket']); st.success("✅ Kuota berhasil direset!"); time.sleep(1); st.rerun()
+                                    if selected_user['Paket'] in PAKET_LANGGANAN:
+                                        reset_user_kuota(selected_user['UID'], selected_user['Paket'])
+                                        st.success("✅ Kuota berhasil direset!")
+                                        time.sleep(1)
+                                        st.rerun()
                                     else: st.error("Paket tidak valid untuk direset.")
-                                st.markdown("<br><h5 style='color:#334155; margin-bottom:10px;'>▶️ Status Akses</h5>", unsafe_allow_html=True)
+                                
+                                st.markdown("<br>", unsafe_allow_html=True)
+                                st.markdown("<h5 style='color:#334155; margin-bottom:10px;'>▶️ Status Akses</h5>", unsafe_allow_html=True)
                                 if selected_user['Status'] == 'non-aktif' and selected_user['Paket'] != 'NON-AKTIF':
+                                    st.caption("Akun ini memiliki paket tapi statusnya non-aktif.")
                                     if st.button("Aktifkan Kembali Akses", type="primary", use_container_width=True):
                                         sekarang = datetime.now()
                                         db.collection("users").document(selected_user['UID']).update({"status_subscription": "aktif", "tanggal_berakhir": (sekarang + timedelta(days=30)).isoformat(), "tanggal_mulai": sekarang.isoformat()})
-                                        st.success("✅ Akun diaktifkan kembali!"); time.sleep(1); st.rerun()
-                                else: st.info("Akun sedang berjalan normal (Aktif).")
+                                        st.success("✅ Akun diaktifkan kembali!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                else:
+                                    st.info("Akun sedang berjalan normal (Aktif).")
+
                             with col_h2:
                                 st.markdown("<h5 style='color:#334155; margin-bottom:10px;'>📜 Riwayat Login</h5>", unsafe_allow_html=True)
                                 if st.button("Tampilkan Riwayat", use_container_width=True):
                                     history = get_user_login_history(selected_user['UID'])
-                                    if history: st.dataframe(pd.DataFrame([{"Waktu": h.get('timestamp', '')[:19].replace("T", " "), "Platform": h.get('platform', '-')} for h in history[:10]]), use_container_width=True, hide_index=True)
+                                    if history:
+                                        st.dataframe(pd.DataFrame([{"Waktu": h.get('timestamp', '')[:19], "Platform": h.get('platform', '-')} for h in history[:10]]), use_container_width=True, hide_index=True)
                                     else: st.info("Belum ada riwayat login.")
+                        
                         with tab_danger:
                             st.markdown("<h5 style='color:#ef4444; margin-bottom:10px;'>❌ Hapus Akun Klien Permanen</h5>", unsafe_allow_html=True)
+                            st.warning("Tindakan ini tidak dapat dibatalkan. Semua data terkait akun ini akan hilang dari database.")
                             if st.button("Hapus Permanen User Ini", type="secondary", use_container_width=True):
                                 if st.session_state.get('confirm_delete') != selected_user['UID']:
                                     st.session_state['confirm_delete'] = selected_user['UID']
                                     st.error(f"⚠️ KLIK SEKALI LAGI UNTUK KONFIRMASI MENGHAPUS **{selected_user['Email']}**!")
                                 else:
                                     success, msg = delete_user(selected_user['UID'], selected_user['Email'])
-                                    if success: st.success(msg); st.session_state.pop('confirm_delete', None); time.sleep(1); st.rerun()
+                                    if success:
+                                        st.success(msg)
+                                        st.session_state.pop('confirm_delete', None)
+                                        time.sleep(1)
+                                        st.rerun()
                                     else: st.error(msg)
             else: st.info("Tidak ada klien yang terdaftar atau sesuai filter untuk dikelola.")
+
+        with tab_sop:
+            st.markdown("### 🏥 AI Akreditasi SOP Generator")
+            st.markdown("Generasi otomatis SOP Rumah Sakit berstandar Akreditasi KARS/JCI dengan output Flowchart Swimlane (PlantUML).")
+            
+            with st.expander("🔑 Kredensial & Info Rumah Sakit", expanded=True):
+                api_key_sop = st.text_input("LiteLLM / Gemini API Key", type="password", help="Masukkan API Key Anda", key="api_sop")
+                logo_url = st.text_input("Link Logo Instansi (Copy Image Address)", value="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Coat_of_arms_of_Jakarta.svg/1280px-Coat_of_arms_of_Jakarta.svg.png", help="Paste link gambar logo (pastikan link berakhiran .png / .jpg)")
+                col_i1, col_i2 = st.columns(2)
+                with col_i1:
+                    rs_name = st.text_input("Nama Instansi/RS", value="RSUD CONTOH")
+                    title_sop = st.text_input("Judul SOP", value="SOP Penerimaan Pasien Baru")
+                    no_dok = st.text_input("Nomor Dokumen", value="001/SOP/2026")
+                with col_i2:
+                    dir_name = st.text_input("Nama Pimpinan", value="Dr. John Doe, MARS")
+                    dir_nip = st.text_input("NIP Pimpinan", value="19800101 200501 1 001")
+
+            st.markdown("#### 📂 Referensi (Max 5)")
+            uploaded_files_sop = st.file_uploader("Upload Dokumen Referensi (PDF/Image)", accept_multiple_files=True, key="upload_sop")
+
+            if st.button("🚀 Generate SOP Akreditasi", type="primary", use_container_width=True):
+                if not api_key_sop: st.error("⚠️ API Key tidak ditemukan. Silakan input API Key!")
+                elif not title_sop: st.error("⚠️ Judul SOP wajib diisi!")
+                elif len(uploaded_files_sop) > 5: st.error("⚠️ Maksimal 5 file referensi!")
+                elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: st.error("❌ Kuota AI Anda habis! Silakan lakukan Top-Up di tab Info Paket.")
+                else:
+                    if not is_admin():
+                        st.session_state["user_kuota_ai"] -= 3
+                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+
+                    try:
+                        BASE_URL_KOBOI = "https://litellm.koboi2026.biz.id/v1/chat/completions"
+                        headers = {'Authorization': f'Bearer {api_key_sop}', 'Content-Type': 'application/json'}
+                        ref_instruction = "Buatlah SOP berdasarkan standar best practice akreditasi RS (KARS/JCI)."
+                        file_data_array = []
+                        if uploaded_files_sop:
+                            ref_instruction = "SANGAT PENTING: Saya melampirkan referensi. WAJIB GUNAKAN ISI REFERENSI INI (dasar hukum, alat, langkah kerja)."
+                            for f in uploaded_files_sop:
+                                file_data_array.append({"type": "image_url", "image_url": { "url": f"data:{f.type};base64,{base64.b64encode(f.getvalue()).decode('utf-8')}" }})
+
+                        prompt_cover = f"""Bertindaklah sebagai Ahli Hukum Kesehatan dan Auditor Akreditasi RS.
+                        Tugas: Buat data teknis JSON untuk SOP: "{title_sop}" di unit "{rs_name}".
+                        {ref_instruction}
+                        ATURAN PENTING: 1. DASAR HUKUM WAJIB TERBARU (UU No. 17 Tahun 2023). 2. NUMBERING (1., 2., dst). 3. KONSISTENSI.
+                        OUTPUT JSON STRICT: {{ "dasar_hukum": ["1. ..."], "kualifikasi": ["1. ..."], "keterkaitan": ["1. ..."], "peralatan": ["1. ..."], "peringatan": "...", "pencatatan": ["1. ..."] }}"""
+
+                        content_array_cover = [{"type": "text", "text": prompt_cover}]
+                        if file_data_array: content_array_cover.extend(file_data_array)
+
+                        with st.spinner("⏳ Robot Germic Membaca Referensi & Menyusun Struktur..."):
+                            response_cover = requests.post(BASE_URL_KOBOI, headers=headers, json={"model": "gemini/gemini-2.5-flash", "messages": [{"role": "user", "content": content_array_cover}], "response_format": { "type": "json_object" }, "temperature": 0.2})
+                            response_cover.raise_for_status()
+                            data_cover = json.loads(clean_json_response(response_cover.json()['choices'][0]['message']['content']))
+
+                        prompt_flow = f"""Tugas: Buat detail langkah kerja dan kode PlantUML untuk SOP "{title_sop}".
+                        ATURAN DECISION: Jika ada percabangan (disetujui/tidak), gunakan blok IF-ELSE di PlantUML.
+                        ATURAN PLANTUML: 1. Swimlane SEBELUM 'start' (|Aktor|\\nstart). 2. Awali (:) akhiri (;). 3. JANGAN rubah Swimlane di dalam blok IF. 4. Tanpa 'repeat'/'while'.
+                        KOLOM WAKTU: Angka dan Satuan (misal "5 Menit").
+                        OUTPUT JSON: {{ "pelaksana_list": ["..."], "plantuml_code": "@startuml\\n|Petugas|\\nstart\\n:Kirim Draf;\\nstop\\n@enduml", "langkah": [ {{ "kegiatan": "...", "pelaksana": "...", "waktu": "...", "kelengkapan": "...", "output": "...", "keterangan": "-" }} ] }}"""
+
+                        content_array_flow = [{"type": "text", "text": prompt_flow}]
+                        if file_data_array: content_array_flow.extend(file_data_array)
+
+                        with st.spinner("⏳ Robot Germic Meracik Alur Logika & Men-generate PlantUML..."):
+                            response_flow = requests.post(BASE_URL_KOBOI, headers=headers, json={"model": "gemini/gemini-2.5-flash", "messages": [{"role": "user", "content": content_array_flow}], "response_format": { "type": "json_object" }, "temperature": 0.2})
+                            response_flow.raise_for_status()
+                            data_flow = json.loads(clean_json_response(response_flow.json()['choices'][0]['message']['content']))
+
+                        st.toast("✅ Dokumen SOP Berhasil Dibuat!", icon="🎉")
+                        preview_html, word_html = render_akreditasi_output({"cover": data_cover, "flow": data_flow}, rs_name, title_sop, no_dok, dir_name, dir_nip, logo_url)
+
+                        st.session_state["sop_preview_html"] = preview_html
+                        st.session_state["sop_word_html"] = word_html
+                        st.session_state["sop_title"] = title_sop
+
+                    except requests.exceptions.RequestException as e: st.error(f"❌ Kesalahan API: {str(e)}")
+                    except Exception as e: st.error(f"❌ Kesalahan pemrosesan: {str(e)}")
+
+            if st.session_state.get("sop_preview_html"):
+                st.markdown("---")
+                st.subheader("📄 Preview Dokumen SOP")
+                st.components.v1.html(st.session_state["sop_preview_html"], height=1000, scrolling=True)
+                
+                st.download_button(
+                    label="📄 DOWNLOAD WORD (SOP)", 
+                    data=st.session_state["sop_word_html"].encode('utf-8-sig'), 
+                    file_name=f"SOP_{st.session_state['sop_title'].replace(' ', '_')}.doc", 
+                    mime="application/msword", 
+                    use_container_width=True
+                )
+
     else:
-        tabs = st.tabs(["🔴 Live Capture", "📁 Upload Rekaman", "📝 SOP Generator", "💳 Info Paket"])
-        tab1, tab2, tab_sop, tab_paket = tabs[0], tabs[1], tabs[2], tabs[3]
+        tabs = st.tabs(["🔴 Live Capture (Zoom/Youtube)", "📁 Upload Rekaman (Offline LiteLLM)", "💳 Info Paket Langganan"])
+        tab1, tab2, tab_paket = tabs[0], tabs[1], tabs[2]
 
     # =====================================================================
-    # TAB INFO PAKET LANGGANAN (USER BIASA)
+    # TAB INFO PAKET LANGGANAN
     # =====================================================================
     with tab_paket:
         st.markdown("### 📊 Pilihan Paket Langganan TranscribX")
-        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai. Klik tombol beli di bawah untuk upgrade secara otomatis.")
+        st.write("Tingkatkan produktivitas rapat Anda dengan memilih paket yang sesuai. Hubungi admin untuk upgrade.")
         st.write("")
+        
         col_p1, col_p2, col_p3 = st.columns(3)
         with col_p1:
-            st.markdown("""<div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3><h4 style='color:#3b82f6;'>Rp 35.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4><p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin.</p><hr style='border-color:#f1f5f9; margin-bottom:20px;'><ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'><li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>8x</b> Premium AI Summary</li><li>❌ <del>AI SOP Generator</del></li><li>✅ <b>1x</b> Upload File Audio</li><li>⏳ <b>30 Hari</b> Masa Aktif</li></ul></div>""", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='background-color:#ffffff; padding:20px; border-radius:15px; border:1px solid #e2e8f0; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <h3 style='color:#334155; margin-top:0;'>1. Paket BASIC</h3>
+                <h4 style='color:#3b82f6;'>Rp 35.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk mahasiswa, asisten peneliti, atau staf admin.</p>
+                <hr style='border-color:#f1f5f9; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#334155; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>8x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>1x</b> Upload File Audio (Max 45 menit)</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
         with col_p2:
-            st.markdown("""<div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative; transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div><h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3><h4 style='color:#2563eb;'>Rp 69.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4><p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, atau profesional.</p><hr style='border-color:#bfdbfe; margin-bottom:20px;'><ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'><li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>25x</b> Premium AI Summary</li><li>✅ <b>AI SOP Generator</b></li><li>✅ <b>5x</b> Upload File Audio</li><li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li><li>⏳ <b>30 Hari</b> Masa Aktif</li></ul></div>""", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='background-color:#eff6ff; padding:20px; border-radius:15px; border:2px solid #3b82f6; height:100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position:relative; transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style='position:absolute; top:-12px; right:20px; background:#ef4444; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;'>🔥 Best Seller</div>
+                <h3 style='color:#1e3a8a; margin-top:0;'>2. Paket EXECUTIVE</h3>
+                <h4 style='color:#2563eb;'>Rp 69.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <p style='font-size:14px; color:#475569; margin-bottom:20px;'>Cocok untuk ketua komite, manajer, atau profesional.</p>
+                <hr style='border-color:#bfdbfe; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#1e3a8a; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>25x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>5x</b> Upload File Audio (Max 45 menit)</li>
+                    <li>🌟 Bisa <b>Top-Up Kuota</b> Kapan Saja</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
         with col_p3:
-            st.markdown("""<div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3><h4 style='color:#e11d48;'>Rp 149.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4><p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass atau institusi.</p><hr style='border-color:#ffe4e6; margin-bottom:20px;'><ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'><li>✅ <b>Unlimited</b> Live Transcribe</li><li>✅ <b>60x</b> Premium AI Summary</li><li>✅ <b>AI SOP Generator</b></li><li>✅ <b>15x</b> Upload File Audio</li><li>🌟 <b>Prioritas Support</b> via WhatsApp</li><li>⏳ <b>30 Hari</b> Masa Aktif</li></ul></div>""", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='background-color:#fff1f2; padding:20px; border-radius:15px; border:1px solid #fecdd3; height:100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s;' onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <h3 style='color:#881337; margin-top:0;'>3. Paket MASTER / VIP</h3>
+                <h4 style='color:#e11d48;'>Rp 149.000 <span style='font-size:14px; color:#94a3b8;'>/ 30 hari</span></h4>
+                <p style='font-size:14px; color:#64748b; margin-bottom:20px;'>Cocok untuk panitia masterclass atau institusi.</p>
+                <hr style='border-color:#ffe4e6; margin-bottom:20px;'>
+                <ul style='font-size:14px; color:#881337; padding-left:20px; line-height:1.8;'>
+                    <li>✅ <b>Unlimited</b> Live Transcribe</li>
+                    <li>✅ <b>60x</b> Premium AI Summary & Mindmap</li>
+                    <li>✅ <b>15x</b> Upload File Audio (Max 45 menit)</li>
+                    <li>🌟 <b>Prioritas Support</b> via WhatsApp</li>
+                    <li>⏳ <b>30 Hari</b> Masa Aktif</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
 
-        user_email_aktif = st.session_state.get('user_email', '')
-        email_encoded = urllib.parse.quote(user_email_aktif)
-
-        st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 40px; font-weight: bold;'>🔋 Paket Top-Up Kuota (Eceran)</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 20px;'>Kehabisan kuota sebelum masa aktif habis? Beli kuota tambahan tanpa harus memperpanjang masa aktif bulanan.</p>", unsafe_allow_html=True)
-        
-        link_tp_ai_10 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_AI_10/checkout?email={email_encoded}"
-        link_tp_ai_25 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_AI_25/checkout?email={email_encoded}"
-        link_tp_mp3_3 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_MP3_3/checkout?email={email_encoded}"
-        link_tp_mp3_10 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_MP3_10/checkout?email={email_encoded}"
-
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            st.markdown(f"""<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
-<h4 style='color:#8b5cf6; margin-top:0;'>✨ Top-Up AI Summary</h4>
-<hr style='border-color:#e2e8f0; margin:10px 0;'>
-<div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-<div><div style='font-size:15px; font-weight:bold; color:#334155;'>+ 10x Kuota AI Summary</div><div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 10.000</div></div>
-<a href="{link_tp_ai_10}" target="_blank" style="text-decoration:none;"><button style="background:#8b5cf6; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button></a>
-</div>
-<div style='display:flex; align-items:center; justify-content:space-between; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-<div><div style='font-size:15px; font-weight:bold; color:#334155;'>+ 25x Kuota AI Summary</div><div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 20.000</div></div>
-<a href="{link_tp_ai_25}" target="_blank" style="text-decoration:none;"><button style="background:#8b5cf6; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button></a>
-</div>
-</div>""", unsafe_allow_html=True)
-            
-        with col_t2:
-            st.markdown(f"""<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);'>
-<h4 style='color:#10b981; margin-top:0;'>📁 Top-Up Upload MP3</h4>
-<hr style='border-color:#e2e8f0; margin:10px 0;'>
-<div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-<div><div style='font-size:15px; font-weight:bold; color:#334155;'>+ 3x Upload MP3</div><div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 10.000</div></div>
-<a href="{link_tp_mp3_3}" target="_blank" style="text-decoration:none;"><button style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button></a>
-</div>
-<div style='display:flex; align-items:center; justify-content:space-between; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;'>
-<div><div style='font-size:15px; font-weight:bold; color:#334155;'>+ 10x Upload MP3</div><div style='font-size:14px; font-weight:bold; color:#3b82f6;'>Rp 25.000</div></div>
-<a href="{link_tp_mp3_10}" target="_blank" style="text-decoration:none;"><button style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; transition:0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Beli</button></a>
-</div>
-</div>""", unsafe_allow_html=True)
-            
-        st.write("")
-        st.info("💡 **INFO UPGRADE PAKET:** Membeli paket baru saat paket lama masih aktif akan **mereset ulang** masa aktif Anda menjadi 30 hari ke depan dan mengatur ulang kuota sesuai paket terbaru (sisa kuota lama tidak diakumulasi). Jika hanya ingin menambah kuota, gunakan fitur **Top-Up Eceran** di atas.")
-
-        st.markdown("<hr style='margin-top: 30px; border-color:#e2e8f0;'>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #38bdf8;'>🚀 Pilih & Beli Paket Sekarang</h3>", unsafe_allow_html=True)
-        link_basic = f"http://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
-        link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
-        link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
-
-        col_btn1, col_btn2, col_btn3 = st.columns(3)
-        with col_btn1: st.markdown(f"""<a href="{link_basic}" target="_blank" style="text-decoration: none;"><button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.3s;">🛒 Beli Paket BASIC</button></a>""", unsafe_allow_html=True)
-        with col_btn2: st.markdown(f"""<a href="{link_executive}" target="_blank" style="text-decoration: none;"><button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(59,130,246,0.3); transition: 0.3s;">💳 Beli EXECUTIVE</button></a>""", unsafe_allow_html=True)
-        with col_btn3: st.markdown(f"""<a href="{link_master}" target="_blank" style="text-decoration: none;"><button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #e11d48; color: white; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(225,29,72,0.3); transition: 0.3s;">👑 Beli MASTER</button></a>""", unsafe_allow_html=True)
-
-        st.write("")
-        if st.button("🔄 Cek Status Pembayaran Saya", use_container_width=True, type="secondary"):
-            with st.spinner("Menyinkronkan data..."):
-                time.sleep(2); render_sidebar_profile(); st.success("✅ Sinkronisasi selesai!"); time.sleep(2); st.rerun()
-
-  # =====================================================================
+    # =====================================================================
     # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI & EXPORT DOCX SAKTI
     # =====================================================================
     with tab1:
@@ -2052,7 +2145,7 @@ else:
                         if (window.sunburstChartLive) {
                             const a = document.createElement('a');
                             a.href = window.sunburstChartLive.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#ffffff' });
-                            a.download = 'Tree_Hierarchy_Live.png';
+                            a.download = 'Sunburst_Live.png';
                             a.click();
                         }
                     };
@@ -2168,15 +2261,15 @@ else:
                                 } catch (err) { console.error("Gagal screenshot Markmap:", err); }
                             }
 
-                            // --- 4. CAPTURE TREE ECHARTS (Pengganti Sunburst) ---
+                            // --- 4. CAPTURE SUNBURST (ECHARTS) ---
                             let sunburstImageHtml = "";
                             if (window.sunburstChartLive) {
                                 try {
-                                    const sbBase64 = window.sunburstChartLive.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                                    const sbBase64 = window.sunburstChartLive.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#ffffff' });
                                     sunburstImageHtml = `
-                                    <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">D. Tree Hierarchy (Anatomi Rapat Sebelah Kanan)</p>
+                                    <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">D. Sunburst Hierarchy (Anatomi Rapat)</p>
                                     <img src="${sbBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-                                } catch (err) { console.error("Gagal screenshot Tree Echarts:", err); }
+                                } catch (err) { console.error("Gagal screenshot Sunburst:", err); }
                             }
 
                             let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
@@ -2451,7 +2544,6 @@ else:
                             }
                         };
 
-                        // INIT HIERARCHY TREE ECHARTS (Pengganti Sunburst ke arah Kanan)
                         try {
                             const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
                                 method: "POST", 
@@ -2498,7 +2590,7 @@ else:
                                     <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
                                     
                                     <div class="mt-4">
-                                        <p class="font-bold text-sm mb-2">🌳 Tree Hierarchy Chart (Anatomi Rapat Sebelah Kanan)</p>
+                                        <p class="font-bold text-sm mb-2">☀️ Sunburst Hierarchy Chart (Anatomi Rapat)</p>
                                         <div class="relative bg-white border rounded-xl overflow-hidden p-2">
                                             <button onclick="dlSunburstLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button>
                                             <div id="sunburstLiveContainer" style="width:100%; height:600px;"></div>
@@ -2548,46 +2640,51 @@ else:
                             }, 100);
 
                             // INIT MARKMAP
-                                setTimeout(() => {
-                                    let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                    const { Transformer, Markmap } = window.markmap;
-                                    const { root } = new Transformer().transform(rawMm);
-                                    Markmap.create('#markmapLive', null, root);
-                                }, 100);
-    
-                                setTimeout(() => {
+                            setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                const lines = rawMm.split('\n');
-                                let rootNode = { name: "Tema Rapat", children: [] };
-                                let stack = [ {level: 0, node: rootNode} ];
-    
-                                for (let i = 0; i < lines.length; i++) {
-                                    let line = lines[i];
-                                    let trimmed = line.trimStart();
-                                    if (!trimmed) continue;
-                                    let level = 0; let text = "";
-                                    let matchHeader = trimmed.match(/^(#+)\s+(.*)/);
-                                    if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
-                                    else {
-                                        let matchList = trimmed.match(/^[-*]\s+(.*)/);
-                                        if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
+                                const { Transformer, Markmap } = window.markmap;
+                                const { root } = new Transformer().transform(rawMm);
+                                Markmap.create('#markmapLive', null, root);
+                            }, 100);
+
+                            // INIT SUNBURST ECHARTS
+                            setTimeout(() => {
+                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                
+                                function parseMarkdownToSunburst(md) {
+                                    const lines = md.split('\\n');
+                                    let root = { name: "Tema Rapat", children: [] };
+                                    let stack = [ {level: 0, node: root} ];
+
+                                    for (let i = 0; i < lines.length; i++) {
+                                        let line = lines[i];
+                                        let trimmed = line.trimStart();
+                                        if (!trimmed) continue;
+                                        let level = 0; let text = "";
+                                        let matchHeader = trimmed.match(/^(#+)\\s+(.*)/);
+                                        if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
+                                        else {
+                                            let matchList = trimmed.match(/^[-*]\\s+(.*)/);
+                                            if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
+                                        }
+                                        if (!text) continue;
+                                        text = text.replace(/\\*\\*/g, '').trim();
+                                        let newNode = { name: text, value: 1, children: [] };
+                                        while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
+                                        let parent = stack[stack.length - 1].node;
+                                        parent.children.push(newNode);
+                                        stack.push({ level: level, node: newNode });
                                     }
-                                    if (!text) continue;
-                                    text = text.replace(/\*\*/g, '').trim();
-                                    let newNode = { name: text, value: 1, children: [] };
-                                    while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
-                                    let parent = stack[stack.length - 1].node;
-                                    parent.children.push(newNode);
-                                    stack.push({ level: level, node: newNode });
+
+                                    function assignValues(node) {
+                                        if (node.children.length === 0) { node.value = 1; } 
+                                        else { node.children.forEach(assignValues); }
+                                    }
+                                    assignValues(root);
+                                    return root.children.length > 0 ? root.children : [{name: "Data tidak tersedia", value: 1}];
                                 }
-                                
-                                function assignValues(node) {
-                                    if (node.children.length === 0) { node.value = 1; } 
-                                    else { node.children.forEach(assignValues); }
-                                }
-                                assignValues(rootNode);
-                                
-                                const sunburstData = rootNode.children.length > 0 ? rootNode.children : [{name: "Data tidak tersedia", value: 1}];
+
+                                const sunburstData = parseMarkdownToSunburst(rawMm);
                                 const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
                                 
                                 if (sunburstData.length === 1 && sunburstData[0].children) {
@@ -2596,9 +2693,9 @@ else:
                                 } else {
                                     sunburstData.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
                                 }
-    
-                                var chartDom = document.getElementById('sunburstOfflineContainer');
-                                window.sunburstChartOffline = echarts.init(chartDom);
+
+                                var chartDom = document.getElementById('sunburstLiveContainer');
+                                window.sunburstChartLive = echarts.init(chartDom);
                                 var option = {
                                     tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
                                     series: {
@@ -2607,8 +2704,8 @@ else:
                                         label: { show: true, formatter: '{b}', width: 85, overflow: 'break', minAngle: 12, fontSize: 11, fontWeight: 'bold', fontFamily: 'sans-serif', color: '#ffffff', textBorderColor: 'rgba(0,0,0,0.6)', textBorderWidth: 2 }
                                     }
                                 };
-                                window.sunburstChartOffline.setOption(option);
-                                window.addEventListener('resize', function() { window.sunburstChartOffline.resize(); });
+                                window.sunburstChartLive.setOption(option);
+                                window.addEventListener('resize', function() { window.sunburstChartLive.resize(); });
                             }, 100);
 
                         } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
@@ -2620,159 +2717,192 @@ else:
         </html>
         """
         components.html(html_code, height=2200, scrolling=True)
+
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
-        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") == "NON-AKTIF":
-            st.markdown("""<div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;"><h1 style="font-size: 50px; margin: 0;">🔒</h1><h2 style="color: #ef4444; margin-top: 10px;">AKSES DITOLAK</h2><p style="color: #475569; font-size: 16px;">Fitur Upload Rekaman Audio ini hanya tersedia untuk pengguna aktif.</p></div>""", unsafe_allow_html=True)
-        else:
-            st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Menggunakan mesin FFmpeg native.")
-            llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
-            uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
+        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Menggunakan mesin FFmpeg native agar tidak membebani RAM.")
 
-            if uploaded_file is not None:
-                st.audio(uploaded_file)
-                kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
-                is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
+        llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
+        uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
 
-                if not is_allowed_to_upload: st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin atau top-up.")
-                else:
-                    if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
-                        if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
-                        else:
-                            if not is_admin():
-                                st.session_state["user_kuota_upload"] -= 1
-                                db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
-                                render_sidebar_profile()
+        if uploaded_file is not None:
+            st.audio(uploaded_file)
+            kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+            is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
 
-                            with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
-                                temp_dir = tempfile.mkdtemp()
-                                input_path = None
-                                try:
-                                    import subprocess, glob, shutil
-                                    file_extension = uploaded_file.name.split('.')[-1]
-                                    input_path = os.path.join(temp_dir, f"input_audio.{file_extension}")
-                                    with open(input_path, "wb") as f: f.write(uploaded_file.getvalue())
-                                    
-                                    status_text = st.empty()
-                                    status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
-                                    output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
-                                    subprocess.run(["ffmpeg", "-i", input_path, "-f", "segment", "-segment_time", "600", "-c:a", "libmp3lame", "-b:a", "64k", output_pattern], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                                    
-                                    chunk_files = sorted(glob.glob(os.path.join(temp_dir, "chunk_*.mp3")))
-                                    total_chunks = len(chunk_files)
-                                    
-                                    if total_chunks == 0: st.error("Gagal memotong audio.")
-                                    else:
-                                        full_transcript = ""
-                                        progress_bar = st.progress(0)
-                                        url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                        headers = {"Authorization": f"Bearer {llm_key}"}
-                                        success_transcription = True
-                                        all_segments = []
-                                        for i, chunk_file in enumerate(chunk_files):
-                                            status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
-                                            with open(chunk_file, "rb") as f: files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
-                                            # UBAH response_format ke verbose_json untuk memunculkan timestamp Time-Travel
-                                            response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "verbose_json"})
-                                            if response.status_code == 200: 
-                                                res_data = response.json()
-                                                full_transcript += res_data.get("text", "") + " "
-                                                # Kalkulasi offset waktu tiap potongan (600 detik per chunk)
-                                                offset = i * 600.0
-                                                for seg in res_data.get("segments", []):
-                                                    all_segments.append({
-                                                        "start": seg.get("start", 0) + offset,
-                                                        "end": seg.get("end", 0) + offset,
-                                                        "text": seg.get("text", "")
-                                                    })
-                                            else: st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}"); success_transcription = False; break
-                                            progress_bar.progress((i + 1) / total_chunks)
+            if not is_allowed_to_upload:
+                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk top-up atau upgrade paket.")
+            else:
+                if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
+                    if not llm_key: 
+                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                    else:
+                        with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
+                            temp_dir = tempfile.mkdtemp()
+                            input_path = None
+                            try:
+                                import subprocess
+                                import glob
+                                
+                                file_extension = uploaded_file.name.split('.')[-1]
+                                input_path = os.path.join(temp_dir, f"input_audio.{file_extension}")
+                                with open(input_path, "wb") as f:
+                                    f.write(uploaded_file.getvalue())
+                                
+                                status_text = st.empty()
+                                status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
+                                output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
+                                
+                                command = [
+                                    "ffmpeg", "-i", input_path,
+                                    "-f", "segment", "-segment_time", "600",
+                                    "-c:a", "libmp3lame", "-b:a", "64k",
+                                    output_pattern
+                                ]
+                                subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                
+                                chunk_files = sorted(glob.glob(os.path.join(temp_dir, "chunk_*.mp3")))
+                                total_chunks = len(chunk_files)
+                                
+                                if total_chunks == 0:
+                                    st.error("Gagal memotong audio.")
+                                else:
+                                    full_transcript = ""
+                                    progress_bar = st.progress(0)
+                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                    headers = {"Authorization": f"Bearer {llm_key}"}
+
+                                    success_transcription = True
+                                    for i, chunk_file in enumerate(chunk_files):
+                                        status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
                                         
-                                        if success_transcription and full_transcript.strip():
-                                            status_text.success("✅ Seluruh audio berhasil ditranskrip!")
-                                            st.session_state["offline_transcript"] = full_transcript.strip()
-                                            st.session_state["offline_segments"] = all_segments
-                                            st.session_state["offline_audio_b64"] = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
-                                            st.session_state["offline_audio_mime"] = uploaded_file.type
-                                except subprocess.CalledProcessError as e: st.error(f"❌ Error FFmpeg: {e.stderr.decode('utf-8')}")
-                                except Exception as e: st.error(f"Terjadi kesalahan: {str(e)}")
-                                finally:
-                                    if os.path.exists(temp_dir): shutil.rmtree(temp_dir, ignore_errors=True)
+                                        with open(chunk_file, "rb") as f:
+                                            files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
+                                            response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
+                                        
+                                        if response.status_code == 200: 
+                                            full_transcript += response.json().get("text", "") + " "
+                                        else: 
+                                            st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}")
+                                            success_transcription = False
+                                            break
+                                        
+                                        progress_bar.progress((i + 1) / total_chunks)
+                                    
+                                    if success_transcription and full_transcript.strip():
+                                        status_text.success("✅ Seluruh audio berhasil ditranskrip!")
+                                        st.session_state["offline_transcript"] = full_transcript.strip()
+                                        if not is_admin():
+                                            st.session_state["user_kuota_upload"] -= 1
+                                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                                        
+                            except subprocess.CalledProcessError as e:
+                                st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")
+                            except Exception as e: 
+                                st.error(f"Terjadi kesalahan: {str(e)}")
+                            finally:
+                                import shutil
+                                if os.path.exists(temp_dir):
+                                    shutil.rmtree(temp_dir, ignore_errors=True)
 
-            if st.session_state["offline_transcript"]:
-                st.markdown("#### 📝 Hasil Transkripsi")
-                
-                # --- TAMBAHAN UI TIME-TRAVEL MENGGANTIKAN TEXT-AREA BIASA ---
-                if st.session_state.get("offline_segments") and st.session_state.get("offline_audio_b64"):
-                    audio_uri = f"data:{st.session_state['offline_audio_mime']};base64,{st.session_state['offline_audio_b64']}"
-                    
-                    segments_html = ""
-                    for seg in st.session_state["offline_segments"]:
-                        total_sec = int(seg['start'])
-                        m, s = divmod(total_sec, 60)
-                        time_str = f"{m:02d}:{s:02d}"
-                        segments_html += f'<div class="segment" data-start="{seg["start"]}" data-end="{seg["end"]}"><span class="timestamp">{time_str}</span> {seg["text"]}</div>'
+        if st.session_state["offline_transcript"]:
+            st.markdown("#### 📝 Hasil Transkripsi")
+            st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
 
-                    time_travel_html = f"""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: transparent; margin: 0; padding: 5px; }}
-                            .player-container {{ background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
-                            audio {{ width: 100%; border-radius: 8px; margin-bottom: 20px; outline: none; }}
-                            .transcript-box {{ height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #cbd5e1; border-radius: 12px; background: #ffffff; scroll-behavior: smooth; }}
-                            .segment {{ padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border-left: 4px solid transparent; font-size: 15px; color: #475569; }}
-                            .segment:hover {{ background: #f1f5f9; }}
-                            .segment.active {{ background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e3a8a; font-weight: 600; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1); }}
-                            .timestamp {{ font-size: 12px; color: #94a3b8; font-weight: bold; margin-right: 10px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; }}
-                        </style>
-                    </head>
-                    <body>
-                    <div class="player-container">
-                        <h3 style="margin-top:0; color:#1e293b; font-size:16px;">🎧 Interactive Timeline Audio (Time-Travel)</h3>
-                        <audio id="audioPlayer" controls>
-                            <source src="{audio_uri}" type="{st.session_state['offline_audio_mime']}">
-                        </audio>
-                        <div class="transcript-box" id="transcriptBox">
-                            {segments_html}
-                        </div>
-                    </div>
-                    <script>
-                        const player = document.getElementById('audioPlayer');
-                        const segments = document.querySelectorAll('.segment');
+            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
+                if not llm_key: 
+                    st.warning("⚠️ Masukkan API Key LiteLLM!")
+                elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
+                    st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
+                else:
+                    with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
+                        prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan WAJIB kembalikan output HANYA dalam format JSON.
+                        PENTING: JANGAN menyalin ulang atau membuat transkrip dialog penuh. Fokus pada ekstraksi poin-poin penting agar ringkas dan cepat.
                         
-                        segments.forEach(seg => {{
-                            seg.addEventListener('click', () => {{
-                                player.currentTime = parseFloat(seg.getAttribute('data-start'));
-                                player.play();
-                            }});
-                        }});
+                        STRUKTUR JSON YANG HARUS DIIKUTI:
+                        {{
+                            "ringkasan_eksekutif": ["poin ringkas 1", "poin ringkas 2"],
+                            "notulensi_rapat": {{
+                                "agenda": "Topik utama rapat",
+                                "peserta": ["Nama/Peran 1", "Nama/Peran 2"],
+                                "jalannya_diskusi": ["Poin penting diskusi 1", "Poin penting diskusi 2"],
+                                "keputusan": ["Keputusan 1", "Keputusan 2"],
+                                "rencana_tindak_lanjut": [
+                                    {{"tugas": "Deskripsi", "pic": "Nama", "deadline": "Tanggal", "prioritas": "Tinggi/Sedang/Rendah"}}
+                                ]
+                            }}
+                        }}
+                        Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
-                        player.addEventListener('timeupdate', () => {{
-                            const currentTime = player.currentTime;
-                            segments.forEach(seg => {{
-                                const start = parseFloat(seg.getAttribute('data-start'));
-                                const end = parseFloat(seg.getAttribute('data-end'));
-                                if (currentTime >= start && currentTime <= end) {{
-                                    if (!seg.classList.contains('active')) {{
-                                        segments.forEach(s => s.classList.remove('active'));
-                                        seg.classList.add('active');
-                                        seg.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-                                    }}
-                                }}
-                            }});
-                        }});
-                    </script>
-                    </body>
-                    </html>
-                    """
-                    components.html(time_travel_html, height=520, scrolling=True)
-                # --- END UI TIME-TRAVEL ---
-if st.session_state.get("offline_summary"):
+                        payload1 = {
+                            "model":"gemini/gemini-2.5-flash",
+                            "messages": [{ "role": "user", "content": prompt1 }], 
+                            "temperature": 0.2,
+                            "response_format": { "type": "json_object" }
+                        }
+
+                        res1 = None
+                        try:
+                            res1 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload1)
+                            if res1.status_code != 200:
+                                st.error(f"Error AI (Tahap 1): Server mengembalikan status {res1.status_code}")
+                                res1 = None
+                        except Exception as e: 
+                            st.error(f"Koneksi LLM Gagal (Tahap 1): {str(e)}")
+
+                    if res1:
+                        with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep (Mindmap & Cytoscape)..."):
+                            prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB kembalikan HANYA JSON.
+                            STRUKTUR JSON:
+                            {{
+                                "hubungan_topik": [
+                                    {{"sumber": "Entitas 1", "target": "Entitas 2", "relasi": "Hubungan"}}
+                                ],
+                                "visual_mindmap": "graph LR\\nA[Topik] --> B[Sub Topik]",
+                                "markmap_code": "# Topik Utama\\n## Sub Topik"
+                            }}
+                            ATURAN SANGAT KETAT:
+                            - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                            - visual_mindmap (MERMAID): Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'. ID Node HARUS 1 HURUF/ANGKA saja. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
+                            - markmap_code (MARKMAP): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail menggunakan Markdown murni.
+                            Transkrip Rapat: "{st.session_state['offline_transcript']}" """
+
+                            payload2 = {
+                                "model":"gemini/gemini-2.5-flash",
+                                "messages": [{ "role": "user", "content": prompt2 }], 
+                                "temperature": 0.2,
+                                "response_format": { "type": "json_object" }
+                            }
+
+                            try:
+                                res2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload2)
+                                if res2.status_code == 200:
+                                    data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
+                                    data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
+                                    
+                                    if "notulensi_rapat" not in data_teks:
+                                        data_teks["notulensi_rapat"] = {}
+                                        
+                                    data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
+                                    data_teks["markmap_code"] = data_visual.get("markmap_code", "")
+                                    data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
+
+                                    st.session_state["offline_summary"] = data_teks
+                                    
+                                    if not is_admin():
+                                        st.session_state["user_kuota_ai"] -= 1
+                                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+                                    
+                                    st.success("✅ Analisis AI Lengkap & Selesai!")
+                                else:
+                                    st.error(f"Error AI (Tahap 2): Server mengembalikan status {res2.status_code}")
+                            except Exception as e: 
+                                st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
+
+        if st.session_state.get("offline_summary"):
             data = st.session_state["offline_summary"]
             st.markdown("---")
             st.markdown("### 📋 Laporan Notulensi AI (Offline)")
@@ -3275,105 +3405,3 @@ if st.session_state.get("offline_summary"):
             
             final_html_offline = html_template_offline.replace("__JSON_DATA__", json.dumps(data))
             components.html(final_html_offline, height=2200, scrolling=True)
-    # =====================================================================
-    # TAB 3: SOP GENERATOR (KARS/JCI)
-    # =====================================================================
-    with tab_sop:
-        st.markdown("### 🏥 AI Akreditasi SOP Generator")
-        st.markdown("Generasi otomatis SOP Rumah Sakit berstandar Akreditasi KARS/JCI dengan output Flowchart Swimlane (PlantUML).")
-        
-        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") not in ["EXECUTIVE", "MASTER"]:
-            st.markdown("""<div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;"><h1 style="font-size: 50px; margin: 0;">🔒</h1><h2 style="color: #ef4444; margin-top: 10px;">AKSES PREMIUM DIBUTUHKAN</h2><p style="color: #475569; font-size: 16px;">Fitur <b>AI Akreditasi SOP Generator</b> ini eksklusif hanya untuk pengguna paket <b>EXECUTIVE</b> dan <b>MASTER</b>. <br>Silakan upgrade paket Anda di tab Info Paket untuk membuka fitur ini.</p></div>""", unsafe_allow_html=True)
-        else:
-            with st.expander("🔑 Kredensial & Info Rumah Sakit", expanded=True):
-                api_key_sop = st.text_input("LiteLLM / Gemini API Key", type="password", help="Masukkan API Key Anda", key="api_sop")
-                logo_url = st.text_input("Link Logo Instansi (Copy Image Address)", value="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Coat_of_arms_of_Jakarta.svg/1280px-Coat_of_arms_of_Jakarta.svg.png", help="Paste link gambar logo (pastikan link berakhiran .png / .jpg)")
-                col_i1, col_i2 = st.columns(2)
-                with col_i1:
-                    rs_name = st.text_input("Nama Instansi/RS", value="RSUD CONTOH")
-                    title = st.text_input("Judul SOP", value="SOP Penerimaan Pasien Baru")
-                    no_dok = st.text_input("Nomor Dokumen", value="001/SOP/2026")
-                with col_i2:
-                    dir_name = st.text_input("Nama Pimpinan", value="Dr. John Doe, MARS")
-                    dir_nip = st.text_input("NIP Pimpinan", value="19800101 200501 1 001")
-
-            st.markdown("#### 📂 Referensi (Max 5)")
-            uploaded_files_sop = st.file_uploader("Upload Dokumen Referensi (PDF/Image)", accept_multiple_files=True, key="upload_sop")
-
-           # --- BLOK TOMBOL GENERATE ---
-            if st.button("🚀 Generate SOP Akreditasi", type="primary", use_container_width=True):
-                if not api_key_sop: st.error("⚠️ API Key tidak ditemukan. Silakan input API Key!")
-                elif not title: st.error("⚠️ Judul SOP wajib diisi!")
-                elif len(uploaded_files_sop) > 5: st.error("⚠️ Maksimal 5 file referensi!")
-                elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: st.error("❌ Kuota AI Anda habis! Silakan lakukan Top-Up di tab Info Paket.")
-                else:
-                    if not is_admin():
-                        st.session_state["user_kuota_ai"] -= 3
-                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
-                        render_sidebar_profile()
-
-                    try:
-                        BASE_URL_KOBOI = "https://litellm.koboi2026.biz.id/v1/chat/completions"
-                        headers = {'Authorization': f'Bearer {api_key_sop}', 'Content-Type': 'application/json'}
-                        ref_instruction = "Buatlah SOP berdasarkan standar best practice akreditasi RS (KARS/JCI)."
-                        file_data_array = []
-                        if uploaded_files_sop:
-                            ref_instruction = "SANGAT PENTING: Saya melampirkan referensi. WAJIB GUNAKAN ISI REFERENSI INI (dasar hukum, alat, langkah kerja)."
-                            for f in uploaded_files_sop:
-                                file_data_array.append({"type": "image_url", "image_url": { "url": f"data:{f.type};base64,{base64.b64encode(f.getvalue()).decode('utf-8')}" }})
-
-                        prompt_cover = f"""Bertindaklah sebagai Ahli Hukum Kesehatan dan Auditor Akreditasi RS.
-                        Tugas: Buat data teknis JSON untuk SOP: "{title}" di unit "{rs_name}".
-                        {ref_instruction}
-                        ATURAN PENTING: 1. DASAR HUKUM WAJIB TERBARU (UU No. 17 Tahun 2023). 2. NUMBERING (1., 2., dst). 3. KONSISTENSI.
-                        OUTPUT JSON STRICT: {{ "dasar_hukum": ["1. ..."], "kualifikasi": ["1. ..."], "keterkaitan": ["1. ..."], "peralatan": ["1. ..."], "peringatan": "...", "pencatatan": ["1. ..."] }}"""
-
-                        content_array_cover = [{"type": "text", "text": prompt_cover}]
-                        if file_data_array: content_array_cover.extend(file_data_array)
-
-                        with st.spinner("⏳ Robot Germic Membaca Referensi & Menyusun Struktur..."):
-                            response_cover = requests.post(BASE_URL_KOBOI, headers=headers, json={"model": "gemini/gemini-2.5-flash", "messages": [{"role": "user", "content": content_array_cover}], "response_format": { "type": "json_object" }, "temperature": 0.2})
-                            response_cover.raise_for_status()
-                            data_cover = json.loads(clean_json_response(response_cover.json()['choices'][0]['message']['content']))
-
-                        prompt_flow = f"""Tugas: Buat detail langkah kerja dan kode PlantUML untuk SOP "{title}".
-                        ATURAN DECISION: Jika ada percabangan (disetujui/tidak), gunakan blok IF-ELSE di PlantUML.
-                        ATURAN PLANTUML: 1. Swimlane SEBELUM 'start' (|Aktor|\\nstart). 2. Awali (:) akhiri (;). 3. JANGAN rubah Swimlane di dalam blok IF. 4. Tanpa 'repeat'/'while'.
-                        KOLOM WAKTU: Angka dan Satuan (misal "5 Menit").
-                        OUTPUT JSON: {{ "pelaksana_list": ["..."], "plantuml_code": "@startuml\\n|Petugas|\\nstart\\n:Kirim Draf;\\nstop\\n@enduml", "langkah": [ {{ "kegiatan": "...", "pelaksana": "...", "waktu": "...", "kelengkapan": "...", "output": "...", "keterangan": "-" }} ] }}"""
-
-                        content_array_flow = [{"type": "text", "text": prompt_flow}]
-                        if file_data_array: content_array_flow.extend(file_data_array)
-
-                        with st.spinner("⏳ Robot Germic Meracik Alur Logika & Men-generate PlantUML..."):
-                            response_flow = requests.post(BASE_URL_KOBOI, headers=headers, json={"model": "gemini/gemini-2.5-flash", "messages": [{"role": "user", "content": content_array_flow}], "response_format": { "type": "json_object" }, "temperature": 0.2})
-                            response_flow.raise_for_status()
-                            data_flow = json.loads(clean_json_response(response_flow.json()['choices'][0]['message']['content']))
-
-                        st.toast("✅ Dokumen SOP Berhasil Dibuat!", icon="🎉")
-                        preview_html, word_html = render_akreditasi_output({"cover": data_cover, "flow": data_flow}, rs_name, title, no_dok, dir_name, dir_nip, logo_url)
-
-                        # SIMPAN HASILNYA KE MEMORI (SESSION STATE) AGAR TIDAK HILANG
-                        st.session_state["sop_preview_html"] = preview_html
-                        st.session_state["sop_word_html"] = word_html
-                        st.session_state["sop_title"] = title
-
-                    except requests.exceptions.RequestException as e: st.error(f"❌ Kesalahan API: {str(e)}")
-                    except Exception as e: st.error(f"❌ Kesalahan pemrosesan: {str(e)}")
-
-            # ====================================================================
-            # MUNCULKAN PREVIEW & TOMBOL DOWNLOAD DI LUAR BLOK "IF BUTTON GENERATE"
-            # PERHATIKAN: Posisi 'if' ini harus sejajar dengan 'if st.button(...)' di atas!
-            # ====================================================================
-            if st.session_state.get("sop_preview_html"):
-                st.markdown("---")
-                st.subheader("📄 Preview Dokumen SOP")
-                st.components.v1.html(st.session_state["sop_preview_html"], height=1000, scrolling=True)
-                
-                st.download_button(
-                    label="📄 DOWNLOAD WORD (SOP)", 
-                    data=st.session_state["sop_word_html"].encode('utf-8-sig'), 
-                    file_name=f"SOP_{st.session_state['sop_title'].replace(' ', '_')}.doc", 
-                    mime="application/msword", 
-                    use_container_width=True
-                )

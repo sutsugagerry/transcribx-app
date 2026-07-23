@@ -2456,7 +2456,7 @@ else:
                             setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
                                 
-                              function parseMarkdownToSunburst(md) {
+                             function parseMarkdownToSunburst(md) {
                                         const lines = md.split('\\n');
                                         let root = { name: "Root", children: [] };
                                         let stack = [ {level: -1, node: root} ];
@@ -2511,44 +2511,60 @@ else:
                                             }
                                         }
                                         assignValues(root);
-                                        return root.children;
+                                        
+                                        // PINTAR MEMILIH ROOT: Agar Topik Utama selalu ngisi di tengah
+                                        if (root.children.length === 1) {
+                                            return root.children; // Jika cuma 1 topik utama, jadikan dia pusatnya
+                                        } else if (root.children.length > 1) {
+                                            return [{ name: "Anatomi Rapat", children: root.children }]; // Bungkus jika banyak
+                                        }
+                                        return [{name: "Data tidak tersedia", value: 1}];
                                     }
 
                                     let sunburstData = parseMarkdownToSunburst(rawMm);
                                     
-                                    // TRIK RAHASIA AGAR WARNA TIDAK MONOTON (HIJAU SEMUA):
-                                    // Jika AI membungkus semua topik ke dalam 1 root utama,
-                                    // kita bypass root tersebut dan langsung ambil anak-anaknya.
-                                    // Dengan begini, ECharts akan melihat banyak "Topik Utama" dan membagi warna paletnya.
-                                    if (sunburstData && sunburstData.length === 1 && sunburstData[0].children && sunburstData[0].children.length > 0) {
-                                        sunburstData = sunburstData[0].children;
+                                    const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
+
+                                    // FUNGSI REKURSIF: Memaksa tiap cabang (branch) beda warna, anti "hijau semua"
+                                    function applyColorToBranch(node, color) {
+                                        node.itemStyle = node.itemStyle || {};
+                                        node.itemStyle.color = color;
+                                        if (node.children && node.children.length > 0) {
+                                            node.children.forEach(child => applyColorToBranch(child, color));
+                                        }
                                     }
-                                    
-                                    if (!sunburstData || sunburstData.length === 0) {
-                                        sunburstData = [{name: "Data tidak tersedia", value: 1}];
+
+                                    // FORMATTING PUSAT (ROOT) DAN ANAK-ANAKNYA
+                                    if (sunburstData.length === 1) {
+                                        sunburstData[0].itemStyle = { color: '#0f172a' }; // Pusat warna Navy Gelap
+                                        sunburstData[0].label = { color: '#ffffff', fontSize: 13, fontWeight: 'bold' };
+                                        
+                                        if (sunburstData[0].children) {
+                                            sunburstData[0].children.forEach((child, index) => { 
+                                                let branchColor = colorPalette[index % colorPalette.length];
+                                                applyColorToBranch(child, branchColor);
+                                            });
+                                        }
                                     }
 
                                     var chartDom = document.getElementById('sunburstLiveContainer');
                                     window.sunburstChartLive = echarts.init(chartDom);
                                     
                                     var option = {
-                                        // Palet warna yang cerah dan memanjakan mata
-                                        color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'],
                                         tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
                                         series: {
                                             type: 'sunburst', 
                                             data: sunburstData, 
-                                            // '10%' memberikan lubang di tengah agar berbentuk donat seperti gambar referensi
-                                            radius: ['10%', '95%'], 
+                                            radius: [0, '95%'], // '0' MEMBUAT ROOT MENGISI PENUH DI TENGAH (TIDAK BOLONG)
                                             sort: undefined, 
                                             emphasis: { focus: 'ancestor' },
                                             itemStyle: { borderRadius: 4, borderWidth: 1.5, borderColor: '#ffffff' },
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                minAngle: 4, // Tampilkan teks walaupun potongannya agak tipis
-                                                width: 80,  // Paksa teks turun (wrap) jika lebih dari 80px
-                                                overflow: 'break', // Teks akan ditekuk ke bawah dengan rapi (tidak dipotong ...)
+                                                minAngle: 4, 
+                                                width: 80,  
+                                                overflow: 'break', // Teks akan digulung ke bawah secara proporsional
                                                 fontSize: 9.5, 
                                                 fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 

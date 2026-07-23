@@ -2482,7 +2482,7 @@ else:
                                                 continue;
                                             }
 
-                                            // Bersihkan sisa format markdown
+                                            // Bersihkan format tebal/miring
                                             text = text.replace(/\\*\\*/g, '').replace(/_/g, '').trim();
 
                                             let newNode = { name: text, children: [] };
@@ -2512,20 +2512,17 @@ else:
                                         }
                                         assignValues(root);
                                         
-                                        // PINTAR MEMILIH ROOT: Agar Topik Utama selalu ngisi di tengah
                                         if (root.children.length === 1) {
-                                            return root.children; // Jika cuma 1 topik utama, jadikan dia pusatnya
+                                            return root.children;
                                         } else if (root.children.length > 1) {
-                                            return [{ name: "Anatomi Rapat", children: root.children }]; // Bungkus jika banyak
+                                            return [{ name: "Anatomi Rapat", children: root.children }];
                                         }
                                         return [{name: "Data tidak tersedia", value: 1}];
                                     }
 
                                     let sunburstData = parseMarkdownToSunburst(rawMm);
-                                    
                                     const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
 
-                                    // FUNGSI REKURSIF: Memaksa tiap cabang (branch) beda warna, anti "hijau semua"
                                     function applyColorToBranch(node, color) {
                                         node.itemStyle = node.itemStyle || {};
                                         node.itemStyle.color = color;
@@ -2534,9 +2531,8 @@ else:
                                         }
                                     }
 
-                                    // FORMATTING PUSAT (ROOT) DAN ANAK-ANAKNYA
                                     if (sunburstData.length === 1) {
-                                        sunburstData[0].itemStyle = { color: '#0f172a' }; // Pusat warna Navy Gelap
+                                        sunburstData[0].itemStyle = { color: '#0f172a' }; 
                                         sunburstData[0].label = { color: '#ffffff', fontSize: 13, fontWeight: 'bold' };
                                         
                                         if (sunburstData[0].children) {
@@ -2551,27 +2547,37 @@ else:
                                     window.sunburstChartLive = echarts.init(chartDom);
                                     
                                     var option = {
-                                        tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
+                                        tooltip: { 
+                                            trigger: 'item', 
+                                            formatter: function(info) { 
+                                                return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; 
+                                            } 
+                                        },
                                         series: {
                                             type: 'sunburst', 
                                             data: sunburstData, 
-                                            radius: [0, '95%'], // '0' MEMBUAT ROOT MENGISI PENUH DI TENGAH (TIDAK BOLONG)
                                             sort: undefined, 
                                             emphasis: { focus: 'ancestor' },
-                                            itemStyle: { borderRadius: 4, borderWidth: 1.5, borderColor: '#ffffff' },
+                                            itemStyle: { borderRadius: 4, borderWidth: 2, borderColor: '#ffffff' },
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                minAngle: 4, 
-                                                width: 80,  
-                                                overflow: 'break', // Teks akan digulung ke bawah secara proporsional
-                                                fontSize: 9.5, 
+                                                overflow: 'break', // Teks dibungkus (wrap)
+                                                lineHeight: 12,    // Merapatkan jarak atas-bawah saat di-wrap
                                                 fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
                                                 textBorderColor: 'rgba(0,0,0,0.6)', 
                                                 textBorderWidth: 1.5 
-                                            }
+                                            },
+                                            // KUNCI JAWABAN: Setting radius dan label per level untuk bulatan sempurna & wrap rapi
+                                            levels: [
+                                                {}, // Level 0 (Tengah/Root)
+                                                { r0: '10%', r: '35%', label: { width: 60, fontSize: 10, minAngle: 5 } },   // Layer 1
+                                                { r0: '35%', r: '60%', label: { width: 50, fontSize: 9.5, minAngle: 8 } },  // Layer 2
+                                                { r0: '60%', r: '80%', label: { width: 40, fontSize: 9, minAngle: 12 } },   // Layer 3
+                                                { r0: '80%', r: '95%', label: { width: 30, fontSize: 8, minAngle: 15 } }    // Layer 4 (Paling luar)
+                                            ]
                                         }
                                     };
                                     window.sunburstChartLive.setOption(option);

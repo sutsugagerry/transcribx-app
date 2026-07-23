@@ -633,6 +633,9 @@ def generate_notulensi_docx(data):
 if "logged_in" not in st.session_state: st.session_state["logged_in"] = False
 if "offline_transcript" not in st.session_state: st.session_state["offline_transcript"] = ""
 if "offline_summary" not in st.session_state: st.session_state["offline_summary"] = None
+if "offline_segments" not in st.session_state: st.session_state["offline_segments"] = []
+if "offline_audio_b64" not in st.session_state: st.session_state["offline_audio_b64"] = ""
+if "offline_audio_mime" not in st.session_state: st.session_state["offline_audio_mime"] = ""
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 if "sop_preview_html" not in st.session_state: st.session_state["sop_preview_html"] = None
 if "sop_word_html" not in st.session_state: st.session_state["sop_word_html"] = None
@@ -1871,17 +1874,32 @@ else:
                                         url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
                                         headers = {"Authorization": f"Bearer {llm_key}"}
                                         success_transcription = True
+                                        all_segments = []
                                         for i, chunk_file in enumerate(chunk_files):
                                             status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
                                             with open(chunk_file, "rb") as f: files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
-                                            response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
-                                            if response.status_code == 200: full_transcript += response.json().get("text", "") + " "
+                                            # UBAH response_format ke verbose_json untuk memunculkan timestamp Time-Travel
+                                            response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "verbose_json"})
+                                            if response.status_code == 200: 
+                                                res_data = response.json()
+                                                full_transcript += res_data.get("text", "") + " "
+                                                # Kalkulasi offset waktu tiap potongan (600 detik per chunk)
+                                                offset = i * 600.0
+                                                for seg in res_data.get("segments", []):
+                                                    all_segments.append({
+                                                        "start": seg.get("start", 0) + offset,
+                                                        "end": seg.get("end", 0) + offset,
+                                                        "text": seg.get("text", "")
+                                                    })
                                             else: st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}"); success_transcription = False; break
                                             progress_bar.progress((i + 1) / total_chunks)
                                         
                                         if success_transcription and full_transcript.strip():
                                             status_text.success("✅ Seluruh audio berhasil ditranskrip!")
                                             st.session_state["offline_transcript"] = full_transcript.strip()
+                                            st.session_state["offline_segments"] = all_segments
+                                            st.session_state["offline_audio_b64"] = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+                                            st.session_state["offline_audio_mime"] = uploaded_file.type
                                 except subprocess.CalledProcessError as e: st.error(f"❌ Error FFmpeg: {e.stderr.decode('utf-8')}")
                                 except Exception as e: st.error(f"Terjadi kesalahan: {str(e)}")
                                 finally:
@@ -1889,7 +1907,76 @@ else:
 
             if st.session_state["offline_transcript"]:
                 st.markdown("#### 📝 Hasil Transkripsi")
-                st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
+                
+                # --- TAMBAHAN UI TIME-TRAVEL MENGGANTIKAN TEXT-AREA BIASA ---
+                if st.session_state.get("offline_segments") and st.session_state.get("offline_audio_b64"):
+                    audio_uri = f"data:{st.session_state['offline_audio_mime']};base64,{st.session_state['offline_audio_b64']}"
+                    
+                    segments_html = ""
+                    for seg in st.session_state["offline_segments"]:
+                        total_sec = int(seg['start'])
+                        m, s = divmod(total_sec, 60)
+                        time_str = f"{m:02d}:{s:02d}"
+                        segments_html += f'<div class="segment" data-start="{seg["start"]}" data-end="{seg["end"]}"><span class="timestamp">{time_str}</span> {seg["text"]}</div>'
+
+                    time_travel_html = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: transparent; margin: 0; padding: 5px; }}
+                            .player-container {{ background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                            audio {{ width: 100%; border-radius: 8px; margin-bottom: 20px; outline: none; }}
+                            .transcript-box {{ height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #cbd5e1; border-radius: 12px; background: #ffffff; scroll-behavior: smooth; }}
+                            .segment {{ padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border-left: 4px solid transparent; font-size: 15px; color: #475569; }}
+                            .segment:hover {{ background: #f1f5f9; }}
+                            .segment.active {{ background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e3a8a; font-weight: 600; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1); }}
+                            .timestamp {{ font-size: 12px; color: #94a3b8; font-weight: bold; margin-right: 10px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; }}
+                        </style>
+                    </head>
+                    <body>
+                    <div class="player-container">
+                        <h3 style="margin-top:0; color:#1e293b; font-size:16px;">🎧 Interactive Timeline Audio (Time-Travel)</h3>
+                        <audio id="audioPlayer" controls>
+                            <source src="{audio_uri}" type="{st.session_state['offline_audio_mime']}">
+                        </audio>
+                        <div class="transcript-box" id="transcriptBox">
+                            {segments_html}
+                        </div>
+                    </div>
+                    <script>
+                        const player = document.getElementById('audioPlayer');
+                        const segments = document.querySelectorAll('.segment');
+                        
+                        segments.forEach(seg => {{
+                            seg.addEventListener('click', () => {{
+                                player.currentTime = parseFloat(seg.getAttribute('data-start'));
+                                player.play();
+                            }});
+                        }});
+
+                        player.addEventListener('timeupdate', () => {{
+                            const currentTime = player.currentTime;
+                            segments.forEach(seg => {{
+                                const start = parseFloat(seg.getAttribute('data-start'));
+                                const end = parseFloat(seg.getAttribute('data-end'));
+                                if (currentTime >= start && currentTime <= end) {{
+                                    if (!seg.classList.contains('active')) {{
+                                        segments.forEach(s => s.classList.remove('active'));
+                                        seg.classList.add('active');
+                                        seg.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                                    }}
+                                }}
+                            }});
+                        }});
+                    </script>
+                    </body>
+                    </html>
+                    """
+                    components.html(time_travel_html, height=520, scrolling=True)
+                # --- END UI TIME-TRAVEL ---
+
+                st.session_state["offline_transcript"] = st.text_area("Edit Raw Text (Hanya jika diperlukan untuk Summary AI):", value=st.session_state["offline_transcript"], height=150)
                 if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                     if not llm_key: st.warning("⚠️ Masukkan API Key LiteLLM!")
                     elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")

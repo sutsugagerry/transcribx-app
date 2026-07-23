@@ -2456,7 +2456,7 @@ else:
                             setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
                                 
-                               function parseMarkdownToSunburst(md) {
+                              function parseMarkdownToSunburst(md) {
                                         const lines = md.split('\\n');
                                         let root = { name: "Root", children: [] };
                                         let stack = [ {level: -1, node: root} ];
@@ -2482,9 +2482,8 @@ else:
                                                 continue;
                                             }
 
-                                            // Bersihkan sisa format dan batasi panjang karakter agar chart tidak pecah/overlap parah
+                                            // Bersihkan sisa format markdown
                                             text = text.replace(/\\*\\*/g, '').replace(/_/g, '').trim();
-                                            if(text.length > 65) text = text.substring(0, 65) + '...';
 
                                             let newNode = { name: text, children: [] };
 
@@ -2516,48 +2515,46 @@ else:
                                     }
 
                                     let sunburstData = parseMarkdownToSunburst(rawMm);
-                                    if (!sunburstData || sunburstData.length === 0) {
-                                        sunburstData = [{name: "Data tidak tersedia", value: 1}];
+                                    
+                                    // TRIK RAHASIA AGAR WARNA TIDAK MONOTON (HIJAU SEMUA):
+                                    // Jika AI membungkus semua topik ke dalam 1 root utama,
+                                    // kita bypass root tersebut dan langsung ambil anak-anaknya.
+                                    // Dengan begini, ECharts akan melihat banyak "Topik Utama" dan membagi warna paletnya.
+                                    if (sunburstData && sunburstData.length === 1 && sunburstData[0].children && sunburstData[0].children.length > 0) {
+                                        sunburstData = sunburstData[0].children;
                                     }
                                     
-                                    const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
-
-                                    // PAKSA PEWARNAAN DI LEVEL TEMA (BRANCHES) AGAR TIDAK MONOTON
-                                    if (sunburstData.length === 1 && sunburstData[0].children && sunburstData[0].children.length > 0) {
-                                        sunburstData[0].itemStyle = { color: '#0f172a' }; // Warna pusat (Inner Circle)
-                                        sunburstData[0].children.forEach((child, index) => { 
-                                            child.itemStyle = { color: colorPalette[index % colorPalette.length] }; 
-                                        });
-                                    } else {
-                                        sunburstData.forEach((child, index) => { 
-                                            child.itemStyle = { color: colorPalette[index % colorPalette.length] }; 
-                                        });
+                                    if (!sunburstData || sunburstData.length === 0) {
+                                        sunburstData = [{name: "Data tidak tersedia", value: 1}];
                                     }
 
                                     var chartDom = document.getElementById('sunburstLiveContainer');
                                     window.sunburstChartLive = echarts.init(chartDom);
                                     
                                     var option = {
+                                        // Palet warna yang cerah dan memanjakan mata
+                                        color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'],
                                         tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
                                         series: {
                                             type: 'sunburst', 
                                             data: sunburstData, 
-                                            radius: [0, '95%'], 
+                                            // '10%' memberikan lubang di tengah agar berbentuk donat seperti gambar referensi
+                                            radius: ['10%', '95%'], 
                                             sort: undefined, 
                                             emphasis: { focus: 'ancestor' },
                                             itemStyle: { borderRadius: 4, borderWidth: 1.5, borderColor: '#ffffff' },
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                minAngle: 5, // Diperkecil agar potongan tipis tetap kebagian teks
-                                                width: 100,  // Diperlebar sebelum teks ditekuk ke bawah
-                                                overflow: 'break', // Biarkan teks ditekuk (wrap) agar tidak kepotong '...'
-                                                fontSize: 9.5, // Font dikecilkan sedikit agar rapi
-                                                fontWeight: '600', 
+                                                minAngle: 4, // Tampilkan teks walaupun potongannya agak tipis
+                                                width: 80,  // Paksa teks turun (wrap) jika lebih dari 80px
+                                                overflow: 'break', // Teks akan ditekuk ke bawah dengan rapi (tidak dipotong ...)
+                                                fontSize: 9.5, 
+                                                fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
-                                                textBorderColor: 'rgba(0,0,0,0.8)', 
-                                                textBorderWidth: 2 
+                                                textBorderColor: 'rgba(0,0,0,0.6)', 
+                                                textBorderWidth: 1.5 
                                             }
                                         }
                                     };

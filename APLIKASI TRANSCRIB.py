@@ -2093,8 +2093,8 @@ else:
             st.markdown("#### 📂 Referensi (Max 5)")
             uploaded_files_sop = st.file_uploader("Upload Dokumen Referensi (PDF/Image)", accept_multiple_files=True, key="upload_sop")
 
+           # --- BLOK TOMBOL GENERATE ---
             if st.button("🚀 Generate SOP Akreditasi", type="primary", use_container_width=True):
-                # (Bagian validasi if-elif biarkan sama persis seperti sebelumnya)
                 if not api_key_sop: st.error("⚠️ API Key tidak ditemukan. Silakan input API Key!")
                 elif not title: st.error("⚠️ Judul SOP wajib diisi!")
                 elif len(uploaded_files_sop) > 5: st.error("⚠️ Maksimal 5 file referensi!")

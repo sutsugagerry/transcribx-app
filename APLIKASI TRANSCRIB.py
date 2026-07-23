@@ -2482,7 +2482,7 @@ else:
                                                 continue;
                                             }
 
-                                            // Bersihkan format tebal/miring
+                                            // Bersihkan sisa format markdown
                                             text = text.replace(/\\*\\*/g, '').replace(/_/g, '').trim();
 
                                             let newNode = { name: text, children: [] };
@@ -2556,27 +2556,28 @@ else:
                                         series: {
                                             type: 'sunburst', 
                                             data: sunburstData, 
+                                            radius: [0, '95%'], // GLOBAL: Mulai dari 0 MUTLAK (Tidak ada lobang)
                                             sort: undefined, 
                                             emphasis: { focus: 'ancestor' },
-                                            itemStyle: { borderRadius: 4, borderWidth: 2, borderColor: '#ffffff' },
+                                            itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: '#ffffff' },
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                overflow: 'break', // Teks dibungkus (wrap)
-                                                lineHeight: 12,    // Merapatkan jarak atas-bawah saat di-wrap
+                                                overflow: 'break', // Teks dibungkus (wrap) ke bawah
+                                                lineHeight: 12,    // Rapatkan jarak baris
                                                 fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
                                                 textBorderColor: 'rgba(0,0,0,0.6)', 
                                                 textBorderWidth: 1.5 
                                             },
-                                            // KUNCI JAWABAN: Setting radius dan label per level untuk bulatan sempurna & wrap rapi
+                                            // PENGATURAN SPESIFIK TIAP LAPISAN
                                             levels: [
-                                                {}, // Level 0 (Tengah/Root)
-                                                { r0: '10%', r: '35%', label: { width: 60, fontSize: 10, minAngle: 5 } },   // Layer 1
-                                                { r0: '35%', r: '60%', label: { width: 50, fontSize: 9.5, minAngle: 8 } },  // Layer 2
-                                                { r0: '60%', r: '80%', label: { width: 40, fontSize: 9, minAngle: 12 } },   // Layer 3
-                                                { r0: '80%', r: '95%', label: { width: 30, fontSize: 8, minAngle: 15 } }    // Layer 4 (Paling luar)
+                                                { r0: '0%', r: '20%', label: { rotate: 0, fontSize: 13 } },  // PUSAT (ROOT): Diatur agar R0=0% -> Tanpa lubang!
+                                                { r0: '20%', r: '45%', label: { width: 55, fontSize: 10, minAngle: 5 } },   // LAPIS 1
+                                                { r0: '45%', r: '70%', label: { width: 50, fontSize: 9.5, minAngle: 8 } },  // LAPIS 2
+                                                { r0: '70%', r: '85%', label: { width: 45, fontSize: 9, minAngle: 12 } },   // LAPIS 3
+                                                { r0: '85%', r: '100%', label: { width: 40, fontSize: 8.5, minAngle: 15 } } // LAPIS 4
                                             ]
                                         }
                                     };

@@ -1645,7 +1645,7 @@ else:
         # BAGIAN HARGA TOP-UP ECERAN
         # ==========================================
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 40px; font-weight: bold;'>🔋 Paket Top-Up Kuota (Eceran)</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 20px;'>Kehabisan kuota sebelum masa aktif habis? Beli kuota tambahan tanpa harus memperpanjang masa aktif bulanan.</p>", unsafe_allow_html=True)
+        st.info("💡 **INFO UPGRADE PAKET:** Membeli paket baru (Basic/Executive/Master) saat paket lama masih aktif akan **mereset ulang** masa aktif Anda menjadi 30 hari ke depan dan mengatur ulang kuota sesuai paket terbaru (sisa kuota lama tidak diakumulasi).")
         
         col_t1, col_t2 = st.columns(2)
         with col_t1:

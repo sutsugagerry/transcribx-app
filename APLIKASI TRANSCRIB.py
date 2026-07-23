@@ -2458,7 +2458,7 @@ else:
                                 
                                function parseMarkdownToSunburst(md) {
                                         const lines = md.split('\\n');
-                                        let root = { name: "Tema Rapat", children: [] };
+                                        let root = { name: "Root", children: [] };
                                         let stack = [ {level: -1, node: root} ];
 
                                         for (let i = 0; i < lines.length; i++) {
@@ -2482,7 +2482,10 @@ else:
                                                 continue;
                                             }
 
+                                            // Bersihkan sisa format dan batasi panjang karakter agar chart tidak pecah/overlap parah
                                             text = text.replace(/\\*\\*/g, '').replace(/_/g, '').trim();
+                                            if(text.length > 65) text = text.substring(0, 65) + '...';
+
                                             let newNode = { name: text, children: [] };
 
                                             while (stack.length > 1) {
@@ -2509,19 +2512,32 @@ else:
                                             }
                                         }
                                         assignValues(root);
-                                        return root.children.length > 0 ? root.children : [{name: "Data tidak tersedia", value: 1}];
+                                        return root.children;
                                     }
 
-                                    const sunburstData = parseMarkdownToSunburst(rawMm);
+                                    let sunburstData = parseMarkdownToSunburst(rawMm);
+                                    if (!sunburstData || sunburstData.length === 0) {
+                                        sunburstData = [{name: "Data tidak tersedia", value: 1}];
+                                    }
                                     
-                                    // Palet Warna ECharts Native
                                     const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
+
+                                    // PAKSA PEWARNAAN DI LEVEL TEMA (BRANCHES) AGAR TIDAK MONOTON
+                                    if (sunburstData.length === 1 && sunburstData[0].children && sunburstData[0].children.length > 0) {
+                                        sunburstData[0].itemStyle = { color: '#0f172a' }; // Warna pusat (Inner Circle)
+                                        sunburstData[0].children.forEach((child, index) => { 
+                                            child.itemStyle = { color: colorPalette[index % colorPalette.length] }; 
+                                        });
+                                    } else {
+                                        sunburstData.forEach((child, index) => { 
+                                            child.itemStyle = { color: colorPalette[index % colorPalette.length] }; 
+                                        });
+                                    }
 
                                     var chartDom = document.getElementById('sunburstLiveContainer');
                                     window.sunburstChartLive = echarts.init(chartDom);
                                     
                                     var option = {
-                                        color: colorPalette, // ECharts otomatis mewarnai ranting sesuai warna induk
                                         tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
                                         series: {
                                             type: 'sunburst', 
@@ -2533,11 +2549,11 @@ else:
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                minAngle: 18, // Sembunyikan label jika slice terlalu sempit (kunci anti-numpuk)
-                                                width: 80, // Batasi panjang teks
-                                                overflow: 'truncate', // Potong teks pakai elipsis (...) jangan turun ke bawah
-                                                fontSize: 10, 
-                                                fontWeight: 'bold', 
+                                                minAngle: 5, // Diperkecil agar potongan tipis tetap kebagian teks
+                                                width: 100,  // Diperlebar sebelum teks ditekuk ke bawah
+                                                overflow: 'break', // Biarkan teks ditekuk (wrap) agar tidak kepotong '...'
+                                                fontSize: 9.5, // Font dikecilkan sedikit agar rapi
+                                                fontWeight: '600', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
                                                 textBorderColor: 'rgba(0,0,0,0.8)', 
@@ -2558,7 +2574,6 @@ else:
         </html>
         """
         components.html(html_code, height=2200, scrolling=True)
-
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION
     # =====================================================================

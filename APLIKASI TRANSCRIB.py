@@ -510,25 +510,58 @@ def render_akreditasi_output(full_data, rs_name, title, no_dok, dir_name, dir_ni
     return doc_html, word_wrapper
 
 # =====================================================================
-# FUNGSI GENERATE DOCX UNTUK NOTULENSI
+# FUNGSI BANTUAN UNTUK GENERATE GAMBAR MERMAID VIA KROKI API
+# =====================================================================
+def get_mermaid_png_bytes(mermaid_code):
+    try:
+        import requests
+        import io
+        
+        # Bersihkan kode mermaid
+        mermaid_code = mermaid_code.replace("```mermaid", "").replace("```", "").strip()
+        if not mermaid_code.lower().startswith('graph') and not mermaid_code.lower().startswith('flowchart') and not mermaid_code.lower().startswith('mindmap'):
+            mermaid_code = "graph LR\n" + mermaid_code
+            
+        # Panggil API Kroki untuk render Mermaid ke PNG
+        response = requests.post(
+            "https://kroki.io/mermaid/png", 
+            data=mermaid_code.encode('utf-8'), 
+            headers={"Content-Type": "text/plain"},
+            timeout=15
+        )
+        
+        if response.status_code == 200:
+            return io.BytesIO(response.content)
+        return None
+    except Exception as e:
+        print(f"Error generating Mermaid PNG: {e}")
+        return None
+
+
+# =====================================================================
+# FUNGSI GENERATE DOCX (REVISI DENGAN GAMBAR MINDMAP TERLAMPIR)
 # =====================================================================
 def generate_notulensi_docx(data):
     doc = Document()
+    
+    # 1. HEADER (Menggunakan tabel tanpa border untuk layout Kiri-Kanan)
     header_table = doc.add_table(rows=1, cols=2)
     header_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     header_table.autofit = True
     
+    # Kolom Kiri: Branding SmartDose
     cell_left = header_table.cell(0, 0)
     p_left = cell_left.paragraphs[0]
     run_logo = p_left.add_run("SMARTDOSE\n")
     run_logo.bold = True
     run_logo.font.size = Pt(28)
-    run_logo.font.color.rgb = RGBColor(30, 58, 138) 
+    run_logo.font.color.rgb = RGBColor(30, 58, 138) # Warna Biru Tua
     
     run_sub = p_left.add_run("Enterprise AI Transcription\nHealthcare & Productivity")
     run_sub.font.size = Pt(10)
     run_sub.font.color.rgb = RGBColor(100, 116, 139)
     
+    # Kolom Kanan: Nama Organisasi
     cell_right = header_table.cell(0, 1)
     p_right = cell_right.paragraphs[0]
     p_right.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -540,9 +573,11 @@ def generate_notulensi_docx(data):
     run_motto.italic = True
     run_motto.font.size = Pt(10)
 
+    # Garis Pemisah 
     doc.add_paragraph("_" * 80).alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph() 
+    doc.add_paragraph() # Spasi
 
+    # 2. JUDUL DOKUMEN
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_title = p_title.add_run("NOTULEN RAPAT")
@@ -556,20 +591,28 @@ def generate_notulensi_docx(data):
     run_subtitle = p_subtitle.add_run(notulensi.get('agenda', 'Koordinasi dan Pembahasan Internal'))
     run_subtitle.bold = True
     run_subtitle.font.size = Pt(12)
-    doc.add_paragraph() 
+    doc.add_paragraph() # Spasi
 
+    # 3. TABEL METADATA (Hari, Waktu, Media, dll)
     table_meta = doc.add_table(rows=6, cols=2)
     table_meta.style = 'Table Grid'
+    
     for row in table_meta.rows:
         row.cells[0].width = Inches(1.5)
         row.cells[1].width = Inches(4.5)
+
+    peserta_val = notulensi.get('peserta', [])
+    if isinstance(peserta_val, list):
+        peserta_str = ", ".join(peserta_val)
+    else:
+        peserta_str = str(peserta_val)
 
     meta_data = [
         ("Hari / Tanggal", datetime.now().strftime("%A, %d %B %Y")),
         ("Waktu", datetime.now().strftime("%H:%M WIB")),
         ("Media", "SmartDose TranscribX (Offline/Live)"),
         ("Notulis", "AI Transcription System"),
-        ("Peserta", ", ".join(notulensi.get('peserta', [])) if isinstance(notulensi.get('peserta'), list) else notulensi.get('peserta', '-')),
+        ("Peserta", peserta_str),
         ("Agenda", notulensi.get('agenda', '-'))
     ]
 
@@ -579,7 +622,7 @@ def generate_notulensi_docx(data):
         cell_k.paragraphs[0].runs[0].bold = True
         table_meta.cell(i, 1).text = str(val)
         
-    doc.add_paragraph()
+    doc.add_paragraph() # Spasi
 
     def add_section_header(num, title):
         p = doc.add_paragraph()
@@ -590,10 +633,13 @@ def generate_notulensi_docx(data):
 
     def add_bullet_points(items, is_numbered=False):
         style = 'List Number' if is_numbered else 'List Bullet'
-        for item in items: doc.add_paragraph(str(item), style=style)
+        for item in items:
+            doc.add_paragraph(str(item), style=style)
 
+    # 4. KONTEN NOTULENSI
     add_section_header("1", "RINGKASAN EKSEKUTIF")
-    for r in data.get('ringkasan_eksekutif', []): doc.add_paragraph(r)
+    for r in data.get('ringkasan_eksekutif', []):
+        doc.add_paragraph(r)
 
     add_section_header("2", "POKOK PEMBAHASAN / JALANNYA DISKUSI")
     add_bullet_points(notulensi.get('jalannya_diskusi', []))
@@ -611,18 +657,21 @@ def generate_notulensi_docx(data):
         for i, header in enumerate(headers):
             hdr_cells[i].text = header
             hdr_cells[i].paragraphs[0].runs[0].bold = True
+            
         for tl in tindak_lanjut:
             row_cells = table_tl.add_row().cells
             row_cells[0].text = str(tl.get('tugas', '-'))
             row_cells[1].text = str(tl.get('pic', '-'))
             row_cells[2].text = str(tl.get('deadline', '-'))
             row_cells[3].text = str(tl.get('prioritas', '-'))
-    else: doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
+    else:
+        doc.add_paragraph("- Tidak ada tindak lanjut khusus.", style='List Bullet')
 
     # --- PENYEMATAN GAMBAR MINDMAP SECARA OTOMATIS KE DALAM WORD ---
     doc.add_paragraph()
     add_section_header("5", "VISUALISASI PETA KONSEP RAPAT")
     mermaid_code = data.get('visual_mindmap', '')
+    
     if mermaid_code:
         img_bytes = get_mermaid_png_bytes(mermaid_code)
         if img_bytes:
@@ -632,6 +681,7 @@ def generate_notulensi_docx(data):
     else:
         doc.add_paragraph("(Tidak ada data visualisasi)")
 
+    # 6. FOOTER / TTD
     p_footer = doc.add_paragraph()
     p_footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run_footer = p_footer.add_run(f"\n\nJakarta, {datetime.now().strftime('%d %B %Y')}\n\n\n\n( Tim Notulen SmartDose )")

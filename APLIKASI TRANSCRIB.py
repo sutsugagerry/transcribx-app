@@ -2456,72 +2456,70 @@ else:
                             setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
                                 
-                                function parseMarkdownToSunburst(md) {
-                                    const lines = md.split('\\n');
-                                    let root = { name: "Tema Rapat", children: [] };
-                                    let stack = [ {level: 0, node: root} ];
+                               function parseMarkdownToSunburst(md) {
+    const lines = md.split('\n');
+    let root = { name: "Tema Rapat", children: [] };
+    let stack = [ {level: 0, node: root, isHeading: true} ];
 
-                                    for (let i = 0; i < lines.length; i++) {
-                                        let line = lines[i];
-                                        let trimmed = line.trimStart();
-                                        if (!trimmed) continue;
-                                        let level = 0; let text = "";
-                                        let matchHeader = trimmed.match(/^(#+)\\s+(.*)/);
-                                        if (matchHeader) { level = matchHeader[1].length; text = matchHeader[2]; } 
-                                        else {
-                                            let matchList = trimmed.match(/^[-*]\\s+(.*)/);
-                                            if (matchList) { level = stack[stack.length - 1].level + 1; text = matchList[1]; }
-                                        }
-                                        if (!text) continue;
-                                        text = text.replace(/\\*\\*/g, '').trim();
-                                        let newNode = { name: text, value: 1, children: [] };
-                                        while (stack.length > 1 && stack[stack.length - 1].level >= level) { stack.pop(); }
-                                        let parent = stack[stack.length - 1].node;
-                                        parent.children.push(newNode);
-                                        stack.push({ level: level, node: newNode });
-                                    }
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        let trimmed = line.trimStart();
+        if (!trimmed) continue;
 
-                                    function assignValues(node) {
-                                        if (node.children.length === 0) { node.value = 1; } 
-                                        else { node.children.forEach(assignValues); }
-                                    }
-                                    assignValues(root);
-                                    return root.children.length > 0 ? root.children : [{name: "Data tidak tersedia", value: 1}];
-                                }
+        let level = 0;
+        let text = "";
+        let isHeading = false;
 
-                                const sunburstData = parseMarkdownToSunburst(rawMm);
-                                const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
-                                
-                                if (sunburstData.length === 1 && sunburstData[0].children) {
-                                    sunburstData[0].itemStyle = { color: '#1e293b' };
-                                    sunburstData[0].children.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
-                                } else {
-                                    sunburstData.forEach((child, index) => { child.itemStyle = { color: colorPalette[index % colorPalette.length] }; });
-                                }
+        let matchHeader = trimmed.match(/^(#+)\s+(.*)/);
+        if (matchHeader) {
+            level = matchHeader[1].length;
+            text = matchHeader[2];
+            isHeading = true;
+        } else {
+            let matchList = trimmed.match(/^[-*]\s+(.*)/);
+            if (matchList) {
+                let indentSpaces = line.length - trimmed.length;
+                let baseLevel = 1;
+                // Cari level heading terakhir sebagai jangkar
+                for(let j = stack.length - 1; j >= 0; j--) {
+                    if(stack[j].isHeading) {
+                        baseLevel = stack[j].level;
+                        break;
+                    }
+                }
+                // Bullet level sejajar, kecuali ada indentasi (2 spasi = 1 level sub-bullet)
+                level = baseLevel + 1 + Math.floor(indentSpaces / 2);
+                text = matchList[1];
+            }
+        }
 
-                                var chartDom = document.getElementById('sunburstLiveContainer');
-                                window.sunburstChartLive = echarts.init(chartDom);
-                                var option = {
-                                    tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
-                                    series: {
-                                        type: 'sunburst', data: sunburstData, radius: [0, '95%'], sort: undefined, emphasis: { focus: 'ancestor' },
-                                        itemStyle: { borderRadius: 5, borderWidth: 1.5, borderColor: '#ffffff' },
-                                        label: { show: true, formatter: '{b}', width: 85, overflow: 'break', minAngle: 12, fontSize: 11, fontWeight: 'bold', fontFamily: 'sans-serif', color: '#ffffff', textBorderColor: 'rgba(0,0,0,0.6)', textBorderWidth: 2 }
-                                    }
-                                };
-                                window.sunburstChartLive.setOption(option);
-                                window.addEventListener('resize', function() { window.sunburstChartLive.resize(); });
-                            }, 100);
+        if (!text) continue;
+        text = text.replace(/\*\*/g, '').trim();
 
-                        } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
-                        finally { aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; }
-                    };
-                })();
-            </script>
-        </body>
-        </html>
-        """
-        components.html(html_code, height=2200, scrolling=True)
+        // Biarkan parent tanpa 'value', ECharts akan mengakumulasi dari children
+        let newNode = { name: text, children: [] };
+
+        while (stack.length > 1 && stack[stack.length - 1].level >= level) {
+            stack.pop();
+        }
+
+        let parent = stack[stack.length - 1].node;
+        parent.children.push(newNode);
+        stack.push({ level: level, node: newNode, isHeading: isHeading });
+    }
+
+    function assignValues(node) {
+        if (node.children.length === 0) {
+            node.value = 1; // Hanya leaf node (ujung) yang diberi value
+        } else {
+            delete node.value;
+            node.children.forEach(assignValues);
+        }
+    }
+    assignValues(root);
+
+    return root.children.length > 0 ? root.children : [{name: "Data tidak tersedia", value: 1}];
+}
 
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION

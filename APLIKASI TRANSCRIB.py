@@ -387,6 +387,15 @@ if "offline_transcript" not in st.session_state: st.session_state["offline_trans
 if "offline_summary" not in st.session_state: st.session_state["offline_summary"] = None
 if "confirm_delete" not in st.session_state: st.session_state["confirm_delete"] = None
 
+# Generate angka Captcha acak
+if "captcha_n1" not in st.session_state:
+    st.session_state.captcha_n1 = random.randint(1, 10)
+    st.session_state.captcha_n2 = random.randint(1, 10)
+    
+# Variabel Anti-Spam DDoS
+if "last_reg_attempt" not in st.session_state:
+    st.session_state.last_reg_attempt = datetime.min
+
 # =====================================================================
 # HALAMAN DEPAN (BERANDA, LOGIN, REGISTRASI)
 # =====================================================================
@@ -815,7 +824,7 @@ if not st.session_state["logged_in"]:
         st.markdown("""
         <div style="text-align:center; margin-top:30px; padding:20px; background:rgba(56, 189, 248, 0.1); border-radius:12px; border:1px solid rgba(56, 189, 248, 0.3);">
             <h4 style="color:#38bdf8; margin:0;">Ingin aktivasi atau perpanjang paket?</h4>
-            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Silakan <b>Login</b> terlebih dahulu melalui tab di atas untuk melakukan pembelian atau upgrade paket secara otomatis. 🚀</p>
+            <p style="color:#64748b; margin:10px 0 0 0; font-size:14px;">Silakan <b>Daftar / Login</b> terlebih dahulu melalui tab di atas untuk melakukan pembelian paket secara otomatis. 🚀</p>
         </div>
         """, unsafe_allow_html=True)
          
@@ -902,17 +911,6 @@ if not st.session_state["logged_in"]:
                     else:
                         st.warning("Silakan masukkan email dan password.")
 
-   # =====================================================================
-    # TAB REGISTRASI (WAJIB BAYAR + CAPTCHA + AUTO REDIRECT)
-    # =====================================================================
-    import random
-    import urllib.parse
-    
-    # Generate angka Captcha acak jika belum ada
-    if "captcha_n1" not in st.session_state:
-        st.session_state.captcha_n1 = random.randint(1, 10)
-        st.session_state.captcha_n2 = random.randint(1, 10)
-
     with tab_register:
         col_r1, col_r2, col_r3 = st.columns([1, 1.5, 1])
         with col_r2:
@@ -929,7 +927,6 @@ if not st.session_state["logged_in"]:
             with st.form("register_form_user"):
                 st.markdown("<h3 style='text-align: center; color: #e0f2fe; margin-bottom: 15px; letter-spacing: 1px;'>Form Pendaftaran</h3>", unsafe_allow_html=True)
                 
-                # --- HANYA ADA PAKET BERBAYAR ---
                 paket_awal = st.selectbox(
                     "📦 Pilih Paket Layanan (Wajib)", 
                     ["EXECUTIVE (Rp 69.000 / 30 Hari) 🔥", "BASIC (Rp 35.000 / 30 Hari)", "MASTER (Rp 149.000 / 30 Hari) 👑"]
@@ -939,34 +936,39 @@ if not st.session_state["logged_in"]:
                 pass_reg_user = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
                 pass_confirm = st.text_input("Konfirmasi Password", type="password", placeholder="Ulangi password")
                 
-                # --- FITUR CAPTCHA ---
                 st.markdown(f"<p style='color:#e2e8f0; font-size:14px; margin-top:10px; margin-bottom:5px;'>🛡️ Verifikasi Keamanan: <b>Berapa hasil dari {st.session_state.captcha_n1} + {st.session_state.captcha_n2} ?</b></p>", unsafe_allow_html=True)
                 captcha_answer = st.text_input("Jawaban Captcha", placeholder="Ketik angka jawaban...", label_visibility="collapsed")
                 
                 st.write("")
-                # Tombolnya berubah fungsi jadi tombol menuju kasir
                 btn_reg_user = st.form_submit_button("💳 Lanjut ke Pembayaran", use_container_width=True, type="primary")
                 
                 if btn_reg_user:
+                    now = datetime.now()
                     expected_ans = str(st.session_state.captcha_n1 + st.session_state.captcha_n2)
                     
-                    if captcha_answer.strip() != expected_ans:
+                    # LOGIKA ANTI SPAM (DDoS)
+                    if (now - st.session_state.last_reg_attempt).total_seconds() < 10:
+                        st.error("⏳ Terlalu banyak permintaan! Sistem mendeteksi aktivitas mencurigakan. Silakan tunggu 10 detik.")
+                    elif captcha_answer.strip() != expected_ans:
+                        st.session_state.last_reg_attempt = now 
                         st.error("❌ Jawaban Captcha salah! Silakan hitung dengan benar.")
-                        # Reset angka Captcha agar bot susah menebak
                         st.session_state.captcha_n1 = random.randint(1, 10)
                         st.session_state.captcha_n2 = random.randint(1, 10)
                     elif not email_reg_user or len(pass_reg_user) < 6:
+                        st.session_state.last_reg_attempt = now
                         st.warning("⚠️ Masukkan email yang valid dan password minimal 6 karakter.")
                     elif pass_reg_user != pass_confirm:
+                        st.session_state.last_reg_attempt = now
                         st.warning("⚠️ Password dan Konfirmasi Password tidak cocok!")
                     else:
+                        st.session_state.last_reg_attempt = now
                         with st.spinner("Memproses pesanan Anda..."):
                             new_user = register_firebase(email_reg_user, pass_reg_user)
+                            
                             if "idToken" in new_user:
                                 uid = new_user["localId"]
                                 sekarang = datetime.now()
                                 
-                                # Amankan data di database (Status: NON-AKTIF sampai Webhook berteriak "LUNAS!")
                                 db.collection("users").document(uid).set({
                                     "email": email_reg_user, 
                                     "status_subscription": "non-aktif", 
@@ -989,13 +991,8 @@ if not st.session_state["logged_in"]:
                                     link_checkout = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
                                     
                                 st.success("✅ Berhasil! Mengarahkan Anda ke kasir pembayaran...")
-                                
-                                # ==============================================
-                                # MAGIC TRICK: AUTO REDIRECT KE LYNK.ID 
-                                # ==============================================
                                 st.markdown(f'<meta http-equiv="refresh" content="2;url={link_checkout}">', unsafe_allow_html=True)
                                 
-                                # Reset captcha
                                 st.session_state.captcha_n1 = random.randint(1, 10)
                                 st.session_state.captcha_n2 = random.randint(1, 10)
                             else:
@@ -1698,7 +1695,7 @@ else:
         st.markdown("<h3 style='text-align: center; color: #38bdf8;'>🚀 Pilih & Beli Paket Sekarang</h3>", unsafe_allow_html=True)
 
         # GANTI LINK INI DENGAN LINK PRODUK ASLI DARI LYNK.ID KAMU!
-        link_basic = f"http://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
+        link_basic = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_BASIC_KAMU/checkout?email={email_encoded}"
         link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
         link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
 
@@ -1743,1573 +1740,1594 @@ else:
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
         
-        kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
-        can_use_ai = is_admin() or kuota_ai_sekarang > 0
-        
-        trigger_val = st.text_input("trigger_ai_live", key="trigger_ai_live", label_visibility="collapsed")
-        st.markdown("""
-        <style>
-            div[data-testid="stTextInput"]:has(input[aria-label="trigger_ai_live"]) {
-                display: none !important;
-            }
-        </style>
-        """, unsafe_allow_html=True)
-
-        if trigger_val.startswith("DEDUCT_"):
-            if st.session_state.get("last_deduct_id") != trigger_val:
-                st.session_state["last_deduct_id"] = trigger_val
-                if not is_admin() and st.session_state["user_kuota_ai"] > 0:
-                    st.session_state["user_kuota_ai"] -= 1
-                    db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
-                st.rerun() 
-
-        st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
-        st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
-        
-        html_code = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        # --- GEMBOK ANTI GRATISAN ---
+        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") == "NON-AKTIF":
+            st.markdown("""
+            <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;">
+                <h1 style="font-size: 50px; margin: 0;">🔒</h1>
+                <h2 style="color: #ef4444; margin-top: 10px;">AKSES DITOLAK: Paket Anda Belum Aktif</h2>
+                <p style="color: #475569; font-size: 16px;">Fitur <b>Live Transcribe Unlimited</b> ini hanya tersedia untuk pengguna VIP. Silakan menuju tab <b>💳 Info Paket Langganan</b> untuk melakukan aktivasi terlebih dahulu.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            kuota_ai_sekarang = st.session_state.get("user_kuota_ai", 0)
+            can_use_ai = is_admin() or kuota_ai_sekarang > 0
+            
+            trigger_val = st.text_input("trigger_ai_live", key="trigger_ai_live", label_visibility="collapsed")
+            st.markdown("""
             <style>
-                * { box-sizing: border-box; }
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
-                
-                .controls-wrapper { 
-                    background: #ffffff; border-radius: 20px; padding: 24px; 
-                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
-                    border: 1px solid #e2e8f0; margin-bottom: 24px;
-                    display: flex; flex-direction: column; gap: 16px;
-                }
-                
-                .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-                
-                .visualizer-container { 
-                    width: 100%; height: 80px; border-radius: 16px; overflow: hidden; 
-                    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
-                    position: relative; box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
-                }
-                #visualizer { width: 100%; height: 100%; display: block; }
-                
-                .transcript-box { 
-                    background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px 20px; 
-                    border-radius: 20px; height: 300px; overflow-y: auto; 
-                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 16px; 
-                }
-                
-                .line-final { 
-                    margin-bottom: 12px; padding: 12px 16px; background: #ffffff; 
-                    border-radius: 12px; border-left: 5px solid #3b82f6; 
-                    font-size: 14px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                }
-                .line-interim { 
-                    margin-bottom: 12px; padding: 12px 16px; background: rgba(255,255,255,0.5); 
-                    border-radius: 12px; border-left: 5px solid #94a3b8; 
-                    font-size: 14px; opacity: 0.6; font-style: italic; 
-                }
-                .timestamp { font-weight: 700; color: #3b82f6; margin-right: 10px; font-size: 12px; background: #eff6ff; padding: 2px 8px; border-radius: 6px; display: inline-block; }
-                
-                .btn-custom { 
-                    font-family: inherit; color: white; padding: 10px 20px; border: none; 
-                    border-radius: 10px; cursor: pointer; font-weight: 600; 
-                    transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; 
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-                .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-                .btn-custom:active { transform: translateY(0); }
-                .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b; }
-                
-                .btn-start { background: #3b82f6; }
-                .btn-start:hover { background: #2563eb; }
-                .btn-stop { background: #ef4444; }
-                .btn-stop:hover { background: #dc2626; }
-                .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
-                .btn-ai:hover { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
-                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none; } 
-                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-                .btn-green { background: #10b981; }
-                .btn-green:hover { background: #059669; }
-                
-                select.btn-secondary, input.api-input { 
-                    outline: none; border: 1px solid #cbd5e1; padding: 10px 14px; 
-                    border-radius: 10px; font-family: inherit; font-size: 14px; background: white;
-                }
-                select.btn-secondary:focus, input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-                input.api-input { flex: 1; min-width: 200px; }
-                
-                .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }
-                .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; flex-shrink: 0; }
-                .indicator-dot.recording { background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: blink 1s infinite; }
-                @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-                
-                .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
-                .ai-section .ai-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-                
-                #audioContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-                .audio-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }
-                .audio-item audio { height: 36px; flex: 1; min-width: 200px; }
-                
-                .fade-in { animation: fadeIn 0.5s ease; }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                
-                .instruction-box {
-                    background: #fffbeb; border: 2px solid #f59e0b; padding: 16px; border-radius: 12px;
-                    margin-bottom: 16px; font-size: 13px; color: #92400e;
-                }
-
-                @media (max-width: 640px) {
-                    .controls-row { flex-direction: column; align-items: stretch; }
-                    .controls-row > * { width: 100%; }
-                    .status-badge { justify-content: center; }
-                    .ai-section .ai-row { flex-direction: column; }
-                    .ai-section .ai-row > * { width: 100%; }
+                div[data-testid="stTextInput"]:has(input[aria-label="trigger_ai_live"]) {
+                    display: none !important;
                 }
             </style>
-        </head>
-        <body>
-            <div class="instruction-box">
-                <strong>📺 CARA SCREEN CAPTURE:</strong><br>
-                1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b>.<br>
-                2. Pastikan <b>VOLUME SPEAKER LAPTOP ANDA NYALA</b> (Tidak di-Mute). Karena fitur ini "mendengar" suara dari speaker Anda.<br>
-                3. Klik <b>"Start Capture"</b>, izinkan akses Microphone jika diminta.<br>
-                4. Pilih tab/window <b>Zoom</b> atau <b>YouTube</b>.<br>
-                5. <b>CENTANG "Share tab audio"</b> lalu klik Share.
-            </div>
+            """, unsafe_allow_html=True)
+
+            if trigger_val.startswith("DEDUCT_"):
+                if st.session_state.get("last_deduct_id") != trigger_val:
+                    st.session_state["last_deduct_id"] = trigger_val
+                    if not is_admin() and st.session_state["user_kuota_ai"] > 0:
+                        st.session_state["user_kuota_ai"] -= 1
+                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
+                    st.rerun() 
+
+            st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
+            st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
             
-            <div class="controls-wrapper">
-                <div class="controls-row">
-                    <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
-                        <option value="id-ID">🇮🇩 Indonesia</option>
-                        <option value="en-US">🇬🇧 English</option>
-                        <option value="ja-JP">🇯🇵 Japanese</option>
-                    </select>
-                    <button id="startBtn" class="btn-custom btn-start">▶️ Start Capture</button>
-                    <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop & Simpan Rekaman</button>
-                    <div class="status-badge" style="margin-left:auto;">
-                        <div id="indicator" class="indicator-dot"></div>
-                        <span id="status" style="color: #64748b;">Standby</span>
-                    </div>
+            html_code = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                <style>
+                    * { box-sizing: border-box; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
+                    
+                    .controls-wrapper { 
+                        background: #ffffff; border-radius: 20px; padding: 24px; 
+                        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
+                        border: 1px solid #e2e8f0; margin-bottom: 24px;
+                        display: flex; flex-direction: column; gap: 16px;
+                    }
+                    
+                    .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+                    
+                    .visualizer-container { 
+                        width: 100%; height: 80px; border-radius: 16px; overflow: hidden; 
+                        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
+                        position: relative; box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
+                    }
+                    #visualizer { width: 100%; height: 100%; display: block; }
+                    
+                    .transcript-box { 
+                        background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px 20px; 
+                        border-radius: 20px; height: 300px; overflow-y: auto; 
+                        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 16px; 
+                    }
+                    
+                    .line-final { 
+                        margin-bottom: 12px; padding: 12px 16px; background: #ffffff; 
+                        border-radius: 12px; border-left: 5px solid #3b82f6; 
+                        font-size: 14px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                    }
+                    .line-interim { 
+                        margin-bottom: 12px; padding: 12px 16px; background: rgba(255,255,255,0.5); 
+                        border-radius: 12px; border-left: 5px solid #94a3b8; 
+                        font-size: 14px; opacity: 0.6; font-style: italic; 
+                    }
+                    .timestamp { font-weight: 700; color: #3b82f6; margin-right: 10px; font-size: 12px; background: #eff6ff; padding: 2px 8px; border-radius: 6px; display: inline-block; }
+                    
+                    .btn-custom { 
+                        font-family: inherit; color: white; padding: 10px 20px; border: none; 
+                        border-radius: 10px; cursor: pointer; font-weight: 600; 
+                        transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; 
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+                    .btn-custom:active { transform: translateY(0); }
+                    .btn-custom:disabled { background: #cbd5e1 !important; cursor: not-allowed; transform: none; box-shadow: none; color: #64748b; }
+                    
+                    .btn-start { background: #3b82f6; }
+                    .btn-start:hover { background: #2563eb; }
+                    .btn-stop { background: #ef4444; }
+                    .btn-stop:hover { background: #dc2626; }
+                    .btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+                    .btn-ai:hover { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+                    .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; box-shadow: none; } 
+                    .btn-secondary:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                    .btn-green { background: #10b981; }
+                    .btn-green:hover { background: #059669; }
+                    
+                    select.btn-secondary, input.api-input { 
+                        outline: none; border: 1px solid #cbd5e1; padding: 10px 14px; 
+                        border-radius: 10px; font-family: inherit; font-size: 14px; background: white;
+                    }
+                    select.btn-secondary:focus, input.api-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+                    input.api-input { flex: 1; min-width: 200px; }
+                    
+                    .status-badge { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; }
+                    .indicator-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; flex-shrink: 0; }
+                    .indicator-dot.recording { background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: blink 1s infinite; }
+                    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+                    
+                    .ai-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+                    .ai-section .ai-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+                    
+                    #audioContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+                    .audio-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap: wrap; }
+                    .audio-item audio { height: 36px; flex: 1; min-width: 200px; }
+                    
+                    .fade-in { animation: fadeIn 0.5s ease; }
+                    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                    
+                    .instruction-box {
+                        background: #fffbeb; border: 2px solid #f59e0b; padding: 16px; border-radius: 12px;
+                        margin-bottom: 16px; font-size: 13px; color: #92400e;
+                    }
+
+                    @media (max-width: 640px) {
+                        .controls-row { flex-direction: column; align-items: stretch; }
+                        .controls-row > * { width: 100%; }
+                        .status-badge { justify-content: center; }
+                        .ai-section .ai-row { flex-direction: column; }
+                        .ai-section .ai-row > * { width: 100%; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="instruction-box">
+                    <strong>📺 CARA SCREEN CAPTURE:</strong><br>
+                    1. Buka <b>Zoom/YouTube</b> di tab browser <b>TERPISAH</b>.<br>
+                    2. Pastikan <b>VOLUME SPEAKER LAPTOP ANDA NYALA</b> (Tidak di-Mute). Karena fitur ini "mendengar" suara dari speaker Anda.<br>
+                    3. Klik <b>"Start Capture"</b>, izinkan akses Microphone jika diminta.<br>
+                    4. Pilih tab/window <b>Zoom</b> atau <b>YouTube</b>.<br>
+                    5. <b>CENTANG "Share tab audio"</b> lalu klik Share.
                 </div>
                 
-                <div class="visualizer-container">
-                    <canvas id="visualizer"></canvas>
+                <div class="controls-wrapper">
+                    <div class="controls-row">
+                        <select id="langSelect" class="btn-custom btn-secondary" style="min-width:120px;">
+                            <option value="id-ID">🇮🇩 Indonesia</option>
+                            <option value="en-US">🇬🇧 English</option>
+                            <option value="ja-JP">🇯🇵 Japanese</option>
+                        </select>
+                        <button id="startBtn" class="btn-custom btn-start">▶️ Start Capture</button>
+                        <button id="stopBtn" class="btn-custom btn-stop" disabled>⏹️ Stop & Simpan Rekaman</button>
+                        <div class="status-badge" style="margin-left:auto;">
+                            <div id="indicator" class="indicator-dot"></div>
+                            <span id="status" style="color: #64748b;">Standby</span>
+                        </div>
+                    </div>
+                    
+                    <div class="visualizer-container">
+                        <canvas id="visualizer"></canvas>
+                    </div>
+                    
+                    <div class="ai-section">
+                        <div id="aiBrainContainer" style="width: 100%; height: 180px; background: #1e1e2f; border-radius: 12px; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.6); border: 1px solid #334155;">
+                            <canvas id="aiBrainCanvas"></canvas>
+                            <div id="aiBrainText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #64748b; font-size: 13px; font-weight: 800; pointer-events: none; letter-spacing: 5px; z-index: 10; text-align: center; text-transform: uppercase;">NEURAL NETWORK IDLE</div>
+                        </div>
+                        
+                        <div class="ai-row">
+                            <span style="font-size: 13px; font-weight: 700; color: #475569; white-space:nowrap;">🔑 API Key:</span>
+                            <input type="password" id="apiKeyInput" class="api-input" placeholder="Masukkan API Key LiteLLM / Gemini..." style="flex:1; min-width:150px;">
+                            <button id="aiBtn" class="btn-custom btn-ai" style="white-space:nowrap;">✨ Generate AI Summary</button>
+                        </div>
+                    </div>
                 </div>
+
+                <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
+                    <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
+                    <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
+                    <button id="downloadTxtBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📝 Save Raw TXT</button>
+                    <button id="downloadNotulensiBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px; display: none;">📑 Download Full Notulensi</button>
+                    <button id="downloadDocxBtn" class="btn-custom btn-ai" style="padding: 6px 14px; font-size: 13px; display: none; background: #ef4444;">📄 Download Resmi (DOCX)</button>
+                </div>
+
+                <div id="transcriptBox" class="transcript-box">
+                    <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
+                        🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
+                    </div>
+                </div>
+
+                <div id="aiContent" class="w-full"></div>
                 
-                <div class="ai-section">
-                    <div id="aiBrainContainer" style="width: 100%; height: 180px; background: #1e1e2f; border-radius: 12px; margin-bottom: 15px; position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.6); border: 1px solid #334155;">
-                        <canvas id="aiBrainCanvas"></canvas>
-                        <div id="aiBrainText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #64748b; font-size: 13px; font-weight: 800; pointer-events: none; letter-spacing: 5px; z-index: 10; text-align: center; text-transform: uppercase;">NEURAL NETWORK IDLE</div>
-                    </div>
-                    
-                    <div class="ai-row">
-                        <span style="font-size: 13px; font-weight: 700; color: #475569; white-space:nowrap;">🔑 API Key:</span>
-                        <input type="password" id="apiKeyInput" class="api-input" placeholder="Masukkan API Key LiteLLM / Gemini..." style="flex:1; min-width:150px;">
-                        <button id="aiBtn" class="btn-custom btn-ai" style="white-space:nowrap;">✨ Generate AI Summary</button>
+                <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                    <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
+                    <div id="audioContainer">
+                        <p style="color:#94a3b8; font-size:13px; text-align:center;" id="audioPlaceholder">Rekaman akan muncul di sini setelah Stop</p>
                     </div>
                 </div>
-            </div>
 
-            <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-bottom: 12px;">
-                <button id="copyBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📋 Copy</button>
-                <button id="clearBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">🗑️ Clear</button>
-                <button id="downloadTxtBtn" class="btn-custom btn-secondary" style="padding: 6px 14px; font-size: 13px;">📝 Save Raw TXT</button>
-                <button id="downloadNotulensiBtn" class="btn-custom btn-green" style="padding: 6px 14px; font-size: 13px; display: none;">📑 Download Full Notulensi</button>
-                <button id="downloadDocxBtn" class="btn-custom btn-ai" style="padding: 6px 14px; font-size: 13px; display: none; background: #ef4444;">📄 Download Resmi (DOCX)</button>
-            </div>
-
-            <div id="transcriptBox" class="transcript-box">
-                <div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">
-                    🎤 Klik "Start Capture" → Pilih tab Zoom/YouTube → Centang "Share audio" → Share
-                </div>
-            </div>
-
-            <div id="aiContent" class="w-full"></div>
-            
-            <div style="margin-top: 24px; background: #ffffff; padding: 16px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
-                <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #1e293b; font-weight: 700;">🎧 Arsip Rekaman Screen Capture</h3>
-                <div id="audioContainer">
-                    <p style="color:#94a3b8; font-size:13px; text-align:center;" id="audioPlaceholder">Rekaman akan muncul di sini setelah Stop</p>
-                </div>
-            </div>
-
-            <script>
-                (function() {
-                    'use strict';
-                    const canUseAi = __CAN_USE_AI__;
-                    
-                    // ======== DOM REFS ========
-                    const startBtn = document.getElementById('startBtn');
-                    const stopBtn = document.getElementById('stopBtn');
-                    const copyBtn = document.getElementById('copyBtn');
-                    const clearBtn = document.getElementById('clearBtn');
-                    const downloadTxtBtn = document.getElementById('downloadTxtBtn');
-                    const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn');
-                    const downloadDocxBtn = document.getElementById('downloadDocxBtn');
-                    const aiBtn = document.getElementById('aiBtn');
-                    const apiKeyInput = document.getElementById('apiKeyInput');
-                    const aiContent = document.getElementById('aiContent');
-                    const langSelect = document.getElementById('langSelect');
-                    const status = document.getElementById('status');
-                    const indicator = document.getElementById('indicator');
-                    const transcriptBox = document.getElementById('transcriptBox');
-                    const audioContainer = document.getElementById('audioContainer');
-                    const visualizer = document.getElementById('visualizer');
-                    const canvasCtx = visualizer.getContext('2d');
-
-                    let lastAiData = null;
-
-                    if (window.mermaid) {
-                        mermaid.initialize({ startOnLoad: false, theme: 'default' });
-                    }
-
-                    // ======== AI BRAIN VISUALIZER ========
-                    const brainCanvas = document.getElementById('aiBrainCanvas');
-                    const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
-                    const brainText = document.getElementById('aiBrainText');
-                    let brainParticles = [];
-                    let isThinking = false;
-                    let timeOscillator = 0;
-
-                    function initBrain() {
-                        if (!brainCanvas) return;
-                        const rect = brainCanvas.parentElement.getBoundingClientRect();
-                        brainCanvas.width = rect.width;
-                        brainCanvas.height = 180;
+                <script>
+                    (function() {
+                        'use strict';
+                        const canUseAi = __CAN_USE_AI__;
                         
-                        brainParticles = [];
-                        const numParticles = 160;
-                        
-                        for(let i=0; i<numParticles; i++) {
-                            let isCore = Math.random() > 0.95;
-                            brainParticles.push({
-                                angle: Math.random() * Math.PI * 2,
-                                orbitRadius: Math.random() * 65 + 5, 
-                                speed: Math.random() * 0.015 + 0.002,
-                                baseRadius: isCore ? (Math.random() * 2 + 2) : (Math.random() * 1.5 + 0.5),
-                                isCore: isCore,
-                                x: 0, y: 0
-                            });
+                        // ======== DOM REFS ========
+                        const startBtn = document.getElementById('startBtn');
+                        const stopBtn = document.getElementById('stopBtn');
+                        const copyBtn = document.getElementById('copyBtn');
+                        const clearBtn = document.getElementById('clearBtn');
+                        const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+                        const downloadNotulensiBtn = document.getElementById('downloadNotulensiBtn');
+                        const downloadDocxBtn = document.getElementById('downloadDocxBtn');
+                        const aiBtn = document.getElementById('aiBtn');
+                        const apiKeyInput = document.getElementById('apiKeyInput');
+                        const aiContent = document.getElementById('aiContent');
+                        const langSelect = document.getElementById('langSelect');
+                        const status = document.getElementById('status');
+                        const indicator = document.getElementById('indicator');
+                        const transcriptBox = document.getElementById('transcriptBox');
+                        const audioContainer = document.getElementById('audioContainer');
+                        const visualizer = document.getElementById('visualizer');
+                        const canvasCtx = visualizer.getContext('2d');
+
+                        let lastAiData = null;
+
+                        if (window.mermaid) {
+                            mermaid.initialize({ startOnLoad: false, theme: 'default' });
                         }
-                    }
 
-                    function drawBrain() {
-                        if (!brainCanvas) return;
-                        brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
-                        timeOscillator += 0.02;
-                        
-                        const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
-                        const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
-                        
-                        const maxDistance = isThinking ? 40 : 25;
-                        const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
-                        const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
-                        
-                        for(let i=0; i<brainParticles.length; i++) {
-                            let p = brainParticles[i];
-                            p.angle += isThinking ? p.speed * 4 : p.speed;
-                            let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
-                            let currentRadius = p.orbitRadius + breath;
+                        // ======== AI BRAIN VISUALIZER ========
+                        const brainCanvas = document.getElementById('aiBrainCanvas');
+                        const brainCtx = brainCanvas ? brainCanvas.getContext('2d') : null;
+                        const brainText = document.getElementById('aiBrainText');
+                        let brainParticles = [];
+                        let isThinking = false;
+                        let timeOscillator = 0;
+
+                        function initBrain() {
+                            if (!brainCanvas) return;
+                            const rect = brainCanvas.parentElement.getBoundingClientRect();
+                            brainCanvas.width = rect.width;
+                            brainCanvas.height = 180;
                             
-                            p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
-                            p.y = cy + Math.sin(p.angle) * currentRadius;
+                            brainParticles = [];
+                            const numParticles = 160;
                             
-                            brainCtx.beginPath();
-                            brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
-                            brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
+                            for(let i=0; i<numParticles; i++) {
+                                let isCore = Math.random() > 0.95;
+                                brainParticles.push({
+                                    angle: Math.random() * Math.PI * 2,
+                                    orbitRadius: Math.random() * 65 + 5, 
+                                    speed: Math.random() * 0.015 + 0.002,
+                                    baseRadius: isCore ? (Math.random() * 2 + 2) : (Math.random() * 1.5 + 0.5),
+                                    isCore: isCore,
+                                    x: 0, y: 0
+                                });
+                            }
+                        }
+
+                        function drawBrain() {
+                            if (!brainCanvas) return;
+                            brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
+                            timeOscillator += 0.02;
                             
-                            if (isThinking) {
-                                brainCtx.shadowBlur = p.isCore ? 15 : 5;
-                                brainCtx.shadowColor = "#2dd4bf";
-                            } else {
-                                brainCtx.shadowBlur = 0;
-                            }
-                            brainCtx.fill();
-                        }
-                        
-                        for(let i=0; i<brainParticles.length; i++) {
-                            let p = brainParticles[i];
-                            for(let j=i+1; j<brainParticles.length; j++) {
-                                let p2 = brainParticles[j];
-                                let dx = p.x - p2.x;
-                                let dy = p.y - p2.y;
-                                let dist = Math.sqrt(dx*dx + dy*dy);
+                            const cx = (brainCanvas.width / 2) + Math.cos(timeOscillator) * 15;
+                            const cy = (brainCanvas.height / 2) + Math.sin(timeOscillator * 0.8) * 8;
+                            
+                            const maxDistance = isThinking ? 40 : 25;
+                            const nodeColor = isThinking ? "rgba(216, 180, 254, 0.9)" : "rgba(148, 163, 184, 0.8)"; 
+                            const coreColor = isThinking ? "rgba(45, 212, 191, 1)" : "rgba(255, 255, 255, 1)";
+                            
+                            for(let i=0; i<brainParticles.length; i++) {
+                                let p = brainParticles[i];
+                                p.angle += isThinking ? p.speed * 4 : p.speed;
+                                let breath = Math.sin(timeOscillator * 2 + p.angle) * (isThinking ? 15 : 5);
+                                let currentRadius = p.orbitRadius + breath;
                                 
-                                if(dist < maxDistance) {
-                                    brainCtx.beginPath();
-                                    brainCtx.moveTo(p.x, p.y);
-                                    brainCtx.lineTo(p2.x, p2.y);
-                                    let opacity = 1 - (dist / maxDistance);
-                                    let alpha = isThinking ? opacity * 0.7 : opacity * 0.2;
-                                    brainCtx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
-                                    brainCtx.lineWidth = isThinking ? 1.0 : 0.4;
-                                    brainCtx.stroke();
-                                }
-                            }
-                        }
-                        requestAnimationFrame(drawBrain);
-                    }
-
-                    if (brainCanvas) {
-                        setTimeout(() => { initBrain(); drawBrain(); }, 500);
-                        window.addEventListener('resize', initBrain);
-                    }
-
-                    // ======== STATE MANAGEMENT ========
-                    let isRecording = false;
-                    let isVisualizerActive = false;
-                    let recognition = null;
-                    let mediaRecorder = null;
-                    let audioChunks = [];
-                    let displayStream = null;
-                    let globalAudioCtx = null;
-                    let analyser = null;
-                    let dataArray = null;
-                    let drawVisual = null;
-                    let currentInterimDiv = null;
-                    let lastFinalText = "";
-
-                    function initSpeechRecognition() {
-                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                        if (!SpeechRecognition) {
-                            status.innerText = "❌ Browser tidak mendukung Speech API";
-                            return null;
-                        }
-                        const rec = new SpeechRecognition();
-                        rec.continuous = true;
-                        rec.interimResults = true;
-                        rec.lang = langSelect.value;
-
-                        rec.onstart = function() {
-                            isRecording = true;
-                            status.innerText = "🎤 Menangkap audio... (Pastikan volume speaker nyala!)";
-                            indicator.className = 'indicator-dot recording';
-                            startBtn.disabled = true;
-                            stopBtn.disabled = false;
-                            const placeholder = document.getElementById('placeholder');
-                            if (placeholder) placeholder.style.display = 'none';
-                        };
-
-                        rec.onerror = function(event) {
-                            if (event.error === 'no-speech' || event.error === 'aborted') return;
-                            status.innerText = "⚠️ Speech Error: " + event.error;
-                        };
-
-                        rec.onend = function() {
-                            if (isRecording) {
-                                setTimeout(() => { try { rec.start(); } catch(e) {} }, 200);
-                            }
-                        };
-
-                        rec.onresult = function(event) {
-                            let interimTranscript = '';
-                            let finalTranscript = '';
-                            for (let i = event.resultIndex; i < event.results.length; i++) {
-                                const result = event.results[i];
-                                if (result.isFinal) finalTranscript += result[0].transcript + ' ';
-                                else interimTranscript += result[0].transcript;
-                            }
-
-                            if (finalTranscript.trim()) {
-                                const cleanFinal = finalTranscript.trim();
-                                if (cleanFinal === lastFinalText.trim()) return;
-                                lastFinalText = cleanFinal;
+                                p.x = cx + Math.cos(p.angle) * currentRadius * 1.5; 
+                                p.y = cy + Math.sin(p.angle) * currentRadius;
                                 
-                                const now = new Date();
-                                const timeStr = '[' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0') + ']';
+                                brainCtx.beginPath();
+                                brainCtx.arc(p.x, p.y, isThinking ? p.baseRadius * 1.2 : p.baseRadius, 0, Math.PI * 2);
+                                brainCtx.fillStyle = p.isCore ? coreColor : nodeColor;
                                 
-                                if (currentInterimDiv) {
-                                    currentInterimDiv.className = 'line-final';
-                                    currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
-                                    currentInterimDiv = null;
+                                if (isThinking) {
+                                    brainCtx.shadowBlur = p.isCore ? 15 : 5;
+                                    brainCtx.shadowColor = "#2dd4bf";
                                 } else {
-                                    const line = document.createElement('div');
-                                    line.className = 'line-final';
-                                    line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
-                                    transcriptBox.appendChild(line);
+                                    brainCtx.shadowBlur = 0;
                                 }
-                                transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                            } else if (interimTranscript.trim()) {
-                                if (!currentInterimDiv) {
-                                    currentInterimDiv = document.createElement('div');
-                                    currentInterimDiv.className = 'line-interim';
-                                    transcriptBox.appendChild(currentInterimDiv);
-                                }
-                                currentInterimDiv.textContent = '💬 ' + interimTranscript;
-                                transcriptBox.scrollTop = transcriptBox.scrollHeight;
-                            }
-                        };
-                        return rec;
-                    }
-
-                    function setupVisualizer(stream) {
-                        try {
-                            const audioTracks = stream.getAudioTracks();
-                            if (audioTracks.length === 0) return;
-                            const audioOnlyStream = new MediaStream(audioTracks);
-                            const source = globalAudioCtx.createMediaStreamSource(audioOnlyStream);
-                            analyser = globalAudioCtx.createAnalyser();
-                            analyser.fftSize = 256;
-                            dataArray = new Uint8Array(analyser.frequencyBinCount);
-                            source.connect(analyser);
-                        } catch(e) { console.error(e); }
-                    }
-
-                    function drawVisualizer() {
-                        if (!isVisualizerActive) return;
-                        const width = visualizer.width;
-                        const height = visualizer.height;
-                        canvasCtx.clearRect(0, 0, width, height);
-                        
-                        if (analyser && dataArray) {
-                            analyser.getByteFrequencyData(dataArray);
-                            const bufferLength = analyser.frequencyBinCount;
-                            const barWidth = (width / bufferLength) * 2.5;
-                            let x = 0;
-                            for (let i = 0; i < bufferLength; i++) {
-                                const barHeight = dataArray[i] / 2;
-                                canvasCtx.fillStyle = 'rgb(' + Math.min(barHeight + 100, 255) + ',158,11)';
-                                const y = (height / 2) - (barHeight / 2);
-                                canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
-                                x += barWidth + 1;
-                            }
-                        }
-                        drawVisual = requestAnimationFrame(drawVisualizer);
-                    }
-
-                    function setupMediaRecorder(stream) {
-                        audioChunks = [];
-                        let options = { mimeType: 'video/webm;codecs=vp9,opus' };
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
-                        
-                        try {
-                            mediaRecorder = new MediaRecorder(stream, options.mimeType ? options : undefined);
-                        } catch(e) {
-                            mediaRecorder = new MediaRecorder(stream);
-                        }
-                        
-                        mediaRecorder.ondataavailable = function(e) {
-                            if (e.data && e.data.size > 0) audioChunks.push(e.data);
-                        };
-                        
-                        mediaRecorder.onstop = function() {
-                            if (audioChunks.length > 0) {
-                                const mimeType = mediaRecorder.mimeType || 'video/webm';
-                                const blob = new Blob(audioChunks, { type: mimeType });
-                                const audioUrl = URL.createObjectURL(blob);
-                                const audioItem = document.createElement('div');
-                                audioItem.className = 'audio-item fade-in';
-                                audioItem.innerHTML = `
-                                    <audio controls src="${audioUrl}" preload="auto" style="flex:1; min-width:200px;"></audio>
-                                    <a href="${audioUrl}" download="Capture_${Date.now()}.webm" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; text-decoration:none;">💾 Download</a>
-                                `;
-                                document.getElementById('audioPlaceholder')?.remove();
-                                audioContainer.appendChild(audioItem);
-                            }
-                        };
-                    }
-
-                    startBtn.onclick = async function() {
-                        try {
-                            lastFinalText = ""; currentInterimDiv = null; audioChunks = [];
-                            transcriptBox.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Rapat/Tab sedang berjalan.</div>';
-                            await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                            if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                            if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
-                            
-                            displayStream = await navigator.mediaDevices.getDisplayMedia({ 
-                                video: { width: 640, height: 480, frameRate: 1 },
-                                audio: { echoCancellation: false, noiseSuppression: false }
-                            });
-                            
-                            if (displayStream.getAudioTracks().length === 0) {
-                                status.innerText = "⚠️ CENTANG 'Share tab audio'!";
-                                displayStream.getVideoTracks().forEach(t => t.stop());
-                                return;
+                                brainCtx.fill();
                             }
                             
-                            setupMediaRecorder(displayStream);
-                            mediaRecorder.start(1000);
-                            setupVisualizer(displayStream);
-                            isVisualizerActive = true; drawVisualizer();
-                            
-                            recognition = initSpeechRecognition();
-                            if (recognition) recognition.start();
-                            
-                            displayStream.getVideoTracks()[0].addEventListener('ended', () => { if (isRecording) stopBtn.click(); });
-                            resizeVisualizer();
-                        } catch(err) {
-                            status.innerText = "❌ Gagal: " + err.message;
-                        }
-                    };
-
-                    stopBtn.onclick = function() {
-                        isRecording = false; isVisualizerActive = false;
-                        if (drawVisual) cancelAnimationFrame(drawVisual);
-                        if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
-                        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-                        if (displayStream) { displayStream.getTracks().forEach(t => t.stop()); displayStream = null; }
-                        
-                        status.innerText = "⏸️ Stopped - Cek Arsip Rekaman ↓";
-                        indicator.className = 'indicator-dot';
-                        startBtn.disabled = false; stopBtn.disabled = true; langSelect.disabled = false;
-                    };
-
-                    function resizeVisualizer() {
-                        visualizer.width = visualizer.parentElement.clientWidth || 600;
-                        visualizer.height = 80;
-                    }
-                    window.addEventListener('resize', resizeVisualizer);
-
-                    copyBtn.onclick = function() {
-                        const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) { alert('Belum ada teks!'); return; }
-                        const text = Array.from(lines).map(line => line.innerText).join('\\n');
-                        navigator.clipboard.writeText(text).then(() => {
-                            copyBtn.innerText = '✅ Copied!';
-                            setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
-                        });
-                    };
-
-                    downloadTxtBtn.onclick = function() {
-                        const lines = transcriptBox.querySelectorAll('.line-final');
-                        if (lines.length === 0) { alert('Belum ada teks!'); return; }
-                        const text = Array.from(lines).map(line => line.innerText).join('\\n');
-                        const blob = new Blob([text], { type: 'text/plain' });
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = 'Transkrip_Live_' + Date.now() + '.txt';
-                        a.click();
-                    };
-                    
-                    downloadNotulensiBtn.onclick = function() {
-                        if (!lastAiData) { alert('Belum ada data notulensi! Silakan Generate AI Summary terlebih dahulu.'); return; }
-                        
-                        const d = lastAiData.notulensi_rapat || {};
-                        let text = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\\n";
-                        text += "========================================\\n\\n";
-
-                        text += "🌟 RINGKASAN EKSEKUTIF:\\n";
-                        (lastAiData.ringkasan_eksekutif || []).forEach(r => text += "- " + r + "\\n");
-
-                        text += "\\n📌 AGENDA: " + (d.agenda || "-") + "\\n";
-                        text += "👥 PESERTA: " + (d.peserta ? d.peserta.join(', ') : "-") + "\\n\\n";
-
-                        if (d.transkrip_dialog && d.transkrip_dialog.length > 0) {
-                            text += "💬 TRANSKRIP DIALOG:\\n";
-                            d.transkrip_dialog.forEach(l => text += l + "\\n");
-                            text += "\\n";
-                        }
-
-                        text += "🗣️ JALANNYA DISKUSI:\\n";
-                        (d.jalannya_diskusi || []).forEach(j => text += "- " + j + "\\n");
-
-                        text += "\\n✅ KEPUTUSAN:\\n";
-                        (d.keputusan || []).forEach(k => text += "- " + k + "\\n");
-
-                        text += "\\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\\n";
-                        (d.rencana_tindak_lanjut || []).forEach(t => {
-                            text += `- ${t.tugas} | ${t.pic} | ${t.deadline} | ${t.prioritas}\\n`;
-                        });
-
-                        const blob = new Blob([text], { type: 'text/plain' });
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = 'Notulensi_Lengkap_' + Date.now() + '.txt';
-                        a.click();
-                    };
-
-                    clearBtn.onclick = function() {
-                        transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
-                        lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = "";
-                        lastAiData = null;
-                        downloadNotulensiBtn.style.display = 'none';
-                        downloadDocxBtn.style.display = 'none';
-                    };
-
-                    function getTranscriptText() {
-                        return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
-                    }
-
-                    window.dlCyLive = function() {
-                        if (window.cyInstance) {
-                            const a = document.createElement('a'); 
-                            a.href = window.cyInstance.png({full: true, scale: 4, bg: 'white'}); 
-                            a.download = 'Cytoscape_Live.png'; a.click();
-                        }
-                    };
-
-                    downloadDocxBtn.onclick = async function() {
-                        if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
-                        
-                        const originalBtnText = downloadDocxBtn.innerHTML;
-                        downloadDocxBtn.innerHTML = "⏳ Memproses Gambar & Dokumen...";
-                        downloadDocxBtn.disabled = true;
-
-                        try {
-                            const d = lastAiData.notulensi_rapat || {};
-                            
-                            const now = new Date();
-                            const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-                            const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-                            const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-                            
-                            let cyImageHtml = "";
-                            if (window.cyInstance) {
-                                try {
-                                    const cyBase64 = window.cyInstance.png({full: true, scale: 2, bg: 'white'});
-                                    cyImageHtml = `
-                                    <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">A. Cytoscape Network (Hubungan Topik)</p>
-                                    <img src="${cyBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-                                } catch (err) { console.error("Gagal screenshot Cytoscape:", err); }
-                            }
-
-                            let mermaidImageHtml = "";
-                            const mermaidContainer = document.getElementById('merContainerLive'); 
-                            if (mermaidContainer && mermaidContainer.querySelector('svg')) {
-                                try {
-                                    const svgMermaid = mermaidContainer.querySelector('svg');
-                                    const origW = mermaidContainer.style.width;
-                                    const origH = mermaidContainer.style.height;
-                                    const origOverflow = mermaidContainer.style.overflow;
+                            for(let i=0; i<brainParticles.length; i++) {
+                                let p = brainParticles[i];
+                                for(let j=i+1; j<brainParticles.length; j++) {
+                                    let p2 = brainParticles[j];
+                                    let dx = p.x - p2.x;
+                                    let dy = p.y - p2.y;
+                                    let dist = Math.sqrt(dx*dx + dy*dy);
                                     
-                                    const bboxMermaid = svgMermaid.getBBox();
-                                    const mWidth = Math.max(bboxMermaid.width + 100, 800);
-                                    const mHeight = Math.max(bboxMermaid.height + 100, 600);
-
-                                    mermaidContainer.style.width = mWidth + 'px';
-                                    mermaidContainer.style.height = mHeight + 'px';
-                                    mermaidContainer.style.overflow = 'visible';
-
-                                    const canvasMermaid = await html2canvas(mermaidContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: mWidth, height: mHeight });
-                                    const merBase64 = canvasMermaid.toDataURL('image/png');
-                                    mermaidImageHtml = `
-                                    <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">B. Mermaid (Mindmap Struktur)</p>
-                                    <img src="${merBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-                                    
-                                    mermaidContainer.style.width = origW;
-                                    mermaidContainer.style.height = origH;
-                                    mermaidContainer.style.overflow = origOverflow;
-                                } catch (err) { console.error("Gagal screenshot Mermaid:", err); }
-                            }
-
-                            let markmapImageHtml = "";
-                            const markmapContainer = document.getElementById('markmapLiveWrapper');
-                            const markmapSvg = markmapContainer ? markmapContainer.querySelector('svg') : null;
-                            
-                            if (markmapContainer && markmapSvg) {
-                                try {
-                                    const origW = markmapContainer.style.width;
-                                    const origH = markmapContainer.style.height;
-                                    const origOverflow = markmapContainer.style.overflow;
-                                    const origViewBox = markmapSvg.getAttribute('viewBox');
-                                    
-                                    const g = markmapSvg.querySelector('g');
-                                    const originalTransform = g ? g.getAttribute('transform') : null;
-                                    
-                                    if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
-                                    
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    
-                                    const bbox = g ? g.getBBox() : markmapSvg.getBBox();
-                                    const padding = 60;
-                                    const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
-                                    const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
-
-                                    markmapContainer.style.width = trueWidth + 'px';
-                                    markmapContainer.style.height = trueHeight + 'px';
-                                    markmapContainer.style.overflow = 'visible';
-                                    markmapSvg.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
-
-                                    const canvasMarkmap = await html2canvas(markmapContainer, { 
-                                        scale: 2, 
-                                        useCORS: true, 
-                                        backgroundColor: '#ffffff',
-                                        width: trueWidth,
-                                        height: trueHeight
-                                    });
-                                    const mmBase64 = canvasMarkmap.toDataURL('image/png');
-                                    markmapImageHtml = `
-                                    <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">C. Markmap (Peta Konsep Detail)</p>
-                                    <img src="${mmBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
-
-                                    markmapContainer.style.width = origW;
-                                    markmapContainer.style.height = origH;
-                                    markmapContainer.style.overflow = origOverflow;
-                                    if (origViewBox) markmapSvg.setAttribute('viewBox', origViewBox);
-                                    else markmapSvg.removeAttribute('viewBox');
-                                    if (g && originalTransform) g.setAttribute('transform', originalTransform);
-
-                                } catch (err) { console.error("Gagal screenshot Markmap:", err); }
-                            }
-
-                            let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
-                            if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
-                                actionItemsHtml = `
-                                <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt;">
-                                    <tr style="background-color: #f1f5f9;">
-                                        <th><b>Tugas</b></th><th><b>PIC</b></th><th><b>Deadline</b></th><th><b>Prioritas</b></th>
-                                    </tr>
-                                    ${d.rencana_tindak_lanjut.map(t => `
-                                    <tr>
-                                        <td>${t.tugas || '-'}</td><td>${t.pic || '-'}</td><td>${t.deadline || '-'}</td><td><b>${t.prioritas || '-'}</b></td>
-                                    </tr>`).join('')}
-                                </table>`;
-                            }
-
-                            let content = `
-                            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                            <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
-                            <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
-                                
-                                <table style="width: 100%; border: none; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="width: 50%; text-align: left; vertical-align: top; border: none; padding: 0;">
-                                            <span style="font-size: 28pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE</span><br>
-                                            <span style="font-size: 10pt; color: #64748b;">Enterprise AI Transcription<br>Healthcare & Productivity</span>
-                                        </td>
-                                        <td style="width: 50%; text-align: right; vertical-align: top; border: none; padding: 0;">
-                                            <span style="font-size: 12pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE ENTERPRISE<br>DIVISI INOVASI DIGITAL</span><br>
-                                            <span style="font-size: 10pt; font-style: italic; color: #000000;">Sistem Notulensi Cerdas & Presisi</span>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
-                                    ________________________________________________________________________________
-                                </div>
-
-                                <div style="text-align: center; margin-bottom: 20px;">
-                                    <span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br>
-                                    <span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
-                                </div>
-                                
-                                <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;">
-                                    <tr>
-                                        <td style="width: 1.5in;"><b>Hari / Tanggal</b></td>
-                                        <td style="width: 4.5in;">${tanggalStr}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Waktu</b></td>
-                                        <td>${waktuStr}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Media</b></td>
-                                        <td>SmartDose TranscribX (Offline/Live)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Notulis</b></td>
-                                        <td>AI Transcription System</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Peserta</b></td>
-                                        <td>${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Agenda</b></td>
-                                        <td>${d.agenda || '-'}</td>
-                                    </tr>
-                                </table>
-                                
-                                <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>
-                                ${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}
-                                <br>
-
-                                <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p>
-                                <ul style="margin-top: 0;">
-                                    ${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}
-                                </ul>
-                                <br>
-
-                                <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p>
-                                <ol style="margin-top: 0;">
-                                    ${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}
-                                </ol>
-                                <br>
-
-                                <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>
-                                ${actionItemsHtml}
-                                <br>
-                                
-                                <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 10px;"><b>5. LAMPIRAN VISUALISASI AI</b></p>
-                                ${cyImageHtml}
-                                ${mermaidImageHtml}
-                                ${markmapImageHtml}
-                                
-                               <br><br>
-                                
-                                <p style="text-align: right;">
-                                    Jakarta, ${tanggalFooterStr}<br><br><br><br>
-                                    ( Tim Notulen SmartDose )
-                                </p>
-                            </body>
-                            </html>`;
-                            
-                            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = 'Notulen_Live_SmartDose_' + Date.now() + '.doc';
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-
-                        } catch (error) {
-                            console.error("Error generating DOCX:", error);
-                            alert("Terjadi kesalahan saat memproses gambar ke dalam dokumen.");
-                        } finally {
-                            downloadDocxBtn.innerHTML = originalBtnText;
-                            downloadDocxBtn.disabled = false;
-                        }
-                    };
-
-                    window.dlMermaidLive = function() {
-                        const mDiv = document.getElementById('mermaidLive');
-                        const container = document.getElementById('merContainerLive');
-                        const svgEl = mDiv.querySelector('svg');
-                        if (!svgEl) return;
-                        
-                        const btn = document.getElementById('dlBtnMermaidLive');
-                        if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
-                    
-                        const bbox = svgEl.getBBox();
-                        const padding = 40;
-                        const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
-                        const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
-                    
-                        const origSvgW = svgEl.style.width;
-                        const origSvgH = svgEl.style.height;
-                        const origSvgMaxW = svgEl.style.maxWidth;
-                        const origDivCssText = mDiv.style.cssText;
-                        const origClasses = mDiv.className;
-                        const origContainerOverflow = container.style.overflow;
-                    
-                        mDiv.className = ''; 
-                        mDiv.style.width = trueWidth + 'px';
-                        mDiv.style.height = trueHeight + 'px';
-                        mDiv.style.backgroundColor = '#ffffff';
-                        mDiv.style.display = 'block'; 
-                        
-                        svgEl.style.width = trueWidth + 'px';
-                        svgEl.style.height = trueHeight + 'px';
-                        svgEl.style.maxWidth = 'none';
-                        
-                        container.style.overflow = 'visible';
-                    
-                        html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
-                        .then(canvas => {
-                            svgEl.style.width = origSvgW;
-                            svgEl.style.height = origSvgH;
-                            svgEl.style.maxWidth = origSvgMaxW;
-                            
-                            mDiv.className = origClasses;
-                            mDiv.style.cssText = origDivCssText;
-                            container.style.overflow = origContainerOverflow;
-                            
-                            const link = document.createElement('a'); 
-                            link.download = 'Mermaid_Live.png'; 
-                            link.href = canvas.toDataURL('image/png', 1.0); 
-                            link.click();
-                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
-                        }).catch((e) => { 
-                            console.error("Download Error:", e);
-                            if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
-                        });
-                    };
-                    
-                    window.dlMarkmapLive = function() {
-                        const container = document.getElementById('markmapLiveWrapper');
-                        const svgEl = container.querySelector('svg'); if (!svgEl) return;
-                        
-                        const btn = document.getElementById('dlBtnMMLive');
-                        if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
-                        
-                        const originalWidth = container.style.width; 
-                        const originalHeight = container.style.height; 
-                        const originalOverflow = container.style.overflow;
-                        
-                        const g = svgEl.querySelector('g'); 
-                        const originalTransform = g ? g.getAttribute('transform') : null;
-                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
-                        
-                        setTimeout(() => {
-                            const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 60;
-                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
-                            const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
-                            
-                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                            svgEl.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
-                            
-                            html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
-                            .then(canvas => {
-                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                if (g && originalTransform) g.setAttribute('transform', originalTransform);
-                                
-                                const link = document.createElement('a'); link.download = 'Markmap_Live.png';
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; }
-                            }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; } });
-                        }, 500);
-                    };
-
-                    aiBtn.onclick = async function() {
-                        if (!canUseAi) {
-                            alert("❌ Kuota AI Summary Anda telah habis! Silakan lakukan Top-Up atau hubungi Admin.");
-                            return;
-                        }
-
-                        const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
-                        if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
-                        
-                        aiContent.innerHTML = `
-                            <div class="p-4 bg-yellow-50 text-yellow-700 rounded-xl mb-4 border border-yellow-200 animate-pulse">
-                                <strong>⏳ AI sedang membaca transkrip...</strong>
-                                <p style="margin:0; font-size:0.9em;">Sedang melakukan analisis mendalam dan menyusun visualisasi. Mohon tunggu sebentar.</p>
-                            </div>
-                        `;
-                        
-                        isThinking = true;
-                        if (brainText) { brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }
-                        aiBtn.innerHTML = '⏳ Memproses...'; aiBtn.disabled = true;
-
-                        const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
-                        ATURAN STRUKTUR OUTPUT:
-                        - ringkasan_eksekutif: Array of strings (poin-poin padat).
-                        - transkrip_dialog: Array of strings (format: "Pembicara: Isi").
-                        - jalannya_diskusi: Array of strings (Narasi detail & lengkap).
-                        - keputusan: Array of strings.
-                        - rencana_tindak_lanjut: Array of objects (tugas, pic, deadline, prioritas).
-                        - hubungan_topik: Array of objects (sumber, target, relasi).
-                        
-                        ATURAN MERMAID (SANGAT KETAT):
-                        1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
-                        2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
-                        3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
-                        4. Teks label WAJIB DIAPIT TANDA KUTIP GANDA. Contoh: A["Teks Label Utama"] --> B["Teks Label Lain"]. DILARANG KERAS menggunakan kurung siku di dalam teks label itu sendiri, gunakan kurung biasa saja untuk singkatan.
-                        
-                        ATURAN MARKMAP (MUTLAK):
-                        Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
-                        Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).
-                        
-                        Transkrip Rapat: "${transcript}"`;
-
-                        const payload = {
-                            model: "gemini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
-                            response_format: {
-                                type: "json_schema",
-                                json_schema: {
-                                    name: "meeting_summary", strict: true,
-                                    schema: {
-                                        type: "object",
-                                        properties: {
-                                            ringkasan_eksekutif: { type: "array", items: { type: "string" } },
-                                            notulensi_rapat: {
-                                                type: "object",
-                                                properties: {
-                                                    agenda: { type: "string" }, peserta: { type: "array", items: { type: "string" } },
-                                                    jalannya_diskusi: { type: "array", items: { type: "string" } }, keputusan: { type: "array", items: { type: "string" } },
-                                                    rencana_tindak_lanjut: { type: "array", items: { type: "object", properties: { tugas: { type: "string" }, pic: { type: "string" }, deadline: { type: "string" }, prioritas: { type: "string" } }, required: ["tugas", "pic", "deadline", "prioritas"], additionalProperties: false } },
-                                                    hubungan_topik: { type: "array", items: { type: "object", properties: { sumber: { type: "string" }, target: { type: "string" }, relasi: { type: "string" } }, required: ["sumber", "target", "relasi"], additionalProperties: false } }
-                                                }, required: ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], additionalProperties: false
-                                            },
-                                            visual_mindmap: { type: "string" }, markmap_code: { type: "string" }
-                                        }, required: ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], additionalProperties: false
+                                    if(dist < maxDistance) {
+                                        brainCtx.beginPath();
+                                        brainCtx.moveTo(p.x, p.y);
+                                        brainCtx.lineTo(p2.x, p2.y);
+                                        let opacity = 1 - (dist / maxDistance);
+                                        let alpha = isThinking ? opacity * 0.7 : opacity * 0.2;
+                                        brainCtx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
+                                        brainCtx.lineWidth = isThinking ? 1.0 : 0.4;
+                                        brainCtx.stroke();
                                     }
                                 }
                             }
+                            requestAnimationFrame(drawBrain);
+                        }
+
+                        if (brainCanvas) {
+                            setTimeout(() => { initBrain(); drawBrain(); }, 500);
+                            window.addEventListener('resize', initBrain);
+                        }
+
+                        // ======== STATE MANAGEMENT ========
+                        let isRecording = false;
+                        let isVisualizerActive = false;
+                        let recognition = null;
+                        let mediaRecorder = null;
+                        let audioChunks = [];
+                        let displayStream = null;
+                        let globalAudioCtx = null;
+                        let analyser = null;
+                        let dataArray = null;
+                        let drawVisual = null;
+                        let currentInterimDiv = null;
+                        let lastFinalText = "";
+
+                        function initSpeechRecognition() {
+                            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                            if (!SpeechRecognition) {
+                                status.innerText = "❌ Browser tidak mendukung Speech API";
+                                return null;
+                            }
+                            const rec = new SpeechRecognition();
+                            rec.continuous = true;
+                            rec.interimResults = true;
+                            rec.lang = langSelect.value;
+
+                            rec.onstart = function() {
+                                isRecording = true;
+                                status.innerText = "🎤 Menangkap audio... (Pastikan volume speaker nyala!)";
+                                indicator.className = 'indicator-dot recording';
+                                startBtn.disabled = true;
+                                stopBtn.disabled = false;
+                                const placeholder = document.getElementById('placeholder');
+                                if (placeholder) placeholder.style.display = 'none';
+                            };
+
+                            rec.onerror = function(event) {
+                                if (event.error === 'no-speech' || event.error === 'aborted') return;
+                                status.innerText = "⚠️ Speech Error: " + event.error;
+                            };
+
+                            rec.onend = function() {
+                                if (isRecording) {
+                                    setTimeout(() => { try { rec.start(); } catch(e) {} }, 200);
+                                }
+                            };
+
+                            rec.onresult = function(event) {
+                                let interimTranscript = '';
+                                let finalTranscript = '';
+                                for (let i = event.resultIndex; i < event.results.length; i++) {
+                                    const result = event.results[i];
+                                    if (result.isFinal) finalTranscript += result[0].transcript + ' ';
+                                    else interimTranscript += result[0].transcript;
+                                }
+
+                                if (finalTranscript.trim()) {
+                                    const cleanFinal = finalTranscript.trim();
+                                    if (cleanFinal === lastFinalText.trim()) return;
+                                    lastFinalText = cleanFinal;
+                                    
+                                    const now = new Date();
+                                    const timeStr = '[' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0') + ']';
+                                    
+                                    if (currentInterimDiv) {
+                                        currentInterimDiv.className = 'line-final';
+                                        currentInterimDiv.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
+                                        currentInterimDiv = null;
+                                    } else {
+                                        const line = document.createElement('div');
+                                        line.className = 'line-final';
+                                        line.innerHTML = '<span class="timestamp">' + timeStr + '</span> ' + cleanFinal;
+                                        transcriptBox.appendChild(line);
+                                    }
+                                    transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                                } else if (interimTranscript.trim()) {
+                                    if (!currentInterimDiv) {
+                                        currentInterimDiv = document.createElement('div');
+                                        currentInterimDiv.className = 'line-interim';
+                                        transcriptBox.appendChild(currentInterimDiv);
+                                    }
+                                    currentInterimDiv.textContent = '💬 ' + interimTranscript;
+                                    transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                                }
+                            };
+                            return rec;
+                        }
+
+                        function setupVisualizer(stream) {
+                            try {
+                                const audioTracks = stream.getAudioTracks();
+                                if (audioTracks.length === 0) return;
+                                const audioOnlyStream = new MediaStream(audioTracks);
+                                const source = globalAudioCtx.createMediaStreamSource(audioOnlyStream);
+                                analyser = globalAudioCtx.createAnalyser();
+                                analyser.fftSize = 256;
+                                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                                source.connect(analyser);
+                            } catch(e) { console.error(e); }
+                        }
+
+                        function drawVisualizer() {
+                            if (!isVisualizerActive) return;
+                            const width = visualizer.width;
+                            const height = visualizer.height;
+                            canvasCtx.clearRect(0, 0, width, height);
+                            
+                            if (analyser && dataArray) {
+                                analyser.getByteFrequencyData(dataArray);
+                                const bufferLength = analyser.frequencyBinCount;
+                                const barWidth = (width / bufferLength) * 2.5;
+                                let x = 0;
+                                for (let i = 0; i < bufferLength; i++) {
+                                    const barHeight = dataArray[i] / 2;
+                                    canvasCtx.fillStyle = 'rgb(' + Math.min(barHeight + 100, 255) + ',158,11)';
+                                    const y = (height / 2) - (barHeight / 2);
+                                    canvasCtx.fillRect(x, y, Math.max(barWidth, 1), Math.max(barHeight, 2));
+                                    x += barWidth + 1;
+                                }
+                            }
+                            drawVisual = requestAnimationFrame(drawVisualizer);
+                        }
+
+                        function setupMediaRecorder(stream) {
+                            audioChunks = [];
+                            let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+                            if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
+                            
+                            try {
+                                mediaRecorder = new MediaRecorder(stream, options.mimeType ? options : undefined);
+                            } catch(e) {
+                                mediaRecorder = new MediaRecorder(stream);
+                            }
+                            
+                            mediaRecorder.ondataavailable = function(e) {
+                                if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                            };
+                            
+                            mediaRecorder.onstop = function() {
+                                if (audioChunks.length > 0) {
+                                    const mimeType = mediaRecorder.mimeType || 'video/webm';
+                                    const blob = new Blob(audioChunks, { type: mimeType });
+                                    const audioUrl = URL.createObjectURL(blob);
+                                    const audioItem = document.createElement('div');
+                                    audioItem.className = 'audio-item fade-in';
+                                    audioItem.innerHTML = `
+                                        <audio controls src="${audioUrl}" preload="auto" style="flex:1; min-width:200px;"></audio>
+                                        <a href="${audioUrl}" download="Capture_${Date.now()}.webm" class="btn-custom btn-green" style="padding:6px 14px; font-size:12px; text-decoration:none;">💾 Download</a>
+                                    `;
+                                    document.getElementById('audioPlaceholder')?.remove();
+                                    audioContainer.appendChild(audioItem);
+                                }
+                            };
+                        }
+
+                        startBtn.onclick = async function() {
+                            try {
+                                lastFinalText = ""; currentInterimDiv = null; audioChunks = [];
+                                transcriptBox.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Menangkap audio... Rapat/Tab sedang berjalan.</div>';
+                                await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                                if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
+                                
+                                displayStream = await navigator.mediaDevices.getDisplayMedia({ 
+                                    video: { width: 640, height: 480, frameRate: 1 },
+                                    audio: { echoCancellation: false, noiseSuppression: false }
+                                });
+                                
+                                if (displayStream.getAudioTracks().length === 0) {
+                                    status.innerText = "⚠️ CENTANG 'Share tab audio'!";
+                                    displayStream.getVideoTracks().forEach(t => t.stop());
+                                    return;
+                                }
+                                
+                                setupMediaRecorder(displayStream);
+                                mediaRecorder.start(1000);
+                                setupVisualizer(displayStream);
+                                isVisualizerActive = true; drawVisualizer();
+                                
+                                recognition = initSpeechRecognition();
+                                if (recognition) recognition.start();
+                                
+                                displayStream.getVideoTracks()[0].addEventListener('ended', () => { if (isRecording) stopBtn.click(); });
+                                resizeVisualizer();
+                            } catch(err) {
+                                status.innerText = "❌ Gagal: " + err.message;
+                            }
                         };
 
-                        try {
-                            const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
-                                method: "POST", 
-                                headers: { 
-                                    "Authorization": "Bearer " + apiKey, 
-                                    "Content-Type": "application/json" 
-                                },
-                                body: JSON.stringify(payload)
+                        stopBtn.onclick = function() {
+                            isRecording = false; isVisualizerActive = false;
+                            if (drawVisual) cancelAnimationFrame(drawVisual);
+                            if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+                            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                            if (displayStream) { displayStream.getTracks().forEach(t => t.stop()); displayStream = null; }
+                            
+                            status.innerText = "⏸️ Stopped - Cek Arsip Rekaman ↓";
+                            indicator.className = 'indicator-dot';
+                            startBtn.disabled = false; stopBtn.disabled = true; langSelect.disabled = false;
+                        };
+
+                        function resizeVisualizer() {
+                            visualizer.width = visualizer.parentElement.clientWidth || 600;
+                            visualizer.height = 80;
+                        }
+                        window.addEventListener('resize', resizeVisualizer);
+
+                        copyBtn.onclick = function() {
+                            const lines = transcriptBox.querySelectorAll('.line-final');
+                            if (lines.length === 0) { alert('Belum ada teks!'); return; }
+                            const text = Array.from(lines).map(line => line.innerText).join('\\n');
+                            navigator.clipboard.writeText(text).then(() => {
+                                copyBtn.innerText = '✅ Copied!';
+                                setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
                             });
-                            const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
+                        };
+
+                        downloadTxtBtn.onclick = function() {
+                            const lines = transcriptBox.querySelectorAll('.line-final');
+                            if (lines.length === 0) { alert('Belum ada teks!'); return; }
+                            const text = Array.from(lines).map(line => line.innerText).join('\\n');
+                            const blob = new Blob([text], { type: 'text/plain' });
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = 'Transkrip_Live_' + Date.now() + '.txt';
+                            a.click();
+                        };
+                        
+                        downloadNotulensiBtn.onclick = function() {
+                            if (!lastAiData) { alert('Belum ada data notulensi! Silakan Generate AI Summary terlebih dahulu.'); return; }
                             
-                            lastAiData = data;
-                            downloadNotulensiBtn.style.display = 'inline-flex';
-                            downloadDocxBtn.style.display = 'inline-flex';
+                            const d = lastAiData.notulensi_rapat || {};
+                            let text = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\\n";
+                            text += "========================================\\n\\n";
+
+                            text += "🌟 RINGKASAN EKSEKUTIF:\\n";
+                            (lastAiData.ringkasan_eksekutif || []).forEach(r => text += "- " + r + "\\n");
+
+                            text += "\\n📌 AGENDA: " + (d.agenda || "-") + "\\n";
+                            text += "👥 PESERTA: " + (d.peserta ? d.peserta.join(', ') : "-") + "\\n\\n";
+
+                            if (d.transkrip_dialog && d.transkrip_dialog.length > 0) {
+                                text += "💬 TRANSKRIP DIALOG:\\n";
+                                d.transkrip_dialog.forEach(l => text += l + "\\n");
+                                text += "\\n";
+                            }
+
+                            text += "🗣️ JALANNYA DISKUSI:\\n";
+                            (d.jalannya_diskusi || []).forEach(j => text += "- " + j + "\\n");
+
+                            text += "\\n✅ KEPUTUSAN:\\n";
+                            (d.keputusan || []).forEach(k => text += "- " + k + "\\n");
+
+                            text += "\\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\\n";
+                            (d.rencana_tindak_lanjut || []).forEach(t => {
+                                text += `- ${t.tugas} | ${t.pic} | ${t.deadline} | ${t.prioritas}\\n`;
+                            });
+
+                            const blob = new Blob([text], { type: 'text/plain' });
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = 'Notulensi_Lengkap_' + Date.now() + '.txt';
+                            a.click();
+                        };
+
+                        clearBtn.onclick = function() {
+                            transcriptBox.innerHTML = '<div id="placeholder" style="text-align: center; color: #94a3b8; margin-top: 100px; font-weight: 600;">🎤 Klik "Start Capture"</div>';
+                            lastFinalText = ""; currentInterimDiv = null; aiContent.innerHTML = "";
+                            lastAiData = null;
+                            downloadNotulensiBtn.style.display = 'none';
+                            downloadDocxBtn.style.display = 'none';
+                        };
+
+                        function getTranscriptText() {
+                            return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
+                        }
+
+                        window.dlCyLive = function() {
+                            if (window.cyInstance) {
+                                const a = document.createElement('a'); 
+                                a.href = window.cyInstance.png({full: true, scale: 4, bg: 'white'}); 
+                                a.download = 'Cytoscape_Live.png'; a.click();
+                            }
+                        };
+
+                        downloadDocxBtn.onclick = async function() {
+                            if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
                             
-                            let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
-                                `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
-                            ).join('');
+                            const originalBtnText = downloadDocxBtn.innerHTML;
+                            downloadDocxBtn.innerHTML = "⏳ Memproses Gambar & Dokumen...";
+                            downloadDocxBtn.disabled = true;
+
+                            try {
+                                const d = lastAiData.notulensi_rapat || {};
+                                
+                                const now = new Date();
+                                const tanggalStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+                                const waktuStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                                const tanggalFooterStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+                                
+                                let cyImageHtml = "";
+                                if (window.cyInstance) {
+                                    try {
+                                        const cyBase64 = window.cyInstance.png({full: true, scale: 2, bg: 'white'});
+                                        cyImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">A. Cytoscape Network (Hubungan Topik)</p>
+                                        <img src="${cyBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+                                    } catch (err) { console.error("Gagal screenshot Cytoscape:", err); }
+                                }
+
+                                let mermaidImageHtml = "";
+                                const mermaidContainer = document.getElementById('merContainerLive'); 
+                                if (mermaidContainer && mermaidContainer.querySelector('svg')) {
+                                    try {
+                                        const svgMermaid = mermaidContainer.querySelector('svg');
+                                        const origW = mermaidContainer.style.width;
+                                        const origH = mermaidContainer.style.height;
+                                        const origOverflow = mermaidContainer.style.overflow;
+                                        
+                                        const bboxMermaid = svgMermaid.getBBox();
+                                        const mWidth = Math.max(bboxMermaid.width + 100, 800);
+                                        const mHeight = Math.max(bboxMermaid.height + 100, 600);
+
+                                        mermaidContainer.style.width = mWidth + 'px';
+                                        mermaidContainer.style.height = mHeight + 'px';
+                                        mermaidContainer.style.overflow = 'visible';
+
+                                        const canvasMermaid = await html2canvas(mermaidContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: mWidth, height: mHeight });
+                                        const merBase64 = canvasMermaid.toDataURL('image/png');
+                                        mermaidImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">B. Mermaid (Mindmap Struktur)</p>
+                                        <img src="${merBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+                                        
+                                        mermaidContainer.style.width = origW;
+                                        mermaidContainer.style.height = origH;
+                                        mermaidContainer.style.overflow = origOverflow;
+                                    } catch (err) { console.error("Gagal screenshot Mermaid:", err); }
+                                }
+
+                                let markmapImageHtml = "";
+                                const markmapContainer = document.getElementById('markmapLiveWrapper');
+                                const markmapSvg = markmapContainer ? markmapContainer.querySelector('svg') : null;
+                                
+                                if (markmapContainer && markmapSvg) {
+                                    try {
+                                        const origW = markmapContainer.style.width;
+                                        const origH = markmapContainer.style.height;
+                                        const origOverflow = markmapContainer.style.overflow;
+                                        const origViewBox = markmapSvg.getAttribute('viewBox');
+                                        
+                                        const g = markmapSvg.querySelector('g');
+                                        const originalTransform = g ? g.getAttribute('transform') : null;
+                                        
+                                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                                        
+                                        await new Promise(resolve => setTimeout(resolve, 100));
+                                        
+                                        const bbox = g ? g.getBBox() : markmapSvg.getBBox();
+                                        const padding = 60;
+                                        const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                                        const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+
+                                        markmapContainer.style.width = trueWidth + 'px';
+                                        markmapContainer.style.height = trueHeight + 'px';
+                                        markmapContainer.style.overflow = 'visible';
+                                        markmapSvg.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
+
+                                        const canvasMarkmap = await html2canvas(markmapContainer, { 
+                                            scale: 2, 
+                                            useCORS: true, 
+                                            backgroundColor: '#ffffff',
+                                            width: trueWidth,
+                                            height: trueHeight
+                                        });
+                                        const mmBase64 = canvasMarkmap.toDataURL('image/png');
+                                        markmapImageHtml = `
+                                        <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">C. Markmap (Peta Konsep Detail)</p>
+                                        <img src="${mmBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+
+                                        markmapContainer.style.width = origW;
+                                        markmapContainer.style.height = origH;
+                                        markmapContainer.style.overflow = origOverflow;
+                                        if (origViewBox) markmapSvg.setAttribute('viewBox', origViewBox);
+                                        else markmapSvg.removeAttribute('viewBox');
+                                        if (g && originalTransform) g.setAttribute('transform', originalTransform);
+
+                                    } catch (err) { console.error("Gagal screenshot Markmap:", err); }
+                                }
+
+                                let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
+                                if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
+                                    actionItemsHtml = `
+                                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt;">
+                                        <tr style="background-color: #f1f5f9;">
+                                            <th><b>Tugas</b></th><th><b>PIC</b></th><th><b>Deadline</b></th><th><b>Prioritas</b></th>
+                                        </tr>
+                                        ${d.rencana_tindak_lanjut.map(t => `
+                                        <tr>
+                                            <td>${t.tugas || '-'}</td><td>${t.pic || '-'}</td><td>${t.deadline || '-'}</td><td><b>${t.prioritas || '-'}</b></td>
+                                        </tr>`).join('')}
+                                    </table>`;
+                                }
+
+                                let content = `
+                                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                                <head><meta charset='utf-8'><title>Notulen Rapat</title></head>
+                                <body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
+                                    
+                                    <table style="width: 100%; border: none; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="width: 50%; text-align: left; vertical-align: top; border: none; padding: 0;">
+                                                <span style="font-size: 28pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE</span><br>
+                                                <span style="font-size: 10pt; color: #64748b;">Enterprise AI Transcription<br>Healthcare & Productivity</span>
+                                            </td>
+                                            <td style="width: 50%; text-align: right; vertical-align: top; border: none; padding: 0;">
+                                                <span style="font-size: 12pt; font-weight: bold; color: #1e3a8a;">SMARTDOSE ENTERPRISE<br>DIVISI INOVASI DIGITAL</span><br>
+                                                <span style="font-size: 10pt; font-style: italic; color: #000000;">Sistem Notulensi Cerdas & Presisi</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <div style="text-align: center; margin-top: 5px; margin-bottom: 20px;">
+                                        ________________________________________________________________________________
+                                    </div>
+
+                                    <div style="text-align: center; margin-bottom: 20px;">
+                                        <span style="font-size: 16pt; font-weight: bold; color: #1e3a8a;">NOTULEN RAPAT</span><br><br>
+                                        <span style="font-size: 12pt; font-weight: bold;">${d.agenda || 'Koordinasi dan Pembahasan Internal'}</span>
+                                    </div>
+                                    
+                                    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 11pt;">
+                                        <tr>
+                                            <td style="width: 1.5in;"><b>Hari / Tanggal</b></td>
+                                            <td style="width: 4.5in;">${tanggalStr}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Waktu</b></td>
+                                            <td>${waktuStr}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Media</b></td>
+                                            <td>SmartDose TranscribX (Offline/Live)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Notulis</b></td>
+                                            <td>AI Transcription System</td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Peserta</b></td>
+                                            <td>${d.peserta ? (Array.isArray(d.peserta) ? d.peserta.join(', ') : d.peserta) : '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Agenda</b></td>
+                                            <td>${d.agenda || '-'}</td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>1. RINGKASAN EKSEKUTIF</b></p>
+                                    ${(lastAiData.ringkasan_eksekutif || []).map(r => `<p style="margin-top: 0; margin-bottom: 5px;">${r}</p>`).join('')}
+                                    <br>
+
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>2. POKOK PEMBAHASAN / JALANNYA DISKUSI</b></p>
+                                    <ul style="margin-top: 0;">
+                                        ${(d.jalannya_diskusi || []).map(j => `<li style="margin-bottom: 5px;">${j}</li>`).join('')}
+                                    </ul>
+                                    <br>
+
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>3. KEPUTUSAN RAPAT</b></p>
+                                    <ol style="margin-top: 0;">
+                                        ${(d.keputusan || []).map(k => `<li style="margin-bottom: 5px;">${k}</li>`).join('')}
+                                    </ol>
+                                    <br>
+
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 5px;"><b>4. TINDAK LANJUT</b></p>
+                                    ${actionItemsHtml}
+                                    <br>
+                                    
+                                    <p style="color: #1e3a8a; font-size: 11pt; margin-bottom: 10px;"><b>5. LAMPIRAN VISUALISASI AI</b></p>
+                                    ${cyImageHtml}
+                                    ${mermaidImageHtml}
+                                    ${markmapImageHtml}
+                                    
+                                   <br><br>
+                                    
+                                    <p style="text-align: right;">
+                                        Jakarta, ${tanggalFooterStr}<br><br><br><br>
+                                        ( Tim Notulen SmartDose )
+                                    </p>
+                                </body>
+                                </html>`;
+                                
+                                const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = 'Notulen_Live_SmartDose_' + Date.now() + '.doc';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+
+                            } catch (error) {
+                                console.error("Error generating DOCX:", error);
+                                alert("Terjadi kesalahan saat memproses gambar ke dalam dokumen.");
+                            } finally {
+                                downloadDocxBtn.innerHTML = originalBtnText;
+                                downloadDocxBtn.disabled = false;
+                            }
+                        };
+
+                        window.dlMermaidLive = function() {
+                            const mDiv = document.getElementById('mermaidLive');
+                            const container = document.getElementById('merContainerLive');
+                            const svgEl = mDiv.querySelector('svg');
+                            if (!svgEl) return;
+                            
+                            const btn = document.getElementById('dlBtnMermaidLive');
+                            if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                        
+                            const bbox = svgEl.getBBox();
+                            const padding = 40;
+                            const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2;
+                            const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                        
+                            const origSvgW = svgEl.style.width;
+                            const origSvgH = svgEl.style.height;
+                            const origSvgMaxW = svgEl.style.maxWidth;
+                            const origDivCssText = mDiv.style.cssText;
+                            const origClasses = mDiv.className;
+                            const origContainerOverflow = container.style.overflow;
+                        
+                            mDiv.className = ''; 
+                            mDiv.style.width = trueWidth + 'px';
+                            mDiv.style.height = trueHeight + 'px';
+                            mDiv.style.backgroundColor = '#ffffff';
+                            mDiv.style.display = 'block'; 
+                            
+                            svgEl.style.width = trueWidth + 'px';
+                            svgEl.style.height = trueHeight + 'px';
+                            svgEl.style.maxWidth = 'none';
+                            
+                            container.style.overflow = 'visible';
+                        
+                            html2canvas(mDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })
+                            .then(canvas => {
+                                svgEl.style.width = origSvgW;
+                                svgEl.style.height = origSvgH;
+                                svgEl.style.maxWidth = origSvgMaxW;
+                                
+                                mDiv.className = origClasses;
+                                mDiv.style.cssText = origDivCssText;
+                                container.style.overflow = origContainerOverflow;
+                                
+                                const link = document.createElement('a'); 
+                                link.download = 'Mermaid_Live.png'; 
+                                link.href = canvas.toDataURL('image/png', 1.0); 
+                                link.click();
+                                if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; }
+                            }).catch((e) => { 
+                                console.error("Download Error:", e);
+                                if (btn) { btn.innerHTML = "📸 PNG"; btn.disabled = false; } 
+                            });
+                        };
+                        
+                        window.dlMarkmapLive = function() {
+                            const container = document.getElementById('markmapLiveWrapper');
+                            const svgEl = container.querySelector('svg'); if (!svgEl) return;
+                            
+                            const btn = document.getElementById('dlBtnMMLive');
+                            if (btn) { btn.innerHTML = "⏳..."; btn.disabled = true; }
+                            
+                            const originalWidth = container.style.width; 
+                            const originalHeight = container.style.height; 
+                            const originalOverflow = container.style.overflow;
+                            
+                            const g = svgEl.querySelector('g'); 
+                            const originalTransform = g ? g.getAttribute('transform') : null;
+                            if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                            
+                            setTimeout(() => {
+                                const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 60;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2);
+                                const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
+                                
+                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                                svgEl.setAttribute('viewBox', `${(bbox.x || 0) - padding} ${(bbox.y || 0) - padding} ${trueWidth} ${trueHeight}`);
+                                
+                                html2canvas(container, { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight })
+                                .then(canvas => {
+                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    if (g && originalTransform) g.setAttribute('transform', originalTransform);
+                                    
+                                    const link = document.createElement('a'); link.download = 'Markmap_Live.png';
+                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
+                                    if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; }
+                                }).catch(() => { if (btn) { btn.innerHTML = "📸 PNG HD"; btn.disabled = false; } });
+                            }, 500);
+                        };
+
+                        aiBtn.onclick = async function() {
+                            if (!canUseAi) {
+                                alert("❌ Kuota AI Summary Anda telah habis! Silakan lakukan Top-Up atau hubungi Admin.");
+                                return;
+                            }
+
+                            const transcript = getTranscriptText(); const apiKey = apiKeyInput.value.trim();
+                            if (!apiKey || !transcript) { alert('API Key atau Transkrip kosong!'); return; }
                             
                             aiContent.innerHTML = `
-                                <div class="fade-in mt-6 mb-10">
-                                    <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
-                                    <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
-                                    <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
-                                    <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
-                                    <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div><p class="font-bold text-sm mb-2">Cytoscape.js</p>
-                                            <div class="relative bg-white border rounded-xl p-2">
-                                                <button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
-                                                <div id="cyLiveContainer" style="width:100%; height:380px;"></div>
+                                <div class="p-4 bg-yellow-50 text-yellow-700 rounded-xl mb-4 border border-yellow-200 animate-pulse">
+                                    <strong>⏳ AI sedang membaca transkrip...</strong>
+                                    <p style="margin:0; font-size:0.9em;">Sedang melakukan analisis mendalam dan menyusun visualisasi. Mohon tunggu sebentar.</p>
+                                </div>
+                            `;
+                            
+                            isThinking = true;
+                            if (brainText) { brainText.innerText = "PROCESSING NEURAL DATA..."; brainText.style.color = "#d8b4fe"; }
+                            aiBtn.innerHTML = '⏳ Memproses...'; aiBtn.disabled = true;
+
+                            const prompt = `Anda adalah Ahli Pembuat Notulensi dan Visual Mapping. Analisis transkrip rapat berikut dan hasilkan JSON.
+                            ATURAN STRUKTUR OUTPUT:
+                            - ringkasan_eksekutif: Array of strings (poin-poin padat).
+                            - transkrip_dialog: Array of strings (format: "Pembicara: Isi").
+                            - jalannya_diskusi: Array of strings (Narasi detail & lengkap).
+                            - keputusan: Array of strings.
+                            - rencana_tindak_lanjut: Array of objects (tugas, pic, deadline, prioritas).
+                            - hubungan_topik: Array of objects (sumber, target, relasi).
+                            
+                            ATURAN MERMAID (SANGAT KETAT):
+                            1. Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'.
+                            2. Konten/materinya HARUS SAMA DETAIL DAN BERCABANG seperti Markmap (Topik Utama -> Sub Topik -> Detail).
+                            3. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi (misal: A, B, C1).
+                            4. Teks label WAJIB DIAPIT TANDA KUTIP GANDA. Contoh: A["Teks Label Utama"] --> B["Teks Label Lain"]. DILARANG KERAS menggunakan kurung siku di dalam teks label itu sendiri, gunakan kurung biasa saja untuk singkatan.
+                            
+                            ATURAN MARKMAP (MUTLAK):
+                            Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail dan bercabang dalam menggunakan Markdown murni. 
+                            Gunakan hierarki heading (# Topik Utama, ## Sub Topik, ### Detail Sub) dan bullet points (- Poin).
+                            
+                            Transkrip Rapat: "${transcript}"`;
+
+                            const payload = {
+                                model: "gemini/gemini-2.5-flash", messages: [{ role: "user", content: prompt }], temperature: 0.2,
+                                response_format: {
+                                    type: "json_schema",
+                                    json_schema: {
+                                        name: "meeting_summary", strict: true,
+                                        schema: {
+                                            type: "object",
+                                            properties: {
+                                                ringkasan_eksekutif: { type: "array", items: { type: "string" } },
+                                                notulensi_rapat: {
+                                                    type: "object",
+                                                    properties: {
+                                                        agenda: { type: "string" }, peserta: { type: "array", items: { type: "string" } },
+                                                        jalannya_diskusi: { type: "array", items: { type: "string" } }, keputusan: { type: "array", items: { type: "string" } },
+                                                        rencana_tindak_lanjut: { type: "array", items: { type: "object", properties: { tugas: { type: "string" }, pic: { type: "string" }, deadline: { type: "string" }, prioritas: { type: "string" } }, required: ["tugas", "pic", "deadline", "prioritas"], additionalProperties: false } },
+                                                        hubungan_topik: { type: "array", items: { type: "object", properties: { sumber: { type: "string" }, target: { type: "string" }, relasi: { type: "string" } }, required: ["sumber", "target", "relasi"], additionalProperties: false } }
+                                                    }, required: ["agenda", "peserta", "jalannya_diskusi", "keputusan", "rencana_tindak_lanjut", "hubungan_topik"], additionalProperties: false
+                                                },
+                                                visual_mindmap: { type: "string" }, markmap_code: { type: "string" }
+                                            }, required: ["ringkasan_eksekutif", "notulensi_rapat", "visual_mindmap", "markmap_code"], additionalProperties: false
+                                        }
+                                    }
+                                }
+                            };
+
+                            try {
+                                const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
+                                    method: "POST", 
+                                    headers: { 
+                                        "Authorization": "Bearer " + apiKey, 
+                                        "Content-Type": "application/json" 
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+                                const data = JSON.parse(JSON.parse(await response.text()).choices[0].message.content);
+                                
+                                lastAiData = data;
+                                downloadNotulensiBtn.style.display = 'inline-flex';
+                                downloadDocxBtn.style.display = 'inline-flex';
+                                
+                                let taskRows = (data.notulensi_rapat.rencana_tindak_lanjut || []).map(t => 
+                                    `<tr class="text-xs border-b"><td class="p-2 border-r">${t.tugas}</td><td class="p-2 border-r">${t.pic}</td><td class="p-2 border-r">${t.deadline}</td><td class="p-2 font-bold">${t.prioritas}</td></tr>`
+                                ).join('');
+                                
+                                aiContent.innerHTML = `
+                                    <div class="fade-in mt-6 mb-10">
+                                        <div class="mb-4"><strong>🌟 RINGKASAN EKSEKUTIF:</strong><div class="bg-blue-50 p-4 rounded-xl mt-2 text-sm"><ul class="list-disc ml-5">${(data.ringkasan_eksekutif || []).map(r => '<li>' + r + '</li>').join('')}</ul></div></div>
+                                        <div class="mb-4"><strong>🗣️ JALANNYA DISKUSI:</strong><div class="bg-white p-4 rounded-xl border mt-2 text-sm"><ul>${(data.notulensi_rapat.jalannya_diskusi || []).map(d => '<li class="mb-2">- ' + d + '</li>').join('')}</ul></div></div>
+                                        <div class="mb-4"><strong>✅ KEPUTUSAN UTAMA:</strong><ul class="list-disc ml-5 text-sm">${(data.notulensi_rapat.keputusan || []).map(k => '<li>' + k + '</li>').join('')}</ul></div>
+                                        <div class="mb-8"><strong>📅 ACTION ITEMS:</strong><table class="w-full text-sm border mt-2"><thead class="bg-gray-100"><tr><th class="p-2 border-r">Tugas</th><th class="p-2 border-r">PIC</th><th class="p-2 border-r">Deadline</th><th class="p-2">Prioritas</th></tr></thead><tbody>${taskRows}</tbody></table></div>
+                                        <h3 class="font-bold text-lg mb-4 border-b pb-2">🕸️ Visualisasi Map</h3>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div><p class="font-bold text-sm mb-2">Cytoscape.js</p>
+                                                <div class="relative bg-white border rounded-xl p-2">
+                                                    <button onclick="dlCyLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                                    <div id="cyLiveContainer" style="width:100%; height:380px;"></div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
-                                            <div class="relative bg-white border rounded-xl" style="height:396px;">
-                                                <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
-                                                <div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;">
-                                                    <pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre>
+                                            <div><p class="font-bold text-sm mb-2">Mermaid (Mindmap)</p>
+                                                <div class="relative bg-white border rounded-xl" style="height:396px;">
+                                                    <button id="dlBtnMermaidLive" onclick="dlMermaidLive()" class="absolute top-2 right-2 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG</button>
+                                                    <div id="merContainerLive" style="width:100%; height:100%; overflow:auto; border-radius:12px;">
+                                                        <pre id="mermaidLive" class="mermaid w-full h-full m-0 flex justify-center items-center bg-white"></pre>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
-                                </div>`;
+                                        <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                    </div>`;
 
-                            setTimeout(() => {
-                                const nodesSet = new Set(); const cyElements = [];
-                                (data.notulensi_rapat.hubungan_topik || []).forEach(rel => {
-                                    if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
-                                    if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
-                                    cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
-                                });
-                                window.cyInstance = cytoscape({
-                                    container: document.getElementById('cyLiveContainer'), elements: cyElements,
-                                    style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '11px', 'text-valign': 'top' } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '9px' } }],
-                                    layout: { name: 'cose', padding: 20 }
-                                });
-                            }, 100);
-
-                            setTimeout(() => {
-                                let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
-                                if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
-                                    rawMer = `graph LR\\n` + rawMer;
-                                }
-                                rawMer = rawMer.replace(/`/g, "").replace(/\\[([A-Z0-9]+)\\]/g, "($1)");
-                                
-                                const mDiv = document.getElementById('mermaidLive'); 
-                                mDiv.textContent = rawMer; 
-                                mDiv.removeAttribute('data-processed');
-                                
-                                try {
-                                    mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
-                                        const svg = mDiv.querySelector('svg');
-                                        if (svg) { 
-                                            svg.style.maxWidth = 'none'; 
-                                            svg.style.height = 'auto';
-                                        }
-                                    }).catch(e => {
-                                        console.error("Mermaid error:", e);
-                                        mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Transkrip mungkin mengandung karakter ilegal.</div>";
+                                setTimeout(() => {
+                                    const nodesSet = new Set(); const cyElements = [];
+                                    (data.notulensi_rapat.hubungan_topik || []).forEach(rel => {
+                                        if (!nodesSet.has(rel.sumber)) { nodesSet.add(rel.sumber); cyElements.push({ data: { id: rel.sumber, label: rel.sumber } }); }
+                                        if (!nodesSet.has(rel.target)) { nodesSet.add(rel.target); cyElements.push({ data: { id: rel.target, label: rel.target } }); }
+                                        cyElements.push({ data: { source: rel.sumber, target: rel.target, label: rel.relasi } });
                                     });
-                                } catch(e) {}
-                            }, 100);
+                                    window.cyInstance = cytoscape({
+                                        container: document.getElementById('cyLiveContainer'), elements: cyElements,
+                                        style: [{ selector: 'node', style: { 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '11px', 'text-valign': 'top' } }, { selector: 'edge', style: { 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '9px' } }],
+                                        layout: { name: 'cose', padding: 20 }
+                                    });
+                                }, 100);
 
-                            setTimeout(() => {
-                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
-                                const { Transformer, Markmap } = window.markmap;
-                                const { root } = new Transformer().transform(rawMm);
-                                Markmap.create('#markmapLive', null, root);
-                            }, 100);
+                                setTimeout(() => {
+                                    let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
+                                    if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
+                                        rawMer = `graph LR\\n` + rawMer;
+                                    }
+                                    rawMer = rawMer.replace(/`/g, "").replace(/\\[([A-Z0-9]+)\\]/g, "($1)");
+                                    
+                                    const mDiv = document.getElementById('mermaidLive'); 
+                                    mDiv.textContent = rawMer; 
+                                    mDiv.removeAttribute('data-processed');
+                                    
+                                    try {
+                                        mermaid.run({ querySelector: '#mermaidLive' }).then(() => {
+                                            const svg = mDiv.querySelector('svg');
+                                            if (svg) { 
+                                                svg.style.maxWidth = 'none'; 
+                                                svg.style.height = 'auto';
+                                            }
+                                        }).catch(e => {
+                                            console.error("Mermaid error:", e);
+                                            mDiv.innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Transkrip mungkin mengandung karakter ilegal.</div>";
+                                        });
+                                    } catch(e) {}
+                                }, 100);
 
-                            // Kirim sinyal potong kuota ke Python
-                            try {
-                                const parentDoc = window.parent.document;
-                                const inputEl = parentDoc.querySelector('input[aria-label="trigger_ai_live"]');
-                                if (inputEl) {
-                                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                                    nativeInputValueSetter.call(inputEl, "DEDUCT_" + Date.now());
-                                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-                                    inputEl.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, keyCode: 13, key: 'Enter' }));
+                                setTimeout(() => {
+                                    let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                    const { Transformer, Markmap } = window.markmap;
+                                    const { root } = new Transformer().transform(rawMm);
+                                    Markmap.create('#markmapLive', null, root);
+                                }, 100);
+
+                                // Kirim sinyal potong kuota ke Python
+                                try {
+                                    const parentDoc = window.parent.document;
+                                    const inputEl = parentDoc.querySelector('input[aria-label="trigger_ai_live"]');
+                                    if (inputEl) {
+                                        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                        nativeInputValueSetter.call(inputEl, "DEDUCT_" + Date.now());
+                                        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                                        inputEl.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, keyCode: 13, key: 'Enter' }));
+                                    }
+                                } catch (error) {
+                                    console.warn("Tidak dapat mengirim sinyal potong kuota ke Python", error);
                                 }
-                            } catch (error) {
-                                console.warn("Tidak dapat mengirim sinyal potong kuota ke Python", error);
-                            }
 
-                        } catch(err) { 
-                            aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; 
-                        }
-                        finally { 
-                            aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; 
-                        }
-                    };
-                })();
-            </script>
-        </body>
-        </html>
-        """
-        html_code = html_code.replace("__CAN_USE_AI__", "true" if can_use_ai else "false")
-        
-        components.html(html_code, height=1600, scrolling=True)
+                            } catch(err) { 
+                                aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; 
+                            }
+                            finally { 
+                                aiBtn.innerHTML = '✨ Generate AI Summary'; aiBtn.disabled = false; isThinking = false; if (brainText) brainText.innerText = "NEURAL NETWORK IDLE"; 
+                            }
+                        };
+                    })();
+                </script>
+            </body>
+            </html>
+            """
+            html_code = html_code.replace("__CAN_USE_AI__", "true" if can_use_ai else "false")
+            
+            components.html(html_code, height=1600, scrolling=True)
 
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION (DIPERBAIKI)
     # =====================================================================
     with tab2:
         st.markdown("### 📁 Transkripsi File Rekaman (Offline)")
-        st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Menggunakan mesin FFmpeg native agar tidak membebani RAM.")
+        
+        # --- GEMBOK ANTI GRATISAN UNTUK UPLOAD ---
+        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") == "NON-AKTIF":
+            st.markdown("""
+            <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;">
+                <h1 style="font-size: 50px; margin: 0;">🔒</h1>
+                <h2 style="color: #ef4444; margin-top: 10px;">AKSES DITOLAK: Paket Anda Belum Aktif</h2>
+                <p style="color: #475569; font-size: 16px;">Fitur <b>Upload Rekaman Audio</b> ini hanya tersedia untuk pengguna aktif. Silakan menuju tab <b>💳 Info Paket Langganan</b> untuk melakukan aktivasi terlebih dahulu.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("💡 Sistem ini menggunakan **LiteLLM Proxy** untuk proses Transkripsi (Whisper) sekaligus Summarization (Gemini). Menggunakan mesin FFmpeg native agar tidak membebani RAM.")
 
-        llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
-        uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
+            llm_key = st.text_input("🔑 API Key LiteLLM (All-in-One)", type="password", placeholder="sk-...", help="API Key untuk proxy LiteLLM Anda")
+            uploaded_file = st.file_uploader("Upload File Rekaman Anda", type=["mp3", "wav", "m4a", "mp4"])
 
-        if uploaded_file is not None:
-            st.audio(uploaded_file)
-            kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
-            is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
+            if uploaded_file is not None:
+                st.audio(uploaded_file)
+                kuota_upload_sekarang = st.session_state.get("user_kuota_upload", 0)
+                is_allowed_to_upload = is_admin() or kuota_upload_sekarang > 0
 
-            if not is_allowed_to_upload:
-                st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk top-up atau upgrade paket.")
-            else:
-                if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
+                if not is_allowed_to_upload:
+                    st.error("❌ Kuota Upload Anda telah habis. Silakan hubungi Admin untuk top-up atau upgrade paket.")
+                else:
+                    if st.button("🎙️ Mulai Transkripsi (Smart Chunking FFmpeg)", use_container_width=True, type="primary"):
+                        if not llm_key: 
+                            st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                        else:
+                            # =========================================================
+                            # POTONG KUOTA UPLOAD TEPAT DI AWAL SAAT TOMBOL DIKLIK
+                            # =========================================================
+                            if not is_admin():
+                                st.session_state["user_kuota_upload"] -= 1
+                                db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                                render_sidebar_profile() # <--- FUNGSI SAKTI REFRESH UI
+                            # =========================================================
+
+                            with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
+                                temp_dir = tempfile.mkdtemp()
+                                input_path = None
+                                try:
+                                    import subprocess
+                                    import glob
+                                    
+                                    # 1. Simpan file original ke folder sementara
+                                    file_extension = uploaded_file.name.split('.')[-1]
+                                    input_path = os.path.join(temp_dir, f"input_audio.{file_extension}")
+                                    with open(input_path, "wb") as f:
+                                        f.write(uploaded_file.getvalue())
+                                    
+                                    # 2. Potong audio menggunakan FFmpeg langsung di disk (Chunk 10 menit / 600 detik)
+                                    status_text = st.empty()
+                                    status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
+                                    output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
+                                    
+                                    command = [
+                                        "ffmpeg", "-i", input_path,
+                                        "-f", "segment", "-segment_time", "600",
+                                        "-c:a", "libmp3lame", "-b:a", "64k",
+                                        output_pattern
+                                    ]
+                                    subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                    
+                                    # 3. Proses file yang sudah dipotong
+                                    chunk_files = sorted(glob.glob(os.path.join(temp_dir, "chunk_*.mp3")))
+                                    total_chunks = len(chunk_files)
+                                    
+                                    if total_chunks == 0:
+                                        st.error("Gagal memotong audio.")
+                                    else:
+                                        full_transcript = ""
+                                        progress_bar = st.progress(0)
+                                        url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
+                                        headers = {"Authorization": f"Bearer {llm_key}"}
+
+                                        success_transcription = True
+                                        for i, chunk_file in enumerate(chunk_files):
+                                            status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
+                                            
+                                            with open(chunk_file, "rb") as f:
+                                                files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
+                                                response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
+                                            
+                                            if response.status_code == 200: 
+                                                full_transcript += response.json().get("text", "") + " "
+                                            else: 
+                                                st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}")
+                                                success_transcription = False
+                                                break
+                                            
+                                            progress_bar.progress((i + 1) / total_chunks)
+                                        
+                                        if success_transcription and full_transcript.strip():
+                                            status_text.success("✅ Seluruh audio berhasil ditranskrip!")
+                                            st.session_state["offline_transcript"] = full_transcript.strip()
+                                            
+                                except subprocess.CalledProcessError as e:
+                                    st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")
+                                except Exception as e: 
+                                    st.error(f"Terjadi kesalahan: {str(e)}")
+                                finally:
+                                    # 4. Bersihkan SEMUA file sementara (Input & Chunks)
+                                    import shutil
+                                    if os.path.exists(temp_dir):
+                                        shutil.rmtree(temp_dir, ignore_errors=True)
+
+            if st.session_state["offline_transcript"]:
+                st.markdown("#### 📝 Hasil Transkripsi")
+                st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
+
+                if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
                     if not llm_key: 
-                        st.warning("⚠️ Masukkan API Key LiteLLM terlebih dahulu!")
+                        st.warning("⚠️ Masukkan API Key LiteLLM!")
+                    elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
+                        st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
                     else:
                         # =========================================================
-                        # POTONG KUOTA UPLOAD TEPAT DI AWAL SAAT TOMBOL DIKLIK
+                        # POTONG KUOTA AI & REFRESH SIDEBAR SECARA LIVE SEKARANG JUGA
                         # =========================================================
                         if not is_admin():
-                            st.session_state["user_kuota_upload"] -= 1
-                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_upload": st.session_state["user_kuota_upload"]})
+                            st.session_state["user_kuota_ai"] -= 1
+                            db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
                             render_sidebar_profile() # <--- FUNGSI SAKTI REFRESH UI
+
                         # =========================================================
-
-                        with st.spinner("⏳ Memproses file secara efisien tanpa membebani RAM..."):
-                            temp_dir = tempfile.mkdtemp()
-                            input_path = None
-                            try:
-                                import subprocess
-                                import glob
-                                
-                                # 1. Simpan file original ke folder sementara
-                                file_extension = uploaded_file.name.split('.')[-1]
-                                input_path = os.path.join(temp_dir, f"input_audio.{file_extension}")
-                                with open(input_path, "wb") as f:
-                                    f.write(uploaded_file.getvalue())
-                                
-                                # 2. Potong audio menggunakan FFmpeg langsung di disk (Chunk 10 menit / 600 detik)
-                                status_text = st.empty()
-                                status_text.info("✂️ Memotong audio menjadi bagian-bagian kecil...")
-                                output_pattern = os.path.join(temp_dir, "chunk_%03d.mp3")
-                                
-                                command = [
-                                    "ffmpeg", "-i", input_path,
-                                    "-f", "segment", "-segment_time", "600",
-                                    "-c:a", "libmp3lame", "-b:a", "64k",
-                                    output_pattern
-                                ]
-                                subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                                
-                                # 3. Proses file yang sudah dipotong
-                                chunk_files = sorted(glob.glob(os.path.join(temp_dir, "chunk_*.mp3")))
-                                total_chunks = len(chunk_files)
-                                
-                                if total_chunks == 0:
-                                    st.error("Gagal memotong audio.")
-                                else:
-                                    full_transcript = ""
-                                    progress_bar = st.progress(0)
-                                    url = "https://litellm.koboi2026.biz.id/v1/audio/transcriptions"
-                                    headers = {"Authorization": f"Bearer {llm_key}"}
-
-                                    success_transcription = True
-                                    for i, chunk_file in enumerate(chunk_files):
-                                        status_text.markdown(f"**🔄 Mentranskripsi bagian {i+1} dari {total_chunks}...**")
-                                        
-                                        with open(chunk_file, "rb") as f:
-                                            files = {"file": (os.path.basename(chunk_file), f.read(), "audio/mpeg")}
-                                            response = requests.post(url, headers=headers, files=files, data={"model": "whisper-1", "response_format": "json"})
-                                        
-                                        if response.status_code == 200: 
-                                            full_transcript += response.json().get("text", "") + " "
-                                        else: 
-                                            st.error(f"❌ Error API LiteLLM chunk {i+1}: {response.text}")
-                                            success_transcription = False
-                                            break
-                                        
-                                        progress_bar.progress((i + 1) / total_chunks)
-                                    
-                                    if success_transcription and full_transcript.strip():
-                                        status_text.success("✅ Seluruh audio berhasil ditranskrip!")
-                                        st.session_state["offline_transcript"] = full_transcript.strip()
-                                        
-                            except subprocess.CalledProcessError as e:
-                                st.error(f"❌ Error saat memotong audio dengan FFmpeg: {e.stderr.decode('utf-8')}")
-                            except Exception as e: 
-                                st.error(f"Terjadi kesalahan: {str(e)}")
-                            finally:
-                                # 4. Bersihkan SEMUA file sementara (Input & Chunks)
-                                import shutil
-                                if os.path.exists(temp_dir):
-                                    shutil.rmtree(temp_dir, ignore_errors=True)
-
-        if st.session_state["offline_transcript"]:
-            st.markdown("#### 📝 Hasil Transkripsi")
-            st.session_state["offline_transcript"] = st.text_area("Edit jika perlu sebelum di-Summary:", value=st.session_state["offline_transcript"], height=250)
-
-            if st.button("✨ Generate AI Summary dari Teks Ini", use_container_width=True, type="secondary"):
-                if not llm_key: 
-                    st.warning("⚠️ Masukkan API Key LiteLLM!")
-                elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: 
-                    st.error("❌ Kuota AI Summary habis! Silakan lakukan Top-Up.")
-                else:
-                    # =========================================================
-                    # POTONG KUOTA AI & REFRESH SIDEBAR SECARA LIVE SEKARANG JUGA
-                    # =========================================================
-                    if not is_admin():
-                        st.session_state["user_kuota_ai"] -= 1
-                        db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
-                        render_sidebar_profile() # <--- FUNGSI SAKTI REFRESH UI
-
-                    # =========================================================
-                    # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
-                    # =========================================================
-                    with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
-                        prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan WAJIB kembalikan output HANYA dalam format JSON.
-                        PENTING: JANGAN menyalin ulang atau membuat transkrip dialog penuh. Fokus pada ekstraksi poin-poin penting agar ringkas dan cepat.
-                        
-                        STRUKTUR JSON YANG HARUS DIIKUTI:
-                        {{
-                            "ringkasan_eksekutif": ["poin ringkas 1", "poin ringkas 2"],
-                            "notulensi_rapat": {{
-                                "agenda": "Topik utama rapat",
-                                "peserta": ["Nama/Peran 1", "Nama/Peran 2"],
-                                "jalannya_diskusi": ["Poin penting diskusi 1", "Poin penting diskusi 2"],
-                                "keputusan": ["Keputusan 1", "Keputusan 2"],
-                                "rencana_tindak_lanjut": [
-                                    {{"tugas": "Deskripsi", "pic": "Nama", "deadline": "Tanggal", "prioritas": "Tinggi/Sedang/Rendah"}}
-                                ]
-                            }}
-                        }}
-                        Transkrip Rapat: "{st.session_state['offline_transcript']}" """
-
-                        payload1 = {
-                            "model":"gemini/gemini-2.5-flash",
-                            "messages": [{ "role": "user", "content": prompt1 }], 
-                            "temperature": 0.2,
-                            "response_format": { "type": "json_object" }
-                        }
-
-                        res1 = None
-                        try:
-                            res1 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload1)
-                            if res1.status_code != 200:
-                                st.error(f"Error AI (Tahap 1): Server mengembalikan status {res1.status_code}")
-                                res1 = None
-                        except Exception as e: 
-                            st.error(f"Koneksi LLM Gagal (Tahap 1): {str(e)}")
-
-                    # =========================================================
-                    # TAHAP 2: GENERATE KODE VISUALISASI MAPPING
-                    # =========================================================
-                    if res1:
-                        with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep (Mindmap & Cytoscape)..."):
-                            prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB kembalikan HANYA JSON.
-                            STRUKTUR JSON:
+                        # TAHAP 1: EKSTRAKSI TEKS & NOTULENSI (Super Ringan)
+                        # =========================================================
+                        with st.spinner("⏳ Tahap 1/2: AI sedang menyusun Ringkasan & Action Items..."):
+                            prompt1 = f"""Anda adalah Ahli Pembuat Notulensi. Analisis transkrip rapat berikut dan WAJIB kembalikan output HANYA dalam format JSON.
+                            PENTING: JANGAN menyalin ulang atau membuat transkrip dialog penuh. Fokus pada ekstraksi poin-poin penting agar ringkas dan cepat.
+                            
+                            STRUKTUR JSON YANG HARUS DIIKUTI:
                             {{
-                                "hubungan_topik": [
-                                    {{"sumber": "Entitas 1", "target": "Entitas 2", "relasi": "Hubungan"}}
-                                ],
-                                "visual_mindmap": "graph LR\\nA[Topik] --> B[Sub Topik]",
-                                "markmap_code": "# Topik Utama\\n## Sub Topik"
+                                "ringkasan_eksekutif": ["poin ringkas 1", "poin ringkas 2"],
+                                "notulensi_rapat": {{
+                                    "agenda": "Topik utama rapat",
+                                    "peserta": ["Nama/Peran 1", "Nama/Peran 2"],
+                                    "jalannya_diskusi": ["Poin penting diskusi 1", "Poin penting diskusi 2"],
+                                    "keputusan": ["Keputusan 1", "Keputusan 2"],
+                                    "rencana_tindak_lanjut": [
+                                        {{"tugas": "Deskripsi", "pic": "Nama", "deadline": "Tanggal", "prioritas": "Tinggi/Sedang/Rendah"}}
+                                    ]
+                                }}
                             }}
-                            ATURAN SANGAT KETAT:
-                            - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
-                            - visual_mindmap (MERMAID): Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'. ID Node HARUS 1 HURUF/ANGKA saja. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
-                            - markmap_code (MARKMAP): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail menggunakan Markdown murni.
                             Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
-                            payload2 = {
+                            payload1 = {
                                 "model":"gemini/gemini-2.5-flash",
-                                "messages": [{ "role": "user", "content": prompt2 }], 
+                                "messages": [{ "role": "user", "content": prompt1 }], 
                                 "temperature": 0.2,
                                 "response_format": { "type": "json_object" }
                             }
 
+                            res1 = None
                             try:
-                                res2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload2)
-                                if res2.status_code == 200:
-                                    # GABUNGKAN HASIL TAHAP 1 DAN TAHAP 2
-                                    data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
-                                    data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
-                                    
-                                    if "notulensi_rapat" not in data_teks:
-                                        data_teks["notulensi_rapat"] = {}
-                                        
-                                    data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
-                                    data_teks["markmap_code"] = data_visual.get("markmap_code", "")
-                                    data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
-
-                                    st.session_state["offline_summary"] = data_teks
-                                    
-                                    st.success("✅ Analisis AI Lengkap & Selesai!")
-                                else:
-                                    st.error(f"Error AI (Tahap 2): Server mengembalikan status {res2.status_code}")
+                                res1 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload1)
+                                if res1.status_code != 200:
+                                    st.error(f"Error AI (Tahap 1): Server mengembalikan status {res1.status_code}")
+                                    res1 = None
                             except Exception as e: 
-                                st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
+                                st.error(f"Koneksi LLM Gagal (Tahap 1): {str(e)}")
 
-        if st.session_state.get("offline_summary"):
-            data = st.session_state["offline_summary"]
-            st.markdown("---")
-            
-            col_t1, col_t2 = st.columns([3, 1])
-            with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
-            
-            txt_report = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n"
-            txt_report += "========================================\n\n"
-            
-            txt_report += "🌟 RINGKASAN EKSEKUTIF:\n"
-            for r in data.get('ringkasan_eksekutif', []):
-                txt_report += f"- {r}\n"
-                
-            notulensi = data.get('notulensi_rapat', {})
-            
-            txt_report += f"\n📌 AGENDA: {notulensi.get('agenda', '-')}\n"
-            
-            peserta = notulensi.get('peserta', [])
-            txt_report += f"👥 PESERTA: {', '.join(peserta) if isinstance(peserta, list) else peserta}\n\n"
-            
-            txt_report += "🗣️ JALANNYA DISKUSI:\n"
-            for d in notulensi.get('jalannya_diskusi', []):
-                txt_report += f"- {d}\n"
-                
-            txt_report += "\n✅ KEPUTUSAN:\n"
-            for k in notulensi.get('keputusan', []):
-                txt_report += f"- {k}\n"
-                
-            txt_report += "\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\n"
-            for t in notulensi.get('rencana_tindak_lanjut', []):
-                txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
+                        # =========================================================
+                        # TAHAP 2: GENERATE KODE VISUALISASI MAPPING
+                        # =========================================================
+                        if res1:
+                            with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep (Mindmap & Cytoscape)..."):
+                                prompt2 = f"""Anda adalah Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB kembalikan HANYA JSON.
+                                STRUKTUR JSON:
+                                {{
+                                    "hubungan_topik": [
+                                        {{"sumber": "Entitas 1", "target": "Entitas 2", "relasi": "Hubungan"}}
+                                    ],
+                                    "visual_mindmap": "graph LR\\nA[Topik] --> B[Sub Topik]",
+                                    "markmap_code": "# Topik Utama\\n## Sub Topik"
+                                }}
+                                ATURAN SANGAT KETAT:
+                                - hubungan_topik (CYTOSCAPE): Ekstrak 5-15 entitas penting dan hubungannya.
+                                - visual_mindmap (MERMAID): Hasilkan flowchart berstruktur pohon dari kiri ke kanan dengan awalan 'graph LR'. ID Node HARUS 1 HURUF/ANGKA saja. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
+                                - markmap_code (MARKMAP): Hasilkan rancangan mindmap horizontal left-to-right tree yang sangat detail menggunakan Markdown murni.
+                                Transkrip Rapat: "{st.session_state['offline_transcript']}" """
 
-            with col_t2: 
-                st.download_button(
-                    label="📝 Download Laporan (TXT)", 
-                    data=txt_report, 
-                    file_name=f"Notulensi_{datetime.now().strftime('%Y%m%d')}.txt",
-                    mime="text/plain", 
-                    use_container_width=True
-                )
+                                payload2 = {
+                                    "model":"gemini/gemini-2.5-flash",
+                                    "messages": [{ "role": "user", "content": prompt2 }], 
+                                    "temperature": 0.2,
+                                    "response_format": { "type": "json_object" }
+                                }
+
+                                try:
+                                    res2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json=payload2)
+                                    if res2.status_code == 200:
+                                        # GABUNGKAN HASIL TAHAP 1 DAN TAHAP 2
+                                        data_teks = json.loads(res1.json()["choices"][0]["message"]["content"])
+                                        data_visual = json.loads(res2.json()["choices"][0]["message"]["content"])
+                                        
+                                        if "notulensi_rapat" not in data_teks:
+                                            data_teks["notulensi_rapat"] = {}
+                                            
+                                        data_teks["visual_mindmap"] = data_visual.get("visual_mindmap", "")
+                                        data_teks["markmap_code"] = data_visual.get("markmap_code", "")
+                                        data_teks["notulensi_rapat"]["hubungan_topik"] = data_visual.get("hubungan_topik", [])
+
+                                        st.session_state["offline_summary"] = data_teks
+                                        
+                                        st.success("✅ Analisis AI Lengkap & Selesai!")
+                                    else:
+                                        st.error(f"Error AI (Tahap 2): Server mengembalikan status {res2.status_code}")
+                                except Exception as e: 
+                                    st.error(f"Koneksi LLM Gagal (Tahap 2): {str(e)}")
+
+            if st.session_state.get("offline_summary"):
+                data = st.session_state["offline_summary"]
+                st.markdown("---")
                 
-                try:
-                    docx_file = generate_notulensi_docx(data)
+                col_t1, col_t2 = st.columns([3, 1])
+                with col_t1: st.markdown("### 📋 Laporan Notulensi AI")
+                
+                txt_report = "NOTULENSI RAPAT SMARTDOSE ENTERPRISE\n"
+                txt_report += "========================================\n\n"
+                
+                txt_report += "🌟 RINGKASAN EKSEKUTIF:\n"
+                for r in data.get('ringkasan_eksekutif', []):
+                    txt_report += f"- {r}\n"
+                    
+                notulensi = data.get('notulensi_rapat', {})
+                
+                txt_report += f"\n📌 AGENDA: {notulensi.get('agenda', '-')}\n"
+                
+                peserta = notulensi.get('peserta', [])
+                txt_report += f"👥 PESERTA: {', '.join(peserta) if isinstance(peserta, list) else peserta}\n\n"
+                
+                txt_report += "🗣️ JALANNYA DISKUSI:\n"
+                for d in notulensi.get('jalannya_diskusi', []):
+                    txt_report += f"- {d}\n"
+                    
+                txt_report += "\n✅ KEPUTUSAN:\n"
+                for k in notulensi.get('keputusan', []):
+                    txt_report += f"- {k}\n"
+                    
+                txt_report += "\n📅 ACTION ITEMS (Tugas | PIC | Deadline | Prioritas):\n"
+                for t in notulensi.get('rencana_tindak_lanjut', []):
+                    txt_report += f"- {t.get('tugas', '-')} | {t.get('pic', '-')} | {t.get('deadline', '-')} | {t.get('prioritas', '-')}\n"
+
+                with col_t2: 
                     st.download_button(
-                        label="📄 Download Resmi (DOCX)",
-                        data=docx_file,
-                        file_name=f"Notulen_SmartDose_{datetime.now().strftime('%Y%m%d')}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True,
-                        type="primary"
+                        label="📝 Download Laporan (TXT)", 
+                        data=txt_report, 
+                        file_name=f"Notulensi_{datetime.now().strftime('%Y%m%d')}.txt",
+                        mime="text/plain", 
+                        use_container_width=True
                     )
-                except Exception as e:
-                    st.error(f"Gagal memuat DOCX: {e}")
+                    
+                    try:
+                        docx_file = generate_notulensi_docx(data)
+                        st.download_button(
+                            label="📄 Download Resmi (DOCX)",
+                            data=docx_file,
+                            file_name=f"Notulen_SmartDose_{datetime.now().strftime('%Y%m%d')}.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            use_container_width=True,
+                            type="primary"
+                        )
+                    except Exception as e:
+                        st.error(f"Gagal memuat DOCX: {e}")
 
-            with st.container(border=True):
-                st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
-                rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>"
-                st.markdown(rx_html, unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown("**🌟 RINGKASAN EKSEKUTIF:**")
+                    rx_html = "<div style='background-color:#eff6ff; padding:15px; border-radius:10px; color:#1e3a8a; font-weight:bold; margin-bottom:15px;'><ul style='margin:0; padding-left:20px; line-height:1.6;'>" + "".join([f"<li>{r}</li>" for r in data.get('ringkasan_eksekutif', [])]) + "</ul></div>"
+                    st.markdown(rx_html, unsafe_allow_html=True)
+                    
+                    colA, colB = st.columns(2)
+                    colA.markdown(f"**📌 AGENDA:** {data['notulensi_rapat']['agenda']}")
+                    colB.markdown(f"**👥 PESERTA:** {', '.join(data['notulensi_rapat']['peserta'])}")
+                    
+                    if 'transkrip_dialog' in data['notulensi_rapat']:
+                        st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
+                        dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #cbd5e1; max-height:350px; overflow-y:auto;'>"
+                        for line in data['notulensi_rapat'].get('transkrip_dialog', []):
+                            if ":" in line:
+                                spk, txt = line.split(":", 1)
+                                dialog_html += f"<div style='margin-bottom:12px;'><span style='font-size:12px; font-weight:bold; color:#475569;'>{spk.strip()}</span><div style='background-color:#e0f2fe; padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:#1e293b; margin-top:2px;'>{txt.strip()}</div></div>"
+                            else: dialog_html += f"<div style='margin-bottom:8px; font-style:italic; color:#64748b; font-size:13px;'>{line}</div>"
+                        st.markdown(dialog_html + "</div>", unsafe_allow_html=True)
+
+                    st.markdown("**🗣️ JALANNYA DISKUSI:**")
+                    st.markdown("<div style='background-color:#fff; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;'><ul>" + "".join([f"<li style='margin-bottom:6px;'>- {d}</li>" for d in data['notulensi_rapat'].get('jalannya_diskusi', [])]) + "</ul></div>", unsafe_allow_html=True)
+                    
+                    st.markdown("**📅 ACTION ITEMS:**")
+                    st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
+
+                # === SANITASI PYTHON EKSTREM ===
+                clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
+                if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'):
+                    clean_mer = "graph LR\n" + clean_mer
                 
-                colA, colB = st.columns(2)
-                colA.markdown(f"**📌 AGENDA:** {data['notulensi_rapat']['agenda']}")
-                colB.markdown(f"**👥 PESERTA:** {', '.join(data['notulensi_rapat']['peserta'])}")
+                clean_mer = clean_mer.replace('`', '')
                 
-                if 'transkrip_dialog' in data['notulensi_rapat']:
-                    st.markdown("**💬 TRANSKRIP DIALOG (Speaker Diarization):**")
-                    dialog_html = "<div style='background-color:#f8fafc; padding:20px; border-radius:15px; border:1px solid #cbd5e1; max-height:350px; overflow-y:auto;'>"
-                    for line in data['notulensi_rapat'].get('transkrip_dialog', []):
-                        if ":" in line:
-                            spk, txt = line.split(":", 1)
-                            dialog_html += f"<div style='margin-bottom:12px;'><span style='font-size:12px; font-weight:bold; color:#475569;'>{spk.strip()}</span><div style='background-color:#e0f2fe; padding:10px 14px; border-radius:0 12px 12px 12px; font-size:14px; color:#1e293b; margin-top:2px;'>{txt.strip()}</div></div>"
-                        else: dialog_html += f"<div style='margin-bottom:8px; font-style:italic; color:#64748b; font-size:13px;'>{line}</div>"
-                    st.markdown(dialog_html + "</div>", unsafe_allow_html=True)
+                mer_json_str = json.dumps(clean_mer)
+                markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
+                hubungan_json = json.dumps(data['notulensi_rapat']['hubungan_topik'])
 
-                st.markdown("**🗣️ JALANNYA DISKUSI:**")
-                st.markdown("<div style='background-color:#fff; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px;'><ul>" + "".join([f"<li style='margin-bottom:6px;'>- {d}</li>" for d in data['notulensi_rapat'].get('jalannya_diskusi', [])]) + "</ul></div>", unsafe_allow_html=True)
+                st.markdown("### 🕸️ Visualisasi Terintegrasi")
+                col_v1, col_v2 = st.columns(2)
                 
-                st.markdown("**📅 ACTION ITEMS:**")
-                st.table(pd.DataFrame(data['notulensi_rapat']['rencana_tindak_lanjut']))
+                with col_v1:
+                    st.markdown("**Cytoscape.js Network**")
+                    cytoscape_html = f"""
+                    <!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head>
+                    <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                        <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
+                        <div id="cy" style="width:100%; height:400px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px;"></div>
+                        <script>
+                            const rawData = {hubungan_json}; const cyElements = []; const nodesSet = new Set();
+                            rawData.forEach(rel => {{
+                                if (!nodesSet.has(rel.sumber)) {{ nodesSet.add(rel.sumber); cyElements.push({{ data: {{ id: rel.sumber, label: rel.sumber }} }}); }}
+                                if (!nodesSet.has(rel.target)) {{ nodesSet.add(rel.target); cyElements.push({{ data: {{ id: rel.target, label: rel.target }} }}); }}
+                                cyElements.push({{ data: {{ source: rel.sumber, target: rel.target, label: rel.relasi }} }});
+                            }});
+                            var cy = cytoscape({{ container: document.getElementById('cy'), elements: cyElements, style: [ {{ selector: 'node', style: {{ 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top' }} }}, {{ selector: 'edge', style: {{ 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '10px' }} }} ], layout: {{ name: 'cose' }} }});
+                            function dlCy() {{ const a = document.createElement('a'); a.href = cy.png({{full: true, scale: 4, bg: 'white'}}); a.download = 'Cytoscape.png'; a.click(); }}
+                        </script>
+                    </body></html>
+                    """
+                    components.html(cytoscape_html, height=450)
 
-            # === SANITASI PYTHON EKSTREM ===
-            clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
-            if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'):
-                clean_mer = "graph LR\n" + clean_mer
-            
-            clean_mer = clean_mer.replace('`', '')
-            
-            mer_json_str = json.dumps(clean_mer)
-            markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
-            hubungan_json = json.dumps(data['notulensi_rapat']['hubungan_topik'])
+                with col_v2:
+                    st.markdown("**Mermaid (Mindmap)**")
+                    mer_html = f"""
+                    <!DOCTYPE html><html><head>
+                        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                    </head>
+                    <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
+                        <button id="dlBtn" onclick="downloadMermaidImage('merContainer', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
+                        
+                        <div style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff; position:relative;">
+                            <div id="merContainerWrap" style="width:100%; height:100%; overflow:auto; border-radius:8px;">
+                                <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; display:flex; justify-content:center; align-items:center;"></pre>
+                            </div>
+                        </div>
+                        
+                        <script>
+                            document.getElementById('merContainer').textContent = {mer_json_str};
+                            mermaid.initialize({{ startOnLoad: false, theme: 'default' }});
+                            
+                            try {{
+                                mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
+                                    const svgEl = document.querySelector('.mermaid svg');
+                                    if (svgEl) {{
+                                        svgEl.style.maxWidth = 'none'; 
+                                        svgEl.style.height = 'auto';
+                                    }}
+                                }}).catch(e => {{
+                                    document.getElementById('merContainerWrap').innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Error: " + e.message + "</div>";
+                                }});
+                            }} catch(e) {{}}
 
-            st.markdown("### 🕸️ Visualisasi Terintegrasi")
-            col_v1, col_v2 = st.columns(2)
-            
-            with col_v1:
-                st.markdown("**Cytoscape.js Network**")
-                cytoscape_html = f"""
-                <!DOCTYPE html><html><head><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script></head>
-                <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <button onclick="dlCy()" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG Full</button>
-                    <div id="cy" style="width:100%; height:400px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px;"></div>
-                    <script>
-                        const rawData = {hubungan_json}; const cyElements = []; const nodesSet = new Set();
-                        rawData.forEach(rel => {{
-                            if (!nodesSet.has(rel.sumber)) {{ nodesSet.add(rel.sumber); cyElements.push({{ data: {{ id: rel.sumber, label: rel.sumber }} }}); }}
-                            if (!nodesSet.has(rel.target)) {{ nodesSet.add(rel.target); cyElements.push({{ data: {{ id: rel.target, label: rel.target }} }}); }}
-                            cyElements.push({{ data: {{ source: rel.sumber, target: rel.target, label: rel.relasi }} }});
-                        }});
-                        var cy = cytoscape({{ container: document.getElementById('cy'), elements: cyElements, style: [ {{ selector: 'node', style: {{ 'background-color': '#f43f5e', 'label': 'data(label)', 'color': '#1e293b', 'font-size': '12px', 'text-valign': 'top' }} }}, {{ selector: 'edge', style: {{ 'width': 2, 'line-color': '#cbd5e1', 'target-arrow-shape': 'triangle', 'label': 'data(label)', 'font-size': '10px' }} }} ], layout: {{ name: 'cose' }} }});
-                        function dlCy() {{ const a = document.createElement('a'); a.href = cy.png({{full: true, scale: 4, bg: 'white'}}); a.download = 'Cytoscape.png'; a.click(); }}
-                    </script>
-                </body></html>
-                """
-                components.html(cytoscape_html, height=450)
+                            // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
+                            window.downloadMermaidImage = function(wrapperId, title) {{
+                                const mDiv = document.getElementById(wrapperId); 
+                                const container = document.getElementById('merContainerWrap');
+                                const svgEl = mDiv.querySelector('svg');
+                                if (!svgEl) return;
+                                
+                                const btn = document.getElementById('dlBtn'); 
+                                const originalText = btn.innerHTML;
+                                btn.innerHTML = "⏳..."; btn.disabled = true;
+                                
+                                setTimeout(() => {{
+                                    const bbox = svgEl.getBBox(); 
+                                    const padding = 40;
+                                    const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
+                                    const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                                    
+                                    const origSvgW = svgEl.style.width;
+                                    const origSvgH = svgEl.style.height;
+                                    const origSvgMaxW = svgEl.style.maxWidth;
+                                    const origDivCssText = mDiv.style.cssText;
+                                    const origContainerOverflow = container ? container.style.overflow : '';
+                                    
+                                    mDiv.style.width = trueWidth + 'px';
+                                    mDiv.style.height = trueHeight + 'px';
+                                    mDiv.style.display = 'block';
+                                    mDiv.style.backgroundColor = '#ffffff';
+                                    mDiv.style.margin = '0 auto';
+                                    
+                                    svgEl.style.width = trueWidth + 'px';
+                                    svgEl.style.height = trueHeight + 'px';
+                                    svgEl.style.maxWidth = 'none';
+                                    
+                                    if (container) container.style.overflow = 'visible';
+                                    
+                                    html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
+                                    .then(canvas => {{
+                                        svgEl.style.width = origSvgW;
+                                        svgEl.style.height = origSvgH;
+                                        svgEl.style.maxWidth = origSvgMaxW;
+                                        
+                                        mDiv.style.cssText = origDivCssText;
+                                        if (container) container.style.overflow = origContainerOverflow;
+                                        
+                                        const link = document.createElement('a'); 
+                                        link.download = 'Mermaid_' + title + '.png'; 
+                                        link.href = canvas.toDataURL('image/png', 1.0); 
+                                        link.click();
+                                        btn.innerHTML = originalText; btn.disabled = false;
+                                    }}).catch(() => {{ 
+                                        btn.innerHTML = originalText; btn.disabled = false; 
+                                    }});
+                                }}, 500);
+                            }};
+                        </script>
+                    </body></html>
+                    """
+                    components.html(mer_html, height=450)
 
-            with col_v2:
-                st.markdown("**Mermaid (Mindmap)**")
-                mer_html = f"""
+                st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
+                markmap_html = f"""
                 <!DOCTYPE html><html><head>
-                    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
                 </head>
                 <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                    <button id="dlBtn" onclick="downloadMermaidImage('merContainer', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG</button>
-                    
-                    <div style="width:100%; height:400px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff; position:relative;">
-                        <div id="merContainerWrap" style="width:100%; height:100%; overflow:auto; border-radius:8px;">
-                            <pre class="mermaid" id="merContainer" style="background:transparent; margin:0; display:flex; justify-content:center; align-items:center;"></pre>
-                        </div>
+                    <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button>
+                    <div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                        <svg id="markmap" style="width:100%; height:100%;"></svg>
                     </div>
-                    
                     <script>
-                        document.getElementById('merContainer').textContent = {mer_json_str};
-                        mermaid.initialize({{ startOnLoad: false, theme: 'default' }});
-                        
-                        try {{
-                            mermaid.run({{ querySelector: '.mermaid' }}).then(() => {{
-                                const svgEl = document.querySelector('.mermaid svg');
-                                if (svgEl) {{
-                                    svgEl.style.maxWidth = 'none'; 
-                                    svgEl.style.height = 'auto';
-                                }}
-                            }}).catch(e => {{
-                                document.getElementById('merContainerWrap').innerHTML = "<div style='color:red; padding:20px;'>Gagal render Mermaid. Error: " + e.message + "</div>";
-                            }});
-                        }} catch(e) {{}}
+                        const markdown = {markmap_json_str};
+                        const {{ Transformer, Markmap }} = window.markmap;
+                        const {{ root }} = new Transformer().transform(markdown);
+                        Markmap.create('#markmap', null, root);
 
-                        // DOWNLOAD MERMAID OFFLINE (SCROLLABLE & HD)
-                        window.downloadMermaidImage = function(wrapperId, title) {{
-                            const mDiv = document.getElementById(wrapperId); 
-                            const container = document.getElementById('merContainerWrap');
-                            const svgEl = mDiv.querySelector('svg');
-                            if (!svgEl) return;
-                            
-                            const btn = document.getElementById('dlBtn'); 
-                            const originalText = btn.innerHTML;
+                        // DOWNLOAD MARKMAP OFFLINE
+                        window.downloadMarkmapImage = function(wrapperId, title) {{
+                            const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
+                            const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
                             btn.innerHTML = "⏳..."; btn.disabled = true;
                             
+                            const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
+                            const g = svgEl.querySelector('g'); 
+                            const originalTransform = g ? g.getAttribute('transform') : null;
+                            
+                            if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
+                            
                             setTimeout(() => {{
-                                const bbox = svgEl.getBBox(); 
-                                const padding = 40;
-                                const trueWidth = Math.max(bbox.width, svgEl.clientWidth) + padding*2; 
-                                const trueHeight = Math.max(bbox.height, svgEl.clientHeight) + padding*2;
+                                const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50;
+                                const trueWidth = Math.max(bbox.width, 800) + (padding * 2); 
+                                const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
                                 
-                                const origSvgW = svgEl.style.width;
-                                const origSvgH = svgEl.style.height;
-                                const origSvgMaxW = svgEl.style.maxWidth;
-                                const origDivCssText = mDiv.style.cssText;
-                                const origContainerOverflow = container ? container.style.overflow : '';
+                                container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
+                                svgEl.setAttribute('viewBox', `${{(bbox.x || 0) - padding}} ${{(bbox.y || 0) - padding}} ${{trueWidth}} ${{trueHeight}}`);
                                 
-                                mDiv.style.width = trueWidth + 'px';
-                                mDiv.style.height = trueHeight + 'px';
-                                mDiv.style.display = 'block';
-                                mDiv.style.backgroundColor = '#ffffff';
-                                mDiv.style.margin = '0 auto';
-                                
-                                svgEl.style.width = trueWidth + 'px';
-                                svgEl.style.height = trueHeight + 'px';
-                                svgEl.style.maxWidth = 'none';
-                                
-                                if (container) container.style.overflow = 'visible';
-                                
-                                html2canvas(mDiv, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff' }})
+                                html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
                                 .then(canvas => {{
-                                    svgEl.style.width = origSvgW;
-                                    svgEl.style.height = origSvgH;
-                                    svgEl.style.maxWidth = origSvgMaxW;
+                                    container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
+                                    if (g && originalTransform) g.setAttribute('transform', originalTransform);
                                     
-                                    mDiv.style.cssText = origDivCssText;
-                                    if (container) container.style.overflow = origContainerOverflow;
-                                    
-                                    const link = document.createElement('a'); 
-                                    link.download = 'Mermaid_' + title + '.png'; 
-                                    link.href = canvas.toDataURL('image/png', 1.0); 
-                                    link.click();
+                                    const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
+                                    link.href = canvas.toDataURL('image/png', 1.0); link.click();
                                     btn.innerHTML = originalText; btn.disabled = false;
-                                }}).catch(() => {{ 
-                                    btn.innerHTML = originalText; btn.disabled = false; 
-                                }});
+                                }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
                             }}, 500);
                         }};
                     </script>
                 </body></html>
                 """
-                components.html(mer_html, height=450)
-
-            st.markdown("### 🌿 Visualisasi Markmap (Peta Konsep Rapat Horizontal)")
-            markmap_html = f"""
-            <!DOCTYPE html><html><head>
-                <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-            </head>
-            <body style="margin:0; padding:10px; background:#f8fafc; position:relative;">
-                <button id="dlBtnMM" onclick="downloadMarkmapImage('markmap-wrapper', 'Offline')" style="position:absolute; top:20px; right:20px; z-index:100; background:#10b981; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">📸 PNG HD</button>
-                <div id="markmap-wrapper" style="width:100%; height:550px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
-                    <svg id="markmap" style="width:100%; height:100%;"></svg>
-                </div>
-                <script>
-                    const markdown = {markmap_json_str};
-                    const {{ Transformer, Markmap }} = window.markmap;
-                    const {{ root }} = new Transformer().transform(markdown);
-                    Markmap.create('#markmap', null, root);
-
-                    // DOWNLOAD MARKMAP OFFLINE
-                    window.downloadMarkmapImage = function(wrapperId, title) {{
-                        const container = document.getElementById(wrapperId); const svgEl = container.querySelector('svg'); if (!svgEl) return;
-                        const btn = document.getElementById('dlBtnMM'); const originalText = btn.innerHTML;
-                        btn.innerHTML = "⏳..."; btn.disabled = true;
-                        
-                        const originalWidth = container.style.width; const originalHeight = container.style.height; const originalOverflow = container.style.overflow;
-                        const g = svgEl.querySelector('g'); 
-                        const originalTransform = g ? g.getAttribute('transform') : null;
-                        
-                        if (g) g.setAttribute('transform', 'translate(50,50) scale(1)');
-                        
-                        setTimeout(() => {{
-                            const bbox = g ? g.getBBox() : svgEl.getBBox(); const padding = 50;
-                            const trueWidth = Math.max(bbox.width, 800) + (padding * 2); 
-                            const trueHeight = Math.max(bbox.height, 600) + (padding * 2);
-                            
-                            container.style.width = trueWidth + 'px'; container.style.height = trueHeight + 'px'; container.style.overflow = 'visible';
-                            svgEl.setAttribute('viewBox', `${{(bbox.x || 0) - padding}} ${{(bbox.y || 0) - padding}} ${{trueWidth}} ${{trueHeight}}`);
-                            
-                            html2canvas(container, {{ scale: 3, useCORS: true, backgroundColor: '#ffffff', width: trueWidth, height: trueHeight }})
-                            .then(canvas => {{
-                                container.style.width = originalWidth; container.style.height = originalHeight; container.style.overflow = originalOverflow;
-                                if (g && originalTransform) g.setAttribute('transform', originalTransform);
-                                
-                                const link = document.createElement('a'); link.download = 'MindMap_' + title + '.png';
-                                link.href = canvas.toDataURL('image/png', 1.0); link.click();
-                                btn.innerHTML = originalText; btn.disabled = false;
-                            }}).catch(() => {{ btn.innerHTML = originalText; btn.disabled = false; }});
-                        }}, 500);
-                    }};
-                </script>
-            </body></html>
-            """
-            components.html(markmap_html, height=600)
+                components.html(markmap_html, height=600)

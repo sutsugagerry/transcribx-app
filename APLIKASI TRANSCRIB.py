@@ -2075,8 +2075,8 @@ else:
         st.markdown("### 🏥 AI Akreditasi SOP Generator")
         st.markdown("Generasi otomatis SOP Rumah Sakit berstandar Akreditasi KARS/JCI dengan output Flowchart Swimlane (PlantUML).")
         
-        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") == "NON-AKTIF":
-            st.markdown("""<div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;"><h1 style="font-size: 50px; margin: 0;">🔒</h1><h2 style="color: #ef4444; margin-top: 10px;">AKSES DITOLAK</h2><p style="color: #475569; font-size: 16px;">Fitur ini khusus pengguna aktif. Silakan berlangganan di Info Paket.</p></div>""", unsafe_allow_html=True)
+        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") not in ["EXECUTIVE", "MASTER"]:
+            st.markdown("""<div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;"><h1 style="font-size: 50px; margin: 0;">🔒</h1><h2 style="color: #ef4444; margin-top: 10px;">AKSES PREMIUM DIBUTUHKAN</h2><p style="color: #475569; font-size: 16px;">Fitur <b>AI Akreditasi SOP Generator</b> ini eksklusif hanya untuk pengguna paket <b>EXECUTIVE</b> dan <b>MASTER</b>. <br>Silakan upgrade paket Anda di tab Info Paket untuk membuka fitur ini.</p></div>""", unsafe_allow_html=True)
         else:
             with st.expander("🔑 Kredensial & Info Rumah Sakit", expanded=True):
                 api_key_sop = st.text_input("LiteLLM / Gemini API Key", type="password", help="Masukkan API Key Anda", key="api_sop")

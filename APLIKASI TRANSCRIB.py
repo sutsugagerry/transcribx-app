@@ -1651,7 +1651,7 @@ else:
         st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 20px;'>Kehabisan kuota sebelum masa aktif habis? Beli kuota tambahan tanpa harus memperpanjang masa aktif bulanan.</p>", unsafe_allow_html=True)
         
         # Link Produk Lynk.id untuk Top-Up (GANTI DENGAN LINK ASLIMU NANTI)
-        link_tp_ai_10 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_AI_10/checkout?email={email_encoded}"
+        link_tp_ai_10 = f"http://lynk.id/gerrysutsuga/9pzvrqnogz5r/checkout?email={email_encoded}"
         link_tp_ai_25 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_AI_25/checkout?email={email_encoded}"
         link_tp_mp3_3 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_MP3_3/checkout?email={email_encoded}"
         link_tp_mp3_10 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_MP3_10/checkout?email={email_encoded}"

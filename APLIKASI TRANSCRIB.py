@@ -13,6 +13,7 @@ import os
 import tempfile
 import urllib.parse
 import random
+from firebase_admin import auth
 from pydub import AudioSegment
 
 os.environ['TZ'] = 'Asia/Jakarta'
@@ -195,11 +196,19 @@ def record_login(uid, email):
 
 def delete_user(uid, email):
     try:
+        # 1. Hapus sub-koleksi histori login di Database
         docs = db.collection("users").document(uid).collection("login_history").stream()
         for doc in docs: doc.reference.delete()
+        
+        # 2. Hapus dokumen utama user dari Database Firestore
         db.collection("users").document(uid).delete()
-        return True, f"User {email} berhasil dihapus."
-    except Exception as e: return False, f"Gagal menghapus user: {str(e)}"
+        
+        # 3. Hapus kredensial login dari Firebase Authentication (INI YANG BARU)
+        auth.delete_user(uid)
+        
+        return True, f"User {email} berhasil dihapus permanen dari semua sistem."
+    except Exception as e: 
+        return False, f"Gagal menghapus user: {str(e)}"
 
 def get_active_users_count():
     try: 

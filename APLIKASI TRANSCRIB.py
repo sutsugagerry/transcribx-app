@@ -2101,7 +2101,7 @@ else:
                 elif not is_admin() and st.session_state.get("user_kuota_ai", 0) <= 0: st.error("❌ Kuota AI Anda habis! Silakan lakukan Top-Up di tab Info Paket.")
                 else:
                     if not is_admin():
-                        st.session_state["user_kuota_ai"] -= 1
+                        st.session_state["user_kuota_ai"] -= 3
                         db.collection("users").document(st.session_state["user_uid"]).update({"kuota_ai": st.session_state["user_kuota_ai"]})
                         render_sidebar_profile()
 

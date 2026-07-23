@@ -1912,7 +1912,8 @@ else:
                         if res1:
                             with st.spinner("⏳ Tahap 2/2: AI sedang merancang Peta Konsep..."):
                                 prompt2 = f"""Anda Ahli Visual Mapping. Buat rancangan JSON untuk visualisasi berdasarkan transkrip rapat. WAJIB HANYA JSON.
-                                STRUKTUR JSON: {{ "hubungan_topik": [{{"sumber": "...", "target": "...", "relasi": "..."}}], "visual_mindmap": "graph LR\\nA[Topik] --> B[Sub Topik]", "markmap_code": "# Topik Utama\\n## Sub Topik" }}
+                                ATURAN MERMAID: 1. Hasilkan flowchart berstruktur pohon (graph LR). 2. ID Node HARUS 1 HURUF/ANGKA saja tanpa spasi. 3. Teks label WAJIB DIAPIT TANDA KUTIP GANDA.
+                                STRUKTUR JSON: {{ "hubungan_topik": [{{"sumber": "...", "target": "...", "relasi": "..."}}], "visual_mindmap": "graph LR\\nA[\"Topik Utama\"] --> B[\"Sub Topik\"]", "markmap_code": "# Topik Utama\\n## Sub Topik" }}
                                 Transkrip: "{st.session_state['offline_transcript']}" """
                                 try:
                                     res2 = requests.post("https://litellm.koboi2026.biz.id/v1/chat/completions", headers={"Authorization": f"Bearer {llm_key}", "Content-Type": "application/json"}, json={"model":"gemini/gemini-2.5-flash", "messages": [{ "role": "user", "content": prompt2 }], "temperature": 0.2, "response_format": { "type": "json_object" }})
@@ -1969,11 +1970,19 @@ else:
                     st.markdown("**📅 ACTION ITEMS:**")
                     st.table(pd.DataFrame(data['notulensi_rapat'].get('rencana_tindak_lanjut', [])))
 
+               # Ambil raw string Mermaid
                 clean_mer = data.get('visual_mindmap', '').replace("```mermaid", "").replace("```", "").strip()
-                if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'): clean_mer = "graph LR\n" + clean_mer
                 
-                # Bersihkan karakter kutip yang sering merusak sistem render Mermaid
-                clean_mer = clean_mer.replace('`', '').replace('"', '').replace("'", "")
+                # Pastikan diawali dengan tipe grafiknya
+                if not clean_mer.lower().startswith('graph') and not clean_mer.lower().startswith('flowchart') and not clean_mer.lower().startswith('mindmap'): 
+                    clean_mer = "graph LR\n" + clean_mer
+                
+                # PENTING: JANGAN hapus double quote (") karena Mermaid butuh double quote untuk string berisikan spasi / tanda kurung
+                clean_mer = clean_mer.replace('`', '').replace("'", "")
+                
+                # Tambahkan proteksi Regex seperti di Live Transkrip (opsional agar makin tangguh)
+                clean_mer = re.sub(r'\[([A-Z0-9]+)\]', r'(\1)', clean_mer)
+
                 mer_json_str = json.dumps(clean_mer)
                 markmap_json_str = json.dumps(data.get('markmap_code', '').replace("```markdown", "").replace("```", "").strip())
                 hubungan_json = json.dumps(data['notulensi_rapat'].get('hubungan_topik', []))

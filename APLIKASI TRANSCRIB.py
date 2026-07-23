@@ -1520,7 +1520,7 @@ else:
                 time.sleep(2); render_sidebar_profile(); st.success("✅ Sinkronisasi selesai!"); time.sleep(2); st.rerun()
 
    # =====================================================================
-    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI & EXPORT DOCX SAKTI
+    # TAB 1: LIVE CAPTURE DENGAN ANIMASI OTAK AI & EXPORT DOCX SAKTI (PLUS SUNBURST)
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
@@ -1540,6 +1540,7 @@ else:
             <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4/dist/browser/index.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
             <style>
                 * { box-sizing: border-box; }
                 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: transparent; margin: 0; padding: 10px; color: #1e293b; }
@@ -2039,7 +2040,6 @@ else:
                         return Array.from(transcriptBox.querySelectorAll('.line-final')).map(line => line.innerText).join('\\n');
                     }
 
-                    // Trik Sakti Buat Tangkep Cytoscape di Live Preview
                     window.dlCyLive = function() {
                         if (window.cyInstance) {
                             const a = document.createElement('a'); 
@@ -2048,8 +2048,17 @@ else:
                         }
                     };
 
+                    window.dlSunburstLive = function() {
+                        if (window.sunburstChartLive) {
+                            const a = document.createElement('a');
+                            a.href = window.sunburstChartLive.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#ffffff' });
+                            a.download = 'Sunburst_Live.png';
+                            a.click();
+                        }
+                    };
+
                     // =========================================================
-                    // FUNGSI SAKTI: EXPORT DOCX VIA JAVASCRIPT DENGAN 3 GAMBAR
+                    // FUNGSI SAKTI: EXPORT DOCX VIA JAVASCRIPT DENGAN 4 GAMBAR
                     // =========================================================
                     downloadDocxBtn.onclick = async function() {
                         if (!lastAiData) { alert('Belum ada data notulensi!'); return; }
@@ -2159,6 +2168,17 @@ else:
                                 } catch (err) { console.error("Gagal screenshot Markmap:", err); }
                             }
 
+                            // --- 4. CAPTURE SUNBURST (ECHARTS) ---
+                            let sunburstImageHtml = "";
+                            if (window.sunburstChartLive) {
+                                try {
+                                    const sbBase64 = window.sunburstChartLive.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                                    sunburstImageHtml = `
+                                    <p style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">D. Sunburst Hierarchy (Anatomi Rapat)</p>
+                                    <img src="${sbBase64}" style="width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; margin-bottom: 15px;"><br>`;
+                                } catch (err) { console.error("Gagal screenshot Sunburst:", err); }
+                            }
+
                             let actionItemsHtml = `<ul style="margin-top:0;"><li style="list-style: none;">- Tidak ada tindak lanjut khusus.</li></ul>`;
                             if (d.rencana_tindak_lanjut && d.rencana_tindak_lanjut.length > 0) {
                                 actionItemsHtml = `
@@ -2251,6 +2271,7 @@ else:
                                 ${cyImageHtml}
                                 ${mermaidImageHtml}
                                 ${markmapImageHtml}
+                                ${sunburstImageHtml}
                                 
                                 <br><br>
                                 
@@ -2430,6 +2451,54 @@ else:
                             }
                         };
 
+                        // PARSER MARKDOWN KE SUNBURST ECHARTS
+                        function parseMarkdownToSunburst(md) {
+                            const lines = md.split('\\n');
+                            let root = { name: "Root", children: [] };
+                            let stack = [ {level: 0, node: root} ];
+
+                            for (let i = 0; i < lines.length; i++) {
+                                let line = lines[i];
+                                let trimmed = line.trimStart();
+                                if (!trimmed) continue;
+                                let level = 0;
+                                let text = "";
+
+                                let matchHeader = trimmed.match(/^(#+)\\s+(.*)/);
+                                if (matchHeader) {
+                                    level = matchHeader[1].length;
+                                    text = matchHeader[2];
+                                } else {
+                                    let matchList = trimmed.match(/^[-*]\\s+(.*)/);
+                                    if (matchList) {
+                                        level = stack[stack.length - 1].level + 1;
+                                        text = matchList[1];
+                                    }
+                                }
+
+                                if (!text) continue;
+                                text = text.replace(/\\*\\*/g, '').trim();
+                                let newNode = { name: text, children: [] };
+
+                                while (stack.length > 1 && stack[stack.length - 1].level >= level) {
+                                    stack.pop();
+                                }
+                                let parent = stack[stack.length - 1].node;
+                                parent.children.push(newNode);
+                                stack.push({ level: level, node: newNode });
+                            }
+
+                            function assignValues(node) {
+                                if (node.children.length === 0) {
+                                    node.value = 1;
+                                } else {
+                                    node.children.forEach(assignValues);
+                                }
+                            }
+                            assignValues(root);
+                            return root.children.length > 0 ? root.children : [{name: "Data tidak tersedia", value: 1}];
+                        }
+
                         try {
                             const response = await fetch("https://litellm.koboi2026.biz.id/v1/chat/completions", {
                                 method: "POST", 
@@ -2472,9 +2541,19 @@ else:
                                             </div>
                                         </div>
                                     </div>
+                                    
                                     <div class="mt-4"><p class="font-bold text-sm mb-2">🌿 Visualisasi Markmap (Peta Konsep Rapat)</p><div class="relative bg-white border rounded-xl overflow-hidden"><button id="dlBtnMMLive" onclick="dlMarkmapLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button><div id="markmapLiveWrapper" style="width:100%; height:500px;"><svg id="markmapLive" style="width:100%; height:100%;"></svg></div></div></div>
+                                    
+                                    <div class="mt-4">
+                                        <p class="font-bold text-sm mb-2">☀️ Sunburst Hierarchy Chart (Anatomi Rapat)</p>
+                                        <div class="relative bg-white border rounded-xl overflow-hidden p-2">
+                                            <button onclick="dlSunburstLive()" class="absolute top-4 right-4 z-10 bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">📸 PNG HD</button>
+                                            <div id="sunburstLiveContainer" style="width:100%; height:600px;"></div>
+                                        </div>
+                                    </div>
                                 </div>`;
 
+                            // INIT CYTOSCAPE
                             setTimeout(() => {
                                 const nodesSet = new Set(); const cyElements = [];
                                 (data.notulensi_rapat.hubungan_topik || []).forEach(rel => {
@@ -2489,6 +2568,7 @@ else:
                                 });
                             }, 100);
 
+                            // INIT MERMAID
                             setTimeout(() => {
                                 let rawMer = (data.visual_mindmap || "").replace(/```mermaid/gi, "").replace(/```/g, "").trim();
                                 if (!rawMer.toLowerCase().includes('graph') && !rawMer.toLowerCase().includes('flowchart') && !rawMer.toLowerCase().includes('mindmap')) {
@@ -2514,11 +2594,43 @@ else:
                                 } catch(e) {}
                             }, 100);
 
+                            // INIT MARKMAP
                             setTimeout(() => {
                                 let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
                                 const { Transformer, Markmap } = window.markmap;
                                 const { root } = new Transformer().transform(rawMm);
                                 Markmap.create('#markmapLive', null, root);
+                            }, 100);
+
+                            // INIT SUNBURST ECHARTS
+                            setTimeout(() => {
+                                let rawMm = (data.markmap_code || "").replace(/```markdown/gi, "").replace(/```/g, "").trim();
+                                const sunburstData = parseMarkdownToSunburst(rawMm);
+                                const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#d946ef'];
+                                
+                                if (sunburstData.length === 1 && sunburstData[0].children) {
+                                    sunburstData[0].itemStyle = { color: '#1e293b' };
+                                    sunburstData[0].children.forEach((child, index) => {
+                                        child.itemStyle = { color: colorPalette[index % colorPalette.length] };
+                                    });
+                                } else {
+                                    sunburstData.forEach((child, index) => {
+                                        child.itemStyle = { color: colorPalette[index % colorPalette.length] };
+                                    });
+                                }
+
+                                var chartDom = document.getElementById('sunburstLiveContainer');
+                                window.sunburstChartLive = echarts.init(chartDom);
+                                var option = {
+                                    tooltip: { trigger: 'item', formatter: function(info) { return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; } },
+                                    series: {
+                                        type: 'sunburst', data: sunburstData, radius: [0, '95%'], sort: undefined, emphasis: { focus: 'ancestor' },
+                                        itemStyle: { borderRadius: 5, borderWidth: 1.5, borderColor: '#ffffff' },
+                                        label: { show: true, formatter: '{b}', width: 85, overflow: 'break', minAngle: 12, fontSize: 11, fontWeight: 'bold', fontFamily: 'sans-serif', color: '#ffffff', textBorderColor: 'rgba(0,0,0,0.6)', textBorderWidth: 2 }
+                                    }
+                                };
+                                window.sunburstChartLive.setOption(option);
+                                window.addEventListener('resize', function() { window.sunburstChartLive.resize(); });
                             }, 100);
 
                         } catch(err) { aiContent.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl mt-4">Gagal memproses data AI: ' + err.message + '</div>'; }
@@ -2529,8 +2641,7 @@ else:
         </body>
         </html>
         """
-        components.html(html_code, height=1600, scrolling=True)
-
+        components.html(html_code, height=2200, scrolling=True)
     # =====================================================================
     # TAB 2: FITUR OFFLINE TRANSCRIPTION
     # =====================================================================

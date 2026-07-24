@@ -1089,6 +1089,7 @@ else:
                     ai_str = "♾️ Unlimited"
                     up_str = "♾️ Unlimited"
                     hari_str = "Status: Permanen"
+                    transcribe_str = "♾️ Unlimited"
                 else:
                     try:
                         uid = st.session_state.get("user_uid")
@@ -1108,14 +1109,16 @@ else:
                         paket_str = "NON-AKTIF"
                         ai_str, up_str = "0x", "0x"
                         hari_str = "Masa Aktif: Habis"
+                        transcribe_str = "🔒 Terkunci"
                     else:
                         paket_str = paket 
                         ai_str = f"{st.session_state.get('user_kuota_ai', 0)}x"
                         up_str = f"{st.session_state.get('user_kuota_upload', 0)}x"
                         hari_str = f"⏳ Sisa: {sisa_hari} hari"
                         card_class = "profile-card user-warning" if sisa_hari <= 3 else "profile-card user-active"
+                        transcribe_str = "∞ Unlimited"
 
-                profile_html = f"""<div class="{card_class}"><div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div><div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div><div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;"><div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div><div style="font-size: 12px; margin-bottom: 5px;">🎙️ <b>Transcribe:</b> ∞ Unlimited</div><div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div><div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div></div><div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">{hari_str}</div></div>"""
+                profile_html = f"""<div class="{card_class}"><div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 5px;">Akses Profil</div><div style="font-weight: 800; font-size: 14px; margin-bottom: 15px; word-break: break-all;">{user_email}</div><div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;"><div style="font-size: 12px; margin-bottom: 5px;">🏷️ <b>Paket:</b> {paket_str}</div><div style="font-size: 12px; margin-bottom: 5px;">🎙️ <b>Transcribe:</b> {transcribe_str}</div><div style="font-size: 12px; margin-bottom: 5px;">✨ <b>Sisa AI:</b> {ai_str}</div><div style="font-size: 12px;">📁 <b>Sisa Audio:</b> {up_str}</div></div><div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 10px;">{hari_str}</div></div>"""
                 with profile_placeholder.container():
                     st.markdown(profile_html, unsafe_allow_html=True)
                     if not is_admin() and st.session_state.get('sisa_hari', 0) <= 3 and st.session_state.get('sisa_hari', 0) > 0: st.warning("⚠️ Masa aktif hampir habis! Segera perpanjang.")
@@ -1422,8 +1425,11 @@ else:
     # =====================================================================
     with tab1:
         st.markdown("### 🎙️ Live Transcribe - Screen Capture (Zoom / YouTube)")
-        st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
-        st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
+        if not is_admin() and st.session_state.get("user_paket", "NON-AKTIF") == "NON-AKTIF":
+            st.markdown("""<div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 30px; text-align: center; margin-top: 20px;"><h1 style="font-size: 50px; margin: 0;">🔒</h1><h2 style="color: #ef4444; margin-top: 10px;">AKSES DITOLAK</h2><p style="color: #475569; font-size: 16px;">Fitur Live Transcribe ini hanya tersedia untuk pengguna yang memiliki paket langganan aktif.<br>Silakan pilih paket di tab <b>Info Paket</b> untuk mulai menggunakan layanan ini.</p></div>""", unsafe_allow_html=True)
+        else:
+            st.info("💡 **TIPS:** Klik Start Capture → Pilih tab/window yang menjalankan Zoom atau YouTube → Centang **'Share tab audio'** → Klik Share.")
+            st.warning("⚠️ **PENTING:** Saat dialog share muncul, pastikan kamu memilih tab/window Zoom/YouTube dan **CENTANG 'Share tab audio'**!")
         
         html_code = """
         <!DOCTYPE html>

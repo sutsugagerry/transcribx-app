@@ -2588,6 +2588,7 @@ else:
                                                 { r0: '90%', r: '100%', label: { width: 45, fontSize: 9, minAngle: 12 } }   // Lapis 5
                                             ]
                                         }
+                                    };    
                                     window.sunburstChartLive.setOption(option);
                                     window.addEventListener('resize', function() { window.sunburstChartLive.resize(); });
                                 }, 100);

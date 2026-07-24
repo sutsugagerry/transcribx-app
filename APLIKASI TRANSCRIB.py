@@ -2580,12 +2580,15 @@ else:
                                             },
                                             // REVISI LAPISAN: Pusat lebih besar & merata ke luar
                                             levels: [
-                                                { r0: '0%', r: '0%' }, // Lapis 0: Virtual root (cegah bolong tengah)
-                                                { r0: '0%', r: '25%', label: { rotate: 0 } },  // Lapis 1: Pusat (Diperbesar dari 20% ke 25%)
-                                                { r0: '25%', r: '50%', label: { width: 70, fontSize: 11, minAngle: 5 } },   // Lapis 2
-                                                { r0: '50%', r: '75%', label: { width: 65, fontSize: 10, minAngle: 8 } },   // Lapis 3
-                                                { r0: '75%', r: '90%', label: { width: 55, fontSize: 9.5, minAngle: 10 } }, // Lapis 4
-                                                { r0: '90%', r: '100%', label: { width: 45, fontSize: 9, minAngle: 12 } }   // Lapis 5
+                                                { r0: '0%', r: '0%' }, // Lapis 0: Virtual root
+                                                { r0: '0%', r: '22%', label: { rotate: 0 } },  // Lapis 1: Pusat
+                                                { r0: '22%', r: '45%', label: { width: 70, fontSize: 11, minAngle: 5 } },   // Lapis 2
+                                                { r0: '45%', r: '65%', label: { width: 65, fontSize: 10, minAngle: 8 } },   // Lapis 3
+                                                { r0: '65%', r: '80%', label: { width: 55, fontSize: 9.5, minAngle: 10 } }, // Lapis 4
+                                                { r0: '80%', r: '92%', label: { width: 45, fontSize: 9, minAngle: 12 } },   // Lapis 5
+                                                { r0: '92%', r: '100%', label: { width: 35, fontSize: 8, minAngle: 15 } },  // Lapis 6 (Ekstra)
+                                                { r0: '98%', r: '100%', label: { show: false } },                           // Lapis 7 (Ekstra jaga-jaga, sembunyikan teks agar tidak tumpah)
+                                                { r0: '99%', r: '100%', label: { show: false } }                            // Lapis 8 (Batas akhir mutlak)
                                             ]
                                         }
                                     };    

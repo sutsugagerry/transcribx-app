@@ -1367,9 +1367,9 @@ else:
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 40px; font-weight: bold;'>🔋 Paket Top-Up Kuota (Eceran)</h3>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 20px;'>Kehabisan kuota sebelum masa aktif habis? Beli kuota tambahan tanpa harus memperpanjang masa aktif bulanan.</p>", unsafe_allow_html=True)
         
-        link_tp_ai_10 = f"https://http://lynk.id/gerrysutsuga/9pzvrqnogz5r/checkout?email={email_encoded}"
-        link_tp_ai_25 = f"https://http://lynk.id/gerrysutsuga/e8j9081dvlmv/checkout?email={email_encoded}"
-        link_tp_mp3_3 = f"https://http://lynk.id/gerrysutsuga/nw8oqw950mm2/checkout?email={email_encoded}"
+        link_tp_ai_10 = f"http://lynk.id/gerrysutsuga/9pzvrqnogz5r/checkout?email={email_encoded}"
+        link_tp_ai_25 = f"http://lynk.id/gerrysutsuga/e8j9081dvlmv/checkout?email={email_encoded}"
+        link_tp_mp3_3 = f"http://lynk.id/gerrysutsuga/nw8oqw950mm2/checkout?email={email_encoded}"
         link_tp_mp3_10 = f"http://lynk.id/gerrysutsuga/20nkp093dvzg/checkout?email={email_encoded}"
 
         col_t1, col_t2 = st.columns(2)

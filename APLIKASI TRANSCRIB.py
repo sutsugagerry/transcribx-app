@@ -2571,24 +2571,23 @@ else:
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                overflow: 'break', // Pastikan semua label ter-wrap
+                                                overflow: 'truncate', // KUNCI 1: Ubah dari 'break' jadi 'truncate' agar teks tidak tumpah
+                                                minAngle: 12,         // KUNCI 2: Otomatis sembunyikan teks jika potongan kuenya terlalu sempit
                                                 fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
                                                 textBorderColor: 'rgba(0,0,0,0.6)', 
                                                 textBorderWidth: 1.5 
                                             },
-                                            // REVISI LAPISAN: Pusat lebih besar & merata ke luar
+                                            // PENGATURAN LAPISAN
                                             levels: [
                                                 { r0: '0%', r: '0%' }, // Lapis 0: Virtual root
-                                                { r0: '0%', r: '22%', label: { rotate: 0 } },  // Lapis 1: Pusat
-                                                { r0: '22%', r: '45%', label: { width: 70, fontSize: 11, minAngle: 5 } },   // Lapis 2
-                                                { r0: '45%', r: '65%', label: { width: 65, fontSize: 10, minAngle: 8 } },   // Lapis 3
-                                                { r0: '65%', r: '80%', label: { width: 55, fontSize: 9.5, minAngle: 10 } }, // Lapis 4
-                                                { r0: '80%', r: '92%', label: { width: 45, fontSize: 9, minAngle: 12 } },   // Lapis 5
-                                                { r0: '92%', r: '100%', label: { width: 35, fontSize: 8, minAngle: 15 } },  // Lapis 6 (Ekstra)
-                                                { r0: '98%', r: '100%', label: { show: false } },                           // Lapis 7 (Ekstra jaga-jaga, sembunyikan teks agar tidak tumpah)
-                                                { r0: '99%', r: '100%', label: { show: false } }                            // Lapis 8 (Batas akhir mutlak)
+                                                { r0: '0%', r: '25%', label: { rotate: 0, overflow: 'break', width: 90, minAngle: 0 } },  // Lapis 1: Pusat (Khusus ini teks boleh wrap/turun ke bawah)
+                                                { r0: '25%', r: '45%', label: { width: 70, fontSize: 11 } },   // Lapis 2
+                                                { r0: '45%', r: '65%', label: { width: 65, fontSize: 10 } },   // Lapis 3
+                                                { r0: '65%', r: '82%', label: { width: 55, fontSize: 9.5 } },  // Lapis 4
+                                                { r0: '82%', r: '95%', label: { width: 45, fontSize: 9 } },    // Lapis 5
+                                                { r0: '95%', r: '100%', label: { show: false } }               // Lapis 6: Margin aman terluar (teks disembunyikan)
                                             ]
                                         }
                                     };    

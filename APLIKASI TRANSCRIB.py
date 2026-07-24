@@ -2557,37 +2557,36 @@ else:
                                     var option = {
                                         tooltip: { 
                                             trigger: 'item', 
-                                            formatter: function(info) { 
-                                                return '<div style="max-width:300px; white-space:normal; font-size:13px;">' + info.name + '</div>'; 
-                                            } 
+                                            formatter: function (info) { 
+                                                return '<div style="max-width:300px; white-space:normal; font-family:sans-serif; font-size:13px; line-height:1.5;">' + info.name + '</div>'; 
+                                            }
                                         },
                                         series: {
                                             type: 'sunburst',
                                             data: sunburstData,
-                                            radius: [0, '100%'], // PERLUASAN AREA: Tarik diagram hingga maksimal menyentuh tepi kotak
+                                            radius: [0, '95%'],
                                             sort: undefined,
                                             emphasis: { focus: 'ancestor' },
                                             itemStyle: { borderRadius: 3, borderWidth: 1.5, borderColor: '#ffffff' },
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                overflow: 'truncate', // KUNCI 1: Ubah dari 'break' jadi 'truncate' agar teks tidak tumpah
-                                                minAngle: 12,         // KUNCI 2: Otomatis sembunyikan teks jika potongan kuenya terlalu sempit
+                                                overflow: 'truncate', // KUNCI 1: Truncate otomatis berdasarkan batas asli ukuran potongan diagram
+                                                minAngle: 8,          // KUNCI 2: Sembunyikan teks otomatis jika potongan kue terlalu sempit (< 8 derajat)
                                                 fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
                                                 textBorderColor: 'rgba(0,0,0,0.6)', 
                                                 textBorderWidth: 1.5 
                                             },
-                                            // PENGATURAN LAPISAN
                                             levels: [
-                                                { r0: '0%', r: '0%' }, // Lapis 0: Virtual root
-                                                { r0: '0%', r: '25%', label: { rotate: 0, overflow: 'break', width: 90, minAngle: 0 } },  // Lapis 1: Pusat (Khusus ini teks boleh wrap/turun ke bawah)
-                                                { r0: '25%', r: '45%', label: { width: 70, fontSize: 11 } },   // Lapis 2
-                                                { r0: '45%', r: '65%', label: { width: 65, fontSize: 10 } },   // Lapis 3
-                                                { r0: '65%', r: '82%', label: { width: 55, fontSize: 9.5 } },  // Lapis 4
-                                                { r0: '82%', r: '95%', label: { width: 45, fontSize: 9 } },    // Lapis 5
-                                                { r0: '95%', r: '100%', label: { show: false } }               // Lapis 6: Margin aman terluar (teks disembunyikan)
+                                                { r0: '0%', r: '0%' }, // Lapis 0: Virtual root (mencegah bolong di tengah)
+                                                { r0: '0%', r: '25%', label: { rotate: 0, overflow: 'break', width: 90, minAngle: 0 } }, // Lapis 1: Pusat (Khusus bagian ini teks boleh turun ke bawah/wrap)
+                                                { r0: '25%', r: '45%', label: { fontSize: 11 } },   // Lapis 2 (Batasan width dihapus)
+                                                { r0: '45%', r: '65%', label: { fontSize: 10 } },   // Lapis 3 (Batasan width dihapus)
+                                                { r0: '65%', r: '82%', label: { fontSize: 9.5 } },  // Lapis 4 (Batasan width dihapus)
+                                                { r0: '82%', r: '95%', label: { fontSize: 9 } },    // Lapis 5 (Batasan width dihapus)
+                                                { r0: '95%', r: '100%', label: { show: false } }    // Lapis 6: Margin aman terluar
                                             ]
                                         }
                                     };    

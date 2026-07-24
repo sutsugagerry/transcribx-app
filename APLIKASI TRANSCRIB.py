@@ -2573,11 +2573,12 @@ else:
                                             },
                                             // PENGATURAN SPESIFIK TIAP LAPISAN
                                             levels: [
-                                                { r0: '0%', r: '20%', label: { rotate: 0, fontSize: 13 } },  // PUSAT (ROOT): Diatur agar R0=0% -> Tanpa lubang!
-                                                { r0: '20%', r: '45%', label: { width: 55, fontSize: 10, minAngle: 5 } },   // LAPIS 1
-                                                { r0: '45%', r: '70%', label: { width: 50, fontSize: 9.5, minAngle: 8 } },  // LAPIS 2
-                                                { r0: '70%', r: '85%', label: { width: 45, fontSize: 9, minAngle: 12 } },   // LAPIS 3
-                                                { r0: '85%', r: '100%', label: { width: 40, fontSize: 8.5, minAngle: 15 } } // LAPIS 4
+                                                { r0: '0%', r: '0%' }, // LAPIS 0: Virtual Root bawaan ECharts diatur 0 agar tidak membuat lubang putih
+                                                { r0: '0%', r: '20%', label: { rotate: 0, fontSize: 13 } },  // LAPIS 1: PUSAT (ROOT ASLI) -> Mulai mutlak dari 0%
+                                                { r0: '20%', r: '45%', label: { width: 55, fontSize: 10, minAngle: 5 } },   // LAPIS 2
+                                                { r0: '45%', r: '70%', label: { width: 50, fontSize: 9.5, minAngle: 8 } },  // LAPIS 3
+                                                { r0: '70%', r: '85%', label: { width: 45, fontSize: 9, minAngle: 12 } },   // LAPIS 4
+                                                { r0: '85%', r: '100%', label: { width: 40, fontSize: 8.5, minAngle: 15 } } // LAPIS 5
                                             ]
                                         }
                                     };

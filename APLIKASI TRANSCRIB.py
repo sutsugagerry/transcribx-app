@@ -1367,10 +1367,10 @@ else:
         st.markdown("<h3 style='text-align: center; color: #38bdf8; margin-top: 40px; font-weight: bold;'>🔋 Paket Top-Up Kuota (Eceran)</h3>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #64748b; margin-bottom: 20px;'>Kehabisan kuota sebelum masa aktif habis? Beli kuota tambahan tanpa harus memperpanjang masa aktif bulanan.</p>", unsafe_allow_html=True)
         
-        link_tp_ai_10 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_AI_10/checkout?email={email_encoded}"
-        link_tp_ai_25 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_AI_25/checkout?email={email_encoded}"
-        link_tp_mp3_3 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_MP3_3/checkout?email={email_encoded}"
-        link_tp_mp3_10 = f"https://lynk.id/gerrysutsuga/LINK_TOPUP_MP3_10/checkout?email={email_encoded}"
+        link_tp_ai_10 = f"https://http://lynk.id/gerrysutsuga/9pzvrqnogz5r/checkout?email={email_encoded}"
+        link_tp_ai_25 = f"https://http://lynk.id/gerrysutsuga/e8j9081dvlmv/checkout?email={email_encoded}"
+        link_tp_mp3_3 = f"https://http://lynk.id/gerrysutsuga/nw8oqw950mm2/checkout?email={email_encoded}"
+        link_tp_mp3_10 = f"http://lynk.id/gerrysutsuga/20nkp093dvzg/checkout?email={email_encoded}"
 
         col_t1, col_t2 = st.columns(2)
         with col_t1:
@@ -1407,8 +1407,8 @@ else:
         st.markdown("<hr style='margin-top: 30px; border-color:#e2e8f0;'>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #38bdf8;'>🚀 Pilih & Beli Paket Sekarang</h3>", unsafe_allow_html=True)
         link_basic = f"http://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
-        link_executive = f"https://lynk.id/gerrysutsuga/yw8d3d5r1m5l/checkout?email={email_encoded}"
-        link_master = f"https://lynk.id/gerrysutsuga/LINK_PRODUK_MASTER_KAMU/checkout?email={email_encoded}"
+        link_executive = f"http://lynk.id/gerrysutsuga/5y198g6zyyrp/checkout?email={email_encoded}"
+        link_master = f"http://lynk.id/gerrysutsuga/ll5p8d82g4w8/checkout?email={email_encoded}"
 
         col_btn1, col_btn2, col_btn3 = st.columns(3)
         with col_btn1: st.markdown(f"""<a href="{link_basic}" target="_blank" style="text-decoration: none;"><button style="width: 100%; padding: 12px; border-radius: 8px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; transition: 0.3s;">🛒 Beli Paket BASIC</button></a>""", unsafe_allow_html=True)

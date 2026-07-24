@@ -2505,15 +2505,10 @@ else:
 
                                         function assignValues(node) {
                                             if (!node.children || node.children.length === 0) {
-                                                node.value = 1;
-                                                return 1;
+                                                node.value = 1; // Hanya cabang paling ujung yang diberi nilai
                                             } else {
-                                                let sum = 0;
-                                                node.children.forEach(child => {
-                                                    sum += assignValues(child);
-                                                });
-                                                node.value = sum; // MENGUNCI 360 DERAJAT: Nilai parent dipastikan persis sama dengan total anak
-                                                return sum;
+                                                delete node.value; // PENTING: Hapus nilai di parent agar ECharts auto-kalkulasi 360 derajat penuh
+                                                node.children.forEach(assignValues);
                                             }
                                         }
                                         assignValues(root);
@@ -2538,8 +2533,15 @@ else:
                                     }
 
                                     if (sunburstData.length === 1) {
-                                        sunburstData[0].itemStyle = { color: '#0f172a' }; 
-                                        sunburstData[0].label = { color: '#ffffff', fontSize: 13, fontWeight: 'bold' };
+                                        sunburstData[0].itemStyle = { color: '#0f172a' };
+                                        sunburstData[0].label = { 
+                                            color: '#ffffff', 
+                                            fontSize: 14, 
+                                            fontWeight: 'bold',
+                                            width: 100,          // BATAS LEBAR: Mengunci lebar teks di lingkaran tengah
+                                            overflow: 'break',   // WRAP: Memaksa teks turun ke bawah jika melebihi width
+                                            lineHeight: 18       // JARAK BARIS: Agar teks tidak saling bertumpuk
+                                        };
                                         
                                         if (sunburstData[0].children) {
                                             sunburstData[0].children.forEach((child, index) => { 
@@ -2560,34 +2562,32 @@ else:
                                             } 
                                         },
                                         series: {
-                                            type: 'sunburst', 
-                                            data: sunburstData, 
-                                            radius: [0, '95%'], // GLOBAL: Mulai dari 0 MUTLAK (Tidak ada lobang)
-                                            sort: undefined, 
+                                            type: 'sunburst',
+                                            data: sunburstData,
+                                            radius: [0, '100%'], // PERLUASAN AREA: Tarik diagram hingga maksimal menyentuh tepi kotak
+                                            sort: undefined,
                                             emphasis: { focus: 'ancestor' },
-                                            itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: '#ffffff' },
+                                            itemStyle: { borderRadius: 3, borderWidth: 1.5, borderColor: '#ffffff' },
                                             label: { 
                                                 show: true, 
                                                 formatter: '{b}', 
-                                                overflow: 'break', // Teks dibungkus (wrap) ke bawah
-                                                lineHeight: 12,    // Rapatkan jarak baris
+                                                overflow: 'break', // Pastikan semua label ter-wrap
                                                 fontWeight: 'bold', 
                                                 fontFamily: 'sans-serif', 
                                                 color: '#ffffff', 
                                                 textBorderColor: 'rgba(0,0,0,0.6)', 
                                                 textBorderWidth: 1.5 
                                             },
-                                            // PENGATURAN SPESIFIK TIAP LAPISAN
+                                            // REVISI LAPISAN: Pusat lebih besar & merata ke luar
                                             levels: [
-                                                { r0: '0%', r: '0%' }, // LAPIS 0: Virtual Root bawaan ECharts diatur 0 agar tidak membuat lubang putih
-                                                { r0: '0%', r: '20%', label: { rotate: 0, fontSize: 13 } },  // LAPIS 1: PUSAT (ROOT ASLI) -> Mulai mutlak dari 0%
-                                                { r0: '20%', r: '45%', label: { width: 55, fontSize: 10, minAngle: 5 } },   // LAPIS 2
-                                                { r0: '45%', r: '70%', label: { width: 50, fontSize: 9.5, minAngle: 8 } },  // LAPIS 3
-                                                { r0: '70%', r: '85%', label: { width: 45, fontSize: 9, minAngle: 12 } },   // LAPIS 4
-                                                { r0: '85%', r: '100%', label: { width: 40, fontSize: 8.5, minAngle: 15 } } // LAPIS 5
+                                                { r0: '0%', r: '0%' }, // Lapis 0: Virtual root (cegah bolong tengah)
+                                                { r0: '0%', r: '25%', label: { rotate: 0 } },  // Lapis 1: Pusat (Diperbesar dari 20% ke 25%)
+                                                { r0: '25%', r: '50%', label: { width: 70, fontSize: 11, minAngle: 5 } },   // Lapis 2
+                                                { r0: '50%', r: '75%', label: { width: 65, fontSize: 10, minAngle: 8 } },   // Lapis 3
+                                                { r0: '75%', r: '90%', label: { width: 55, fontSize: 9.5, minAngle: 10 } }, // Lapis 4
+                                                { r0: '90%', r: '100%', label: { width: 45, fontSize: 9, minAngle: 12 } }   // Lapis 5
                                             ]
                                         }
-                                    };
                                     window.sunburstChartLive.setOption(option);
                                     window.addEventListener('resize', function() { window.sunburstChartLive.resize(); });
                                 }, 100);

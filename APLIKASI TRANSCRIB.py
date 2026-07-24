@@ -2504,10 +2504,16 @@ else:
                                         }
 
                                         function assignValues(node) {
-                                            if (node.children.length === 0) {
+                                            if (!node.children || node.children.length === 0) {
                                                 node.value = 1;
+                                                return 1;
                                             } else {
-                                                node.children.forEach(assignValues);
+                                                let sum = 0;
+                                                node.children.forEach(child => {
+                                                    sum += assignValues(child);
+                                                });
+                                                node.value = sum; // MENGUNCI 360 DERAJAT: Nilai parent dipastikan persis sama dengan total anak
+                                                return sum;
                                             }
                                         }
                                         assignValues(root);
